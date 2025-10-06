@@ -4857,6 +4857,10 @@ static bool32 NoAliveMonsForOpponent(void)
     // Get total HP for the enemy's party to determine if the player has won
     for (i = 0; i < PARTY_SIZE; i++)
     {
+        // Don't count mons not on field in Wild Battles (Illusion)
+        if (i >= (IsDoubleBattle() ? 2 : 1) && !(gBattleTypeFlags & (BATTLE_TYPE_TRAINER | BATTLE_TYPE_LINK)))
+            break;
+
         if (GetMonData(&gEnemyParty[i], MON_DATA_SPECIES) && !GetMonData(&gEnemyParty[i], MON_DATA_IS_EGG)
          && (!(gBattleTypeFlags & BATTLE_TYPE_ARENA) || !(gBattleStruct->arenaLostOpponentMons & (1u << i))))
         {
@@ -7172,6 +7176,10 @@ bool32 CanBattlerSwitch(u32 battler)
     s32 i, lastMonId, battlerIn1, battlerIn2;
     bool32 ret = FALSE;
     struct Pokemon *party;
+
+    // Don't allow opponent to switch in wild battles
+    if (!(gBattleTypeFlags & (BATTLE_TYPE_TRAINER | BATTLE_TYPE_LINK)) && !IsOnPlayerSide(battler))
+        return FALSE;
 
     if (BATTLE_TWO_VS_ONE_OPPONENT && !IsOnPlayerSide(battler))
     {

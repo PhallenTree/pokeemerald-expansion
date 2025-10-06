@@ -2969,6 +2969,10 @@ bool32 HasNoMonsToSwitch(u32 battler, u8 partyIdBattlerOn1, u8 partyIdBattlerOn2
     u32 i, playerId, flankId;
     struct Pokemon *party;
 
+    // Don't allow opponent to switch in wild battles
+    if (!(gBattleTypeFlags & (BATTLE_TYPE_TRAINER | BATTLE_TYPE_LINK)) && !IsOnPlayerSide(battler))
+        return TRUE;
+
     if (!IsDoubleBattle())
         return FALSE;
 
@@ -10670,8 +10674,12 @@ bool32 TryClearIllusion(u32 battler, u32 caseID)
 {
     if (gBattleStruct->illusion[battler].state != ILLUSION_ON)
         return FALSE;
-    if (GetBattlerAbility(battler) == ABILITY_ILLUSION && IsBattlerAlive(battler))
-        return FALSE;
+
+    if (gBattleTypeFlags & (BATTLE_TYPE_TRAINER | BATTLE_TYPE_LINK) || IsOnPlayerSide(battler)) // Illusion in wild battles
+    {
+        if (GetBattlerAbility(battler) == ABILITY_ILLUSION && IsBattlerAlive(battler))
+            return FALSE;
+    }
 
     gBattleScripting.battler = battler;
     if (caseID == ABILITYEFFECT_ON_SWITCHIN)
