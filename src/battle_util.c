@@ -2609,7 +2609,7 @@ static enum MoveCanceler CancelerDetermineTarget(struct BattleContext *ctx)
     }
     else
     {
-        if (gCalledMove != MOVE_NONE) // Called moves already have a set target at this point
+        if (gCalledMove == MOVE_NONE) // Called moves already have a set target at this point
             gBattlerTarget = gBattleStruct->moveTarget[ctx->battlerAtk];
 
         if (!IsBattlerAlive(gBattlerTarget)
