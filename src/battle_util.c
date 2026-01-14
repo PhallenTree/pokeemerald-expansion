@@ -380,50 +380,6 @@ static bool32 IsUnnerveAbilityOnOpposingSide(u32 battler)
     return FALSE;
 }
 
-static inline bool32 IsDragonDartsSecondHit(u32 battlerAtk, enum Move move)
-{
-    if (GetBattlerMoveTargetType(battlerAtk, move) != TARGET_SMART)
-        return FALSE;
-
-    if (gMultiHitCounter < GetMoveStrikeCount(move))
-        return TRUE;
-
-    return FALSE;
-}
-
-bool32 IsAffectedByFollowMe(u32 battlerAtk, enum BattleSide defSide, enum Move move)
-{
-    enum Ability ability = GetBattlerAbility(battlerAtk);
-    enum BattleMoveEffects effect = GetMoveEffect(move);
-
-    if (gSideTimers[defSide].followmeTimer == 0
-        || (!IsBattlerAlive(gSideTimers[defSide].followmeTarget) && !IsDragonDartsSecondHit(battlerAtk, move))
-        || effect == EFFECT_SNIPE_SHOT
-        || effect == EFFECT_SKY_DROP
-        || IsAbilityAndRecord(battlerAtk, ability, ABILITY_PROPELLER_TAIL)
-        || IsAbilityAndRecord(battlerAtk, ability, ABILITY_STALWART))
-        return FALSE;
-
-    if (effect == EFFECT_PURSUIT && IsPursuitTargetSet())
-        return FALSE;
-
-    if (gSideTimers[defSide].followmePowder && !IsAffectedByPowderMove(battlerAtk, ability, GetBattlerHoldEffect(battlerAtk)))
-        return FALSE;
-
-    return TRUE;
-}
-
-static bool32 WasOriginalTargetAlly(enum MoveTarget target)
-{
-    if (!gProtectStructs[BATTLE_PARTNER(gBattlerAttacker)].usedAllySwitch)
-        return FALSE;
-
-    if ((target == TARGET_ALLY || target == TARGET_USER_OR_ALLY) && gBattlerAttacker == gBattlerTarget)
-        return TRUE;
-
-    return FALSE;
-}
-
 // Functions
 void HandleAction_UseMove(void)
 {
@@ -509,6 +465,7 @@ void HandleAction_UseMove(void)
     ClearDamageCalcResults();
     gMultiHitCounter = 0;
     gBattleCommunication[MISS_TYPE] = 0;
+    gBattlerTarget = gBattleStruct->moveTarget[gBattlerAttacker];
 
     if (gBattleTypeFlags & BATTLE_TYPE_PALACE && gProtectStructs[gBattlerAttacker].palaceUnableToUseMove)
     {
@@ -2490,6 +2447,50 @@ static enum MoveCanceler CancelerAttackstring(struct BattleContext *ctx)
     return MOVE_STEP_BREAK;
 }
 
+static inline bool32 IsDragonDartsSecondHit(u32 battlerAtk, enum Move move)
+{
+    if (GetBattlerMoveTargetType(battlerAtk, move) != TARGET_SMART)
+        return FALSE;
+
+    if (gMultiHitCounter < GetMoveStrikeCount(move))
+        return TRUE;
+
+    return FALSE;
+}
+
+bool32 IsAffectedByFollowMe(u32 battlerAtk, enum BattleSide defSide, enum Move move)
+{
+    enum Ability ability = GetBattlerAbility(battlerAtk);
+    enum BattleMoveEffects effect = GetMoveEffect(move);
+
+    if (gSideTimers[defSide].followmeTimer == 0
+        || (!IsBattlerAlive(gSideTimers[defSide].followmeTarget) && !IsDragonDartsSecondHit(battlerAtk, move))
+        || effect == EFFECT_SNIPE_SHOT
+        || effect == EFFECT_SKY_DROP
+        || IsAbilityAndRecord(battlerAtk, ability, ABILITY_PROPELLER_TAIL)
+        || IsAbilityAndRecord(battlerAtk, ability, ABILITY_STALWART))
+        return FALSE;
+
+    if (effect == EFFECT_PURSUIT && IsPursuitTargetSet())
+        return FALSE;
+
+    if (gSideTimers[defSide].followmePowder && !IsAffectedByPowderMove(battlerAtk, ability, GetBattlerHoldEffect(battlerAtk)))
+        return FALSE;
+
+    return TRUE;
+}
+
+static bool32 WasOriginalTargetAlly(enum MoveTarget target)
+{
+    if (!gProtectStructs[BATTLE_PARTNER(gBattlerAttacker)].usedAllySwitch)
+        return FALSE;
+
+    if ((target == TARGET_ALLY || target == TARGET_USER_OR_ALLY) && gBattlerAttacker == gBattlerTarget)
+        return TRUE;
+
+    return FALSE;
+}
+
 bool32 HandleMoveTargetRedirection(enum MoveTarget moveTarget)
 {
     u32 redirectorOrderNum = MAX_BATTLERS_COUNT;
@@ -2516,6 +2517,7 @@ bool32 HandleMoveTargetRedirection(enum MoveTarget moveTarget)
 
     enum Type moveType = GetBattleMoveType(gCurrentMove);
     enum Ability ability = GetBattlerAbility(gBattleStruct->moveTarget[gBattlerAttacker]);
+    enum Ability abilityAtk = GetBattlerAbility(gBattlerAttacker);
     bool32 currTargetCantAbsorb = ((ability != ABILITY_LIGHTNING_ROD && moveType == TYPE_ELECTRIC)
                                 || (ability != ABILITY_STORM_DRAIN && moveType == TYPE_WATER));
 
@@ -2524,10 +2526,13 @@ bool32 HandleMoveTargetRedirection(enum MoveTarget moveTarget)
      && gSideTimers[side].followmeTimer == 0
      && moveTarget != TARGET_USER
      && moveTarget != TARGET_ALL_BATTLERS
-     && moveTarget != TARGET_FIELD)
+     && moveTarget != TARGET_FIELD
+     && moveEffect != EFFECT_SNIPE_SHOT
+     && moveEffect != EFFECT_PLEDGE
+     && !IsAbilityAndRecord(gBattlerAttacker, abilityAtk, ABILITY_PROPELLER_TAIL)
+     && !IsAbilityAndRecord(gBattlerAttacker, abilityAtk, ABILITY_STALWART))
     {
         // Find first battler that redirects the move (in turn order)
-        enum Ability abilityAtk = GetBattlerAbility(gBattlerAttacker);
         u32 battler;
         for (battler = 0; battler < gBattlersCount; battler++)
         {
@@ -2537,16 +2542,12 @@ bool32 HandleMoveTargetRedirection(enum MoveTarget moveTarget)
                 && gBattleStruct->moveTarget[gBattlerAttacker] != battler
                 && ((ability == ABILITY_LIGHTNING_ROD && moveType == TYPE_ELECTRIC)
                  || (ability == ABILITY_STORM_DRAIN && moveType == TYPE_WATER))
-                && GetBattlerTurnOrderNum(battler) < redirectorOrderNum
-                && moveEffect != EFFECT_SNIPE_SHOT
-                && moveEffect != EFFECT_PLEDGE
-                && !IsAbilityAndRecord(gBattlerAttacker, abilityAtk, ABILITY_PROPELLER_TAIL)
-                && !IsAbilityAndRecord(gBattlerAttacker, abilityAtk, ABILITY_STALWART))
+                && GetBattlerTurnOrderNum(battler) < redirectorOrderNum)
             {
                 redirectorOrderNum = GetBattlerTurnOrderNum(battler);
             }
         }
-        if (redirectorOrderNum != MAX_BATTLERS_COUNT && moveEffect != EFFECT_TEATIME)
+        if (redirectorOrderNum != MAX_BATTLERS_COUNT)
         {
             enum Ability battlerAbility;
             battler = gBattlerByTurnOrder[redirectorOrderNum];
