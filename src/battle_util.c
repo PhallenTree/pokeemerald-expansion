@@ -2490,7 +2490,7 @@ static enum MoveCanceler CancelerAttackstring(struct BattleContext *ctx)
     return MOVE_STEP_BREAK;
 }
 
-static bool32 HandleMoveTargetRedirection(enum MoveTarget moveTarget)
+bool32 HandleMoveTargetRedirection(enum MoveTarget moveTarget)
 {
     u32 redirectorOrderNum = MAX_BATTLERS_COUNT;
     enum BattleMoveEffects moveEffect = GetMoveEffect(gCurrentMove);
