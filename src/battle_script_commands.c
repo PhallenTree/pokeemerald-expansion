@@ -1238,8 +1238,7 @@ static void Cmd_printselectionstringfromtable(void)
 {
     CMD_ARGS(const u16 *ptr);
 
-    if (gSelectionBattleScripts[gBattlerAttacker] == NULL)
-        errorf("wrong use of printselectionstring");
+    assertf(gSelectionBattleScripts[gBattlerAttacker] != NULL, "wrong use of printselectionstringfromtable");
 
     if (gBattleControllerExecFlags == 0)
     {
@@ -2139,8 +2138,8 @@ static void Cmd_printstring(void)
 static void Cmd_printselectionstring(void)
 {
     CMD_ARGS(u16 id);
-    if (gSelectionBattleScripts[gBattlerAttacker] == NULL)
-        errorf("wrong use of printselectionstring");
+
+    assertf(gSelectionBattleScripts[gBattlerAttacker] != NULL, "wrong use of printselectionstring");
     BtlController_EmitPrintSelectionString(gBattlerAttacker, B_COMM_TO_CONTROLLER, cmd->id);
     MarkBattlerForControllerExec(gBattlerAttacker);
 
@@ -4888,7 +4887,7 @@ static void Cmd_call(void)
 {
     CMD_ARGS(const u8 *instr);
 
-    assertf(gBattleResources->battleScriptsStack->size == UINT8_MAX, "call used, but battleScriptsStack is full!");
+    assertf(gBattleResources->battleScriptsStack->size != UINT8_MAX, "call used, but battleScriptsStack is full!");
     assertf(!IsInstructionInBattleScriptsStack(cmd->nextInstr), "call used, but instruction was already previously called, do you intend to infinitely loop?");
     BattleScriptPush(cmd->nextInstr);
     gBattlescriptCurrInstr = cmd->instr;
@@ -4923,8 +4922,7 @@ static void Cmd_endselectionscript(void)
 {
     CMD_ARGS();
 
-    if (gSelectionBattleScripts[gBattlerAttacker] == NULL)
-        errorf("wrong use of endselectionscript");
+    assertf(gSelectionBattleScripts[gBattlerAttacker] != NULL, "wrong use of endselectionstring");
     gBattleStruct->battlerState[gBattlerAttacker].selectionScriptFinished = TRUE;
 }
 
