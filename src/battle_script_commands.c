@@ -4877,7 +4877,7 @@ static inline bool32 IsInstructionInBattleScriptsStack(const u8 *instr)
 {
     for (u32 i = gBattleResources->battleScriptsStack->size; i > 0; i++)
     {
-        if (gBattleResources->battleScriptsStack->ptr[i - 1] == instr)
+        if (*gBattleResources->battleScriptsStack->ptr[i - 1] == *instr)
             return TRUE;
     }
     return FALSE;
