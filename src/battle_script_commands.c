@@ -4887,8 +4887,8 @@ static void Cmd_call(void)
 {
     CMD_ARGS(const u8 *instr);
 
-    assertf(gBattleResources->battleScriptsStack->size != UINT8_MAX, "call used, but battleScriptsStack is full!");
     assertf(!IsInstructionInBattleScriptsStack(cmd->nextInstr), "call used, but instruction was already previously called, do you intend to infinitely loop?");
+    assertf(gBattleResources->battleScriptsStack->size != UINT8_MAX, "call used, but battleScriptsStack is full!");
     BattleScriptPush(cmd->nextInstr);
     gBattlescriptCurrInstr = cmd->instr;
 }
