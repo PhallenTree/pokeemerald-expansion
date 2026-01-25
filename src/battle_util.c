@@ -465,7 +465,7 @@ void HandleAction_UseMove(void)
     ClearDamageCalcResults();
     gMultiHitCounter = 0;
     gBattleCommunication[MISS_TYPE] = 0;
-    gBattlerTarget = gBattleStruct->moveTarget[gBattlerAttacker];
+    gBattlerTarget = gBattlerAttacker;
 
     if (gBattleTypeFlags & BATTLE_TYPE_PALACE && gProtectStructs[gBattlerAttacker].palaceUnableToUseMove)
     {
