@@ -1238,6 +1238,9 @@ static void Cmd_printselectionstringfromtable(void)
 {
     CMD_ARGS(const u16 *ptr);
 
+    if (gSelectionBattleScripts[gBattlerAttacker] == NULL)
+        errorf("wrong use of printselectionstring");
+
     if (gBattleControllerExecFlags == 0)
     {
         const u16 *ptr = cmd->ptr;
@@ -2136,7 +2139,8 @@ static void Cmd_printstring(void)
 static void Cmd_printselectionstring(void)
 {
     CMD_ARGS(u16 id);
-
+    if (gSelectionBattleScripts[gBattlerAttacker] == NULL)
+        errorf("wrong use of printselectionstring");
     BtlController_EmitPrintSelectionString(gBattlerAttacker, B_COMM_TO_CONTROLLER, cmd->id);
     MarkBattlerForControllerExec(gBattlerAttacker);
 
@@ -4832,12 +4836,15 @@ static void Cmd_isdmgblockedbydisguise(void)
 
 static void Cmd_return(void)
 {
+    assertf(gBattleResources->battleScriptsStack->size != 0, "return used with nothing to return to, did you mean end/end2/end3?");
     BattleScriptPop();
 }
 
 static void Cmd_end(void)
 {
     CMD_ARGS();
+
+    assertf(gBattleMainFunc != RunBattleScriptCommands, "incorrect use of end in battle script, did you mean end3?");
 
     if (gBattleTypeFlags & BATTLE_TYPE_ARENA)
         BattleArena_AddSkillPoints(gBattlerAttacker);
@@ -4848,6 +4855,8 @@ static void Cmd_end(void)
 static void Cmd_end2(void)
 {
     CMD_ARGS();
+
+    assertf(gBattleMainFunc != RunBattleScriptCommands, "incorrect use of end2 in battle script, did you mean end3?");
 
     gCurrentActionFuncId = B_ACTION_TRY_FINISH;
 }
@@ -4860,13 +4869,30 @@ static void Cmd_end3(void)
     BattleScriptPop();
     if (gBattleResources->battleCallbackStack->size != 0)
         gBattleResources->battleCallbackStack->size--;
+    else // nothing to callback to
+        assertf(gBattleMainFunc != RunBattleScriptCommands_PopCallbacksStack, "incorrect use of end3 in battle script, did you mean end/end2?");
     gBattleMainFunc = gBattleResources->battleCallbackStack->function[gBattleResources->battleCallbackStack->size];
+}
+
+static inline bool32 IsInstructionInBattleScriptsStack(const u8 *instr)
+{
+    for (u32 i = gBattleResources->battleScriptsStack->size; i > 0; i++)
+    {
+        if (gBattleResources->battleScriptsStack->ptr[i] == instr)
+            return TRUE;
+    }
+    // check if equal to first instruction which isn't checked above
+    if (gBattleResources->battleScriptsStack->ptr[0] == instr)
+        return TRUE;
+    return FALSE;
 }
 
 static void Cmd_call(void)
 {
     CMD_ARGS(const u8 *instr);
 
+    assertf(gBattleResources->battleScriptsStack->size == UINT8_MAX, "call used, but battleScriptsStack is full!");
+    assertf(!IsInstructionInBattleScriptsStack(cmd->nextInstr), "call used, but instruction was already previously called, do you intend to infinitely loop?");
     BattleScriptPush(cmd->nextInstr);
     gBattlescriptCurrInstr = cmd->instr;
 }
@@ -4899,6 +4925,9 @@ static void Cmd_jumpifabilitypresent(void)
 static void Cmd_endselectionscript(void)
 {
     CMD_ARGS();
+
+    if (gSelectionBattleScripts[gBattlerAttacker] == NULL)
+        errorf("wrong use of endselectionscript");
     gBattleStruct->battlerState[gBattlerAttacker].selectionScriptFinished = TRUE;
 }
 
