@@ -752,7 +752,7 @@ static enum CancelerResult CancelerSetTargets(struct BattleContext *ctx)
 
         if (!ShouldCheckTargetMoveFailure(ctx->battlerAtk, battlerDef, ctx->move, moveTarget))
         {
-            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone |= 1u << battlerDef;
+            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[battlerDef] = TRUE;
             gBattleStruct->moveResultFlags[battlerDef] = MOVE_RESULT_NO_EFFECT;
         }
     }
@@ -893,7 +893,7 @@ static enum CancelerResult CancelerMoveFailure(struct BattleContext *ctx)
     {
         u32 battlerDef = gBattleStruct->eventState.atkCancelerBattler++;
 
-        if (gBattleStruct->battlerState[ctx->battlerAtk].targetsDone & (1u << battlerDef))
+        if (gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[1u << battlerDef])
             continue;
 
         switch (GetMoveEffect(ctx->move))
@@ -1163,8 +1163,8 @@ static enum CancelerResult CancelerPriorityBlock(struct BattleContext *ctx)
     {
         if (!IsBattlerAlive(battler) || IsBattlerAlly(ctx->battlerAtk, battler))
             continue;
-        if (!(gBattleStruct->battlerState[ctx->battlerAtk].targetsDone & (1u << battler)
-         && gBattleStruct->battlerState[ctx->battlerAtk].targetsDone & (1u << BATTLE_PARTNER(battler)))) // at least one of battler or partner is affected
+        if (!(gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[1u << battler]
+         && gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[BATTLE_PARTNER(battler)])) // at least one of battler or partner is affected
             continue;
 
         ability = GetBattlerAbility(battler);
@@ -1371,7 +1371,7 @@ static enum CancelerResult CancelerTargetFailure(struct BattleContext *ctx)
     {
         ctx->battlerDef = gBattleStruct->eventState.atkCancelerBattler++;
 
-        if (gBattleStruct->battlerState[ctx->battlerAtk].targetsDone & (1u << ctx->battlerDef))
+        if (gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[ctx->battlerDef])
             continue;
 
         ctx->abilityDef = GetBattlerAbility(ctx->battlerDef);
@@ -1386,19 +1386,19 @@ static enum CancelerResult CancelerTargetFailure(struct BattleContext *ctx)
 
         if (IsBattlerUnaffectedByMove(ctx->battlerDef)) // immune but targeted
         {
-            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone |= 1u << ctx->battlerDef;
+            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[ctx->battlerDef] = TRUE;
             BattleScriptCall(BattleScript_DoesntAffectScripting);
             targetAvoidedAttack = TRUE;
         }
         else if (!IsBattlerAlive(ctx->battlerDef))
         {
-            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone |= 1u << ctx->battlerDef;
+            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[ctx->battlerDef] = TRUE;
             gBattleStruct->moveResultFlags[ctx->battlerDef] |= MOVE_RESULT_FAILED;
             continue;
         }
         else if (!BreaksThroughSemiInvulnerablity(ctx->battlerAtk, ctx->battlerDef, ctx->abilityAtk, ctx->abilityDef, ctx->move))
         {
-            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone |= 1u << ctx->battlerDef;
+            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[ctx->battlerDef] = TRUE;
             gBattleStruct->moveResultFlags[ctx->battlerDef] |= MOVE_RESULT_FAILED;
             gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_AVOIDED_ATK;
             if (GetMoveEffect(ctx->move) == EFFECT_FLING)
@@ -1410,7 +1410,7 @@ static enum CancelerResult CancelerTargetFailure(struct BattleContext *ctx)
         else if (IsBattlerProtected(ctx))
         {
             SetOrClearRageVolatile();
-            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone |= 1u << ctx->battlerDef;
+            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[ctx->battlerDef] = TRUE;
             gBattleStruct->moveResultFlags[ctx->battlerDef] |= MOVE_RESULT_MISSED;
             gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_PROTECTED;
             if (GetMoveEffect(ctx->move) == EFFECT_FLING)
@@ -1425,13 +1425,13 @@ static enum CancelerResult CancelerTargetFailure(struct BattleContext *ctx)
         }
         else if (CanMoveBeBlockedByTarget(ctx, movePriority))
         {
-            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone |= 1u << ctx->battlerDef;
+            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[ctx->battlerDef] = TRUE;
             gBattleStruct->moveResultFlags[ctx->battlerDef] |= MOVE_RESULT_MISSED;
             targetAvoidedAttack = TRUE;
         }
         else if (GetMoveEffect(ctx->move) == EFFECT_SYNCHRONOISE && !DoBattlersShareType(ctx->battlerAtk, ctx->battlerDef))
         {
-            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone |= 1u << ctx->battlerDef;
+            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[ctx->battlerDef] = TRUE;
             gBattleStruct->moveResultFlags[ctx->battlerDef] = MOVE_RESULT_NO_EFFECT;
             BattleScriptCall(BattleScript_ItDoesntAffectFoe);
             targetAvoidedAttack = TRUE;
@@ -1443,7 +1443,7 @@ static enum CancelerResult CancelerTargetFailure(struct BattleContext *ctx)
             if (ctx->abilityBlocked)
             {
                 ctx->abilityBlocked = FALSE;
-                gBattleStruct->battlerState[ctx->battlerAtk].targetsDone |= 1u << ctx->battlerDef;
+                gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[ctx->battlerDef] = TRUE;
                 gBattleStruct->moveResultFlags[ctx->battlerDef] = MOVE_RESULT_FAILED;
                 gBattlerAbility = ctx->battlerDef;
                 RecordAbilityBattle(ctx->battlerDef, ctx->abilityDef);
@@ -1453,7 +1453,7 @@ static enum CancelerResult CancelerTargetFailure(struct BattleContext *ctx)
             else if (ctx->airBalloonBlocked)
             {
                 ctx->airBalloonBlocked = FALSE;
-                gBattleStruct->battlerState[ctx->battlerAtk].targetsDone |= 1u << ctx->battlerDef;
+                gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[ctx->battlerDef] = TRUE;
                 gBattleStruct->moveResultFlags[ctx->battlerDef] = MOVE_RESULT_FAILED;
                 BattleScriptCall(BattleScript_DoesntAffectScripting);
                 targetAvoidedAttack = TRUE;
