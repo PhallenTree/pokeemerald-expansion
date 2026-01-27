@@ -617,6 +617,149 @@ static enum CancelerResult CancelerAttackstring(struct BattleContext *ctx)
     return CANCELER_RESULT_BREAK;
 }
 
+#define checkFailure TRUE
+#define skipFailure FALSE
+static bool32 IsSingleTarget(u32 battlerAtk, u32 battlerDef)
+{
+    if (battlerDef != gBattlerTarget)
+        return skipFailure;
+    return checkFailure;
+}
+
+static bool32 IsSmartTarget(u32 battlerAtk, u32 battlerDef)
+{
+    if (!IsBattlerAlly(gBattlerTarget, battlerDef) || battlerAtk == battlerDef)
+        return skipFailure;
+    return checkFailure;
+}
+
+static bool32 IsTargetingBothFoes(u32 battlerAtk, u32 battlerDef)
+{
+    if (battlerDef == BATTLE_PARTNER(battlerAtk) || battlerAtk == battlerDef)
+    {
+        // Because of Magic Bounce and Magic Coat we don't want to set MOVE_RESULT_NO_EFFECT
+        if (GetMoveCategory(gCurrentMove) != DAMAGE_CATEGORY_STATUS)
+            gBattleStruct->moveResultFlags[battlerDef] = MOVE_RESULT_NO_EFFECT;
+        return skipFailure;
+    }
+    return checkFailure;
+}
+
+static bool32 IsTargetingSelf(u32 battlerAtk, u32 battlerDef)
+{
+    return skipFailure;
+}
+
+static bool32 IsTargetingAlly(u32 battlerAtk, u32 battlerDef)
+{
+    if (battlerDef != BATTLE_PARTNER(battlerAtk))
+    {
+        gBattleStruct->moveResultFlags[battlerDef] = MOVE_RESULT_NO_EFFECT;
+        return skipFailure;
+    }
+    return checkFailure;
+}
+
+static bool32 IsTargetingSelfAndAlly(u32 battlerAtk, u32 battlerDef)
+{
+    if (battlerDef != BATTLE_PARTNER(battlerAtk))
+    {
+        if (battlerDef != battlerAtk) // Don't set result flags for user
+            gBattleStruct->moveResultFlags[battlerDef] = MOVE_RESULT_NO_EFFECT;
+        return skipFailure;
+    }
+    return checkFailure; // In Gen3 the user checks it's own failure. Unclear because no such moves exists
+}
+
+static bool32 IsTargetingSelfOrAlly(u32 battlerAtk, u32 battlerDef)
+{
+    if (battlerDef == battlerAtk)
+        return skipFailure;
+
+    if (battlerDef != BATTLE_PARTNER(battlerAtk))
+    {
+        gBattleStruct->moveResultFlags[battlerDef] = MOVE_RESULT_NO_EFFECT;
+        return skipFailure;
+    }
+
+    return checkFailure; // In Gen3 the user checks it's own failure. Unclear because no such move exists
+}
+
+static bool32 IsTargetingFoesAndAlly(u32 battlerAtk, u32 battlerDef)
+{
+    if (battlerAtk == battlerDef)
+        return skipFailure;  // Don't set result flags for user
+    return checkFailure;
+}
+
+static bool32 IsTargetingField(u32 battlerAtk, u32 battlerDef)
+{
+    return skipFailure;
+}
+
+static bool32 IsTargetingOpponentsField(u32 battlerAtk, u32 battlerDef)
+{
+    if (IsBattlerAlly(battlerDef, BATTLE_OPPOSITE(battlerDef)))
+        return checkFailure;
+    return skipFailure;
+}
+
+static bool32 IsTargetingAllBattlers(u32 battlerAtk, u32 battlerDef)
+{
+    if (GetConfig(CONFIG_CHECK_USER_FAILURE) >= GEN_5 && battlerAtk == battlerDef)
+        return skipFailure;
+    return checkFailure;
+}
+
+// ShouldCheckFailureOnTarget
+static bool32 (*const sShouldCheckTargetMoveFailure[])(u32 battlerAtk, u32 battlerDef) =
+{
+    [TARGET_NONE] = IsTargetingField,
+    [TARGET_SELECTED] = IsSingleTarget,
+    [TARGET_DEPENDS] = IsSingleTarget,
+    [TARGET_OPPONENT] = IsSingleTarget,
+    [TARGET_RANDOM] = IsSingleTarget,
+    [TARGET_BOTH] = IsTargetingBothFoes,
+    [TARGET_USER] = IsTargetingSelf,
+    [TARGET_SMART] = IsSmartTarget,
+    [TARGET_ALLY] = IsTargetingAlly,
+    [TARGET_USER_AND_ALLY] = IsTargetingSelfAndAlly,
+    [TARGET_USER_OR_ALLY] = IsTargetingSelfOrAlly,
+    [TARGET_FOES_AND_ALLY] = IsTargetingFoesAndAlly,
+    [TARGET_FIELD] = IsTargetingField,
+    [TARGET_OPPONENTS_FIELD] = IsTargetingOpponentsField,
+    [TARGET_ALL_BATTLERS] = IsTargetingAllBattlers,
+};
+
+static bool32 ShouldCheckTargetMoveFailure(u32 battlerAtk, u32 battlerDef, enum Move move, enum MoveTarget moveTarget)
+{
+    // For Bounced moves
+    if (IsBattlerUnaffectedByMove(battlerDef))
+        return skipFailure;
+
+    return sShouldCheckTargetMoveFailure[moveTarget](battlerAtk, battlerDef);
+}
+#undef checkFailure
+#undef skipFailure
+
+static enum CancelerResult CancelerSetTargets(struct BattleContext *ctx)
+{
+    enum MoveTarget moveTarget = GetBattlerMoveTargetType(ctx->battlerAtk, ctx->move);
+
+    while (gBattleStruct->eventState.atkCancelerBattler < gBattlersCount)
+    {
+        u32 battlerDef = gBattleStruct->eventState.atkCancelerBattler++;
+
+        if (!ShouldCheckTargetMoveFailure(ctx->battlerAtk, battlerDef, ctx->move, moveTarget))
+        {
+            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone |= 1u << battlerDef;
+            gBattleStruct->moveResultFlags[battlerDef] = MOVE_RESULT_NO_EFFECT;
+        }
+    }
+    gBattleStruct->eventState.atkCancelerBattler = 0;
+    return CANCELER_RESULT_SUCCESS;
+}
+
 static enum CancelerResult CancelerPPDeduction(struct BattleContext *ctx)
 {
     if (gBattleMons[ctx->battlerAtk].volatiles.multipleTurns
@@ -744,6 +887,105 @@ static enum CancelerResult CancelerWeatherPrimal(struct BattleContext *ctx)
 static enum CancelerResult CancelerMoveFailure(struct BattleContext *ctx)
 {
     const u8 *battleScript = NULL;
+    u32 numAffectedTargets = 0;
+
+    while (gBattleStruct->eventState.atkCancelerBattler < gBattlersCount)
+    {
+        u32 battlerDef = gBattleStruct->eventState.atkCancelerBattler++;
+
+        if (gBattleStruct->battlerState[ctx->battlerAtk].targetsDone & (1u << battlerDef))
+            continue;
+
+        switch (GetMoveEffect(ctx->move))
+        {
+        case EFFECT_FLING:
+            if (!CanFling(ctx->battlerAtk, battlerDef))
+            {
+                battleScript = BattleScript_ButItFailed;
+            }
+            else if (!IsBattlerAlive(battlerDef)) // Edge case for removing a mon's item when there is no target available after using Fling.
+            {
+                battleScript = BattleScript_FlingFailConsumeItem;
+            }
+            else
+            {
+                numAffectedTargets++;
+                continue;
+            }
+            break;
+        case EFFECT_FUTURE_SIGHT:
+            if (gBattleStruct->futureSight[battlerDef].counter > 0)
+            {
+                battleScript = BattleScript_ButItFailed;
+            }
+            else
+            {
+                numAffectedTargets++;
+                continue;
+            }
+            break;
+        case EFFECT_POLTERGEIST:
+            if (gFieldStatuses & STATUS_FIELD_MAGIC_ROOM)
+            {
+                battleScript = BattleScript_ButItFailed;
+                gBattleStruct->eventState.atkCancelerBattler = gBattlersCount; // no need to check this 4 times
+            }
+            else if (gBattleMons[battlerDef].item == ITEM_NONE
+                  || GetBattlerAbility(battlerDef) == ABILITY_KLUTZ)
+            {
+                battleScript = BattleScript_ButItFailed;
+            }
+            else
+            {
+                numAffectedTargets++;
+                continue;
+            }
+            break;
+        case EFFECT_SUCKER_PUNCH:
+            if (HasBattlerActedThisTurn(battlerDef)
+             || (IsBattleMoveStatus(GetChosenMoveFromPosition(battlerDef)) && !gProtectStructs[battlerDef].noValidMoves))
+            {
+                battleScript = BattleScript_ButItFailed;
+            }
+            else
+            {
+                numAffectedTargets++;
+                continue;
+            }
+            break;
+        case EFFECT_UPPER_HAND:
+        {
+            s32 prio = GetChosenMovePriority(battlerDef, GetBattlerAbility(battlerDef));
+            if (prio < 1 || prio > 3 // Fails if priority is less than 1 or greater than 3, if target already moved, or if using a status
+             || HasBattlerActedThisTurn(battlerDef)
+             || gChosenMoveByBattler[battlerDef] == MOVE_NONE
+             || IsBattleMoveStatus(gChosenMoveByBattler[battlerDef]))
+            {
+                battleScript = BattleScript_ButItFailed;
+            }
+            else
+            {
+                numAffectedTargets++;
+                continue;
+            }
+            break;
+        }
+        case EFFECT_LOW_KICK:
+        case EFFECT_HEAT_CRASH:
+            if (GetActiveGimmick(battlerDef) == GIMMICK_DYNAMAX)
+            {
+                battleScript = BattleScript_MoveBlockedByDynamax;
+            }
+            else
+            {
+                numAffectedTargets++;
+                continue;
+            }
+            break;
+        }
+
+        gBattleStruct->moveResultFlags[battlerDef] = MOVE_RESULT_DOESNT_AFFECT_FOE;
+    }
 
     switch (GetMoveEffect(ctx->move))
     {
@@ -795,18 +1037,8 @@ static enum CancelerResult CancelerMoveFailure(struct BattleContext *ctx)
         if (!gBattleStruct->battlerState[ctx->battlerAtk].isFirstTurn || gSpecialStatuses[ctx->battlerAtk].instructedChosenTarget)
             battleScript = BattleScript_ButItFailed;
         break;
-    case EFFECT_FLING:
-        if (!CanFling(ctx->battlerAtk, ctx->battlerDef))
-            battleScript = BattleScript_ButItFailed;
-        else if (!IsBattlerAlive(ctx->battlerDef)) // Edge case for removing a mon's item when there is no target available after using Fling.
-            battleScript = BattleScript_FlingFailConsumeItem;
-        break;
     case EFFECT_FOLLOW_ME:
         if (B_UPDATED_MOVE_DATA >= GEN_8 && !(gBattleTypeFlags & BATTLE_TYPE_DOUBLE))
-            battleScript = BattleScript_ButItFailed;
-        break;
-    case EFFECT_FUTURE_SIGHT:
-        if (gBattleStruct->futureSight[ctx->battlerDef].counter > 0)
             battleScript = BattleScript_ButItFailed;
         break;
     case EFFECT_LAST_RESORT:
@@ -814,13 +1046,7 @@ static enum CancelerResult CancelerMoveFailure(struct BattleContext *ctx)
             battleScript = BattleScript_ButItFailed;
         break;
     case EFFECT_NO_RETREAT:
-        if (gBattleMons[ctx->battlerDef].volatiles.noRetreat)
-            battleScript = BattleScript_ButItFailed;
-        break;
-    case EFFECT_POLTERGEIST:
-        if (gBattleMons[ctx->battlerDef].item == ITEM_NONE
-         || gFieldStatuses & STATUS_FIELD_MAGIC_ROOM
-         || ctx->abilityDef == ABILITY_KLUTZ)
+        if (gBattleMons[ctx->battlerAtk].volatiles.noRetreat)
             battleScript = BattleScript_ButItFailed;
         break;
     case EFFECT_PROTECT:
@@ -857,21 +1083,6 @@ static enum CancelerResult CancelerMoveFailure(struct BattleContext *ctx)
               || ctx->abilityAtk == ABILITY_PURIFYING_SALT)
             battleScript = BattleScript_InsomniaProtects;
         break;
-    case EFFECT_SUCKER_PUNCH:
-        if (HasBattlerActedThisTurn(ctx->battlerDef)
-         || (IsBattleMoveStatus(GetChosenMoveFromPosition(ctx->battlerDef)) && !gProtectStructs[ctx->battlerDef].noValidMoves))
-            battleScript = BattleScript_ButItFailed;
-        break;
-    case EFFECT_UPPER_HAND:
-    {
-        s32 prio = GetChosenMovePriority(ctx->battlerDef, GetBattlerAbility(ctx->battlerDef));
-        if (prio < 1 || prio > 3 // Fails if priority is less than 1 or greater than 3, if target already moved, or if using a status
-         || HasBattlerActedThisTurn(ctx->battlerDef)
-         || gChosenMoveByBattler[ctx->battlerDef] == MOVE_NONE
-         || IsBattleMoveStatus(gChosenMoveByBattler[ctx->battlerDef]))
-            battleScript = BattleScript_ButItFailed;
-        break;
-    }
     case EFFECT_SNORE:
         if (!(gBattleMons[ctx->battlerAtk].status1 & STATUS1_SLEEP)
          && ctx->abilityAtk != ABILITY_COMATOSE)
@@ -897,16 +1108,11 @@ static enum CancelerResult CancelerMoveFailure(struct BattleContext *ctx)
     case EFFECT_TELEPORT:
         // TODO: follow up: Can't make sense of teleport logic
         break;
-    case EFFECT_LOW_KICK:
-    case EFFECT_HEAT_CRASH:
-        if (GetActiveGimmick(ctx->battlerDef) == GIMMICK_DYNAMAX)
-            battleScript = BattleScript_MoveBlockedByDynamax;
-        break;
     default:
         break;
     }
 
-    if (battleScript != NULL)
+    if (battleScript != NULL && numAffectedTargets == 0)
     {
         gBattlescriptCurrInstr = battleScript;
         return CANCELER_RESULT_FAILURE;
@@ -953,12 +1159,12 @@ static enum CancelerResult CancelerPriorityBlock(struct BattleContext *ctx)
 
     u32 battler;
     enum Ability ability = ABILITY_NONE; // ability of battler who is blocking
-    bool32 isSpreadMove = IsSpreadMove(GetBattlerMoveTargetType(ctx->battlerAtk, ctx->move));
     for (battler = 0; battler < gBattlersCount; battler++)
     {
         if (!IsBattlerAlive(battler) || IsBattlerAlly(ctx->battlerAtk, battler))
             continue;
-        if (!isSpreadMove && !IsBattlerAlly(battler, ctx->battlerDef))
+        if (!(gBattleStruct->battlerState[ctx->battlerAtk].targetsDone & (1u << battler)
+         && gBattleStruct->battlerState[ctx->battlerAtk].targetsDone & (1u << BATTLE_PARTNER(battler)))) // at least one of battler or partner is affected
             continue;
 
         ability = GetBattlerAbility(battler);
@@ -1014,7 +1220,7 @@ static enum CancelerResult CancelerExplosion(struct BattleContext *ctx)
 {
     // KO user of Explosion; for Final Gambit doesn't happen if target is immune or if it missed
     if (IsExplosionMove(ctx->move)
-     && (GetMoveEffect(ctx->move) != EFFECT_FINAL_GAMBIT || !IsBattlerUnaffectedByMove(ctx->battlerDef)))
+     && (GetMoveEffect(ctx->move) != EFFECT_FINAL_GAMBIT || IsAnyTargetAffected()))
     {
         BattleScriptCall(BattleScript_Explosion);
         return CANCELER_RESULT_BREAK;
@@ -1152,132 +1358,6 @@ static enum CancelerResult CancelerTookAttack(struct BattleContext *ctx)
     return CANCELER_RESULT_SUCCESS;
 }
 
-#define checkFailure FALSE
-#define skipFailure TRUE
-static bool32 IsSingleTarget(u32 battlerAtk, u32 battlerDef)
-{
-    if (battlerDef != gBattlerTarget)
-        return skipFailure;
-    return checkFailure;
-}
-
-static bool32 IsSmartTarget(u32 battlerAtk, u32 battlerDef)
-{
-    if (battlerAtk == BATTLE_PARTNER(battlerDef))
-        return skipFailure;
-    return checkFailure;
-}
-
-static bool32 IsTargetingBothFoes(u32 battlerAtk, u32 battlerDef)
-{
-    if (battlerDef == BATTLE_PARTNER(battlerAtk) || battlerAtk == battlerDef)
-    {
-        // Because of Magic Bounce and Magic Coat we don't want to set MOVE_RESULT_NO_EFFECT
-        if (GetMoveCategory(gCurrentMove) != DAMAGE_CATEGORY_STATUS)
-            gBattleStruct->moveResultFlags[battlerDef] = MOVE_RESULT_NO_EFFECT;
-        return skipFailure;
-    }
-    return checkFailure;
-}
-
-static bool32 IsTargetingSelf(u32 battlerAtk, u32 battlerDef)
-{
-    if (battlerAtk != battlerDef)
-        return skipFailure;
-    return skipFailure; // In Gen3 the user checks it's own failure. Unclear because no such moves exists
-}
-
-static bool32 IsTargetingAlly(u32 battlerAtk, u32 battlerDef)
-{
-    if (battlerDef != BATTLE_PARTNER(battlerAtk))
-    {
-        gBattleStruct->moveResultFlags[battlerDef] = MOVE_RESULT_NO_EFFECT;
-        return skipFailure;
-    }
-    return checkFailure;
-}
-
-static bool32 IsTargetingSelfAndAlly(u32 battlerAtk, u32 battlerDef)
-{
-    if (battlerDef != BATTLE_PARTNER(battlerAtk))
-    {
-        if (battlerDef != battlerAtk) // Don't set result flags for user
-            gBattleStruct->moveResultFlags[battlerDef] = MOVE_RESULT_NO_EFFECT;
-        return skipFailure;
-    }
-    return checkFailure; // In Gen3 the user checks it's own failure. Unclear because no such moves exists
-}
-
-static bool32 IsTargetingSelfOrAlly(u32 battlerAtk, u32 battlerDef)
-{
-    if (battlerDef == battlerAtk)
-        return skipFailure;
-
-    if (battlerDef != BATTLE_PARTNER(battlerAtk))
-    {
-        gBattleStruct->moveResultFlags[battlerDef] = MOVE_RESULT_NO_EFFECT;
-        return skipFailure;
-    }
-
-    return checkFailure; // In Gen3 the user checks it's own failure. Unclear because no such move exists
-}
-
-static bool32 IsTargetingFoesAndAlly(u32 battlerAtk, u32 battlerDef)
-{
-    if (battlerAtk == battlerDef)
-        return skipFailure;  // Don't set result flags for user
-    return checkFailure;
-}
-
-static bool32 IsTargetingField(u32 battlerAtk, u32 battlerDef)
-{
-    return skipFailure;
-}
-
-static bool32 IsTargetingOpponentsField(u32 battlerAtk, u32 battlerDef)
-{
-    return checkFailure; // Bounce failure only
-}
-
-static bool32 IsTargetingAllBattlers(u32 battlerAtk, u32 battlerDef)
-{
-    if (GetConfig(CONFIG_CHECK_USER_FAILURE) >= GEN_5 && battlerAtk == battlerDef)
-        return skipFailure;
-    return checkFailure;
-}
-
-// ShouldCheckFailureOnTarget
-static bool32 (*const sShouldCheckTargetMoveFailure[])(u32 battlerAtk, u32 battlerDef) =
-{
-    [TARGET_NONE] = IsTargetingField,
-    [TARGET_SELECTED] = IsSingleTarget,
-    [TARGET_DEPENDS] = IsSingleTarget,
-    [TARGET_OPPONENT] = IsSingleTarget,
-    [TARGET_RANDOM] = IsSingleTarget,
-    [TARGET_BOTH] = IsTargetingBothFoes,
-    [TARGET_USER] = IsTargetingSelf,
-    [TARGET_SMART] = IsSmartTarget,
-    [TARGET_ALLY] = IsTargetingAlly,
-    [TARGET_USER_AND_ALLY] = IsTargetingSelfAndAlly,
-    [TARGET_USER_OR_ALLY] = IsTargetingSelfOrAlly,
-    [TARGET_FOES_AND_ALLY] = IsTargetingFoesAndAlly,
-    [TARGET_FIELD] = IsTargetingField,
-    [TARGET_OPPONENTS_FIELD] = IsTargetingOpponentsField,
-    [TARGET_ALL_BATTLERS] = IsTargetingAllBattlers,
-};
-
-static bool32 ShouldCheckTargetMoveFailure(u32 battlerAtk, u32 battlerDef, enum Move move, enum MoveTarget moveTarget)
-{
-    // For Bounced moves
-    if (IsBattlerUnaffectedByMove(battlerDef))
-        return skipFailure;
-
-    return sShouldCheckTargetMoveFailure[moveTarget](battlerAtk, battlerDef);
-}
-#undef checkFailure
-#undef skipFailure
-
-
 static enum CancelerResult CancelerTargetFailure(struct BattleContext *ctx)
 {
     bool32 targetAvoidedAttack = FALSE;
@@ -1291,7 +1371,7 @@ static enum CancelerResult CancelerTargetFailure(struct BattleContext *ctx)
     {
         ctx->battlerDef = gBattleStruct->eventState.atkCancelerBattler++;
 
-        if (ShouldCheckTargetMoveFailure(ctx->battlerAtk, ctx->battlerDef, ctx->move, moveTarget))
+        if (gBattleStruct->battlerState[ctx->battlerAtk].targetsDone & (1u << ctx->battlerDef))
             continue;
 
         ctx->abilityDef = GetBattlerAbility(ctx->battlerDef);
@@ -1304,13 +1384,21 @@ static enum CancelerResult CancelerTargetFailure(struct BattleContext *ctx)
             continue;
         }
 
-        if (!IsBattlerAlive(ctx->battlerDef))
+        if (IsBattlerUnaffectedByMove(ctx->battlerDef)) // immune but targeted
         {
+            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone |= 1u << ctx->battlerDef;
+            BattleScriptCall(BattleScript_DoesntAffectScripting);
+            targetAvoidedAttack = TRUE;
+        }
+        else if (!IsBattlerAlive(ctx->battlerDef))
+        {
+            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone |= 1u << ctx->battlerDef;
             gBattleStruct->moveResultFlags[ctx->battlerDef] |= MOVE_RESULT_FAILED;
             continue;
         }
         else if (!BreaksThroughSemiInvulnerablity(ctx->battlerAtk, ctx->battlerDef, ctx->abilityAtk, ctx->abilityDef, ctx->move))
         {
+            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone |= 1u << ctx->battlerDef;
             gBattleStruct->moveResultFlags[ctx->battlerDef] |= MOVE_RESULT_FAILED;
             gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_AVOIDED_ATK;
             if (GetMoveEffect(ctx->move) == EFFECT_FLING)
@@ -1322,6 +1410,7 @@ static enum CancelerResult CancelerTargetFailure(struct BattleContext *ctx)
         else if (IsBattlerProtected(ctx))
         {
             SetOrClearRageVolatile();
+            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone |= 1u << ctx->battlerDef;
             gBattleStruct->moveResultFlags[ctx->battlerDef] |= MOVE_RESULT_MISSED;
             gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_PROTECTED;
             if (GetMoveEffect(ctx->move) == EFFECT_FLING)
@@ -1336,12 +1425,13 @@ static enum CancelerResult CancelerTargetFailure(struct BattleContext *ctx)
         }
         else if (CanMoveBeBlockedByTarget(ctx, movePriority))
         {
-
+            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone |= 1u << ctx->battlerDef;
             gBattleStruct->moveResultFlags[ctx->battlerDef] |= MOVE_RESULT_MISSED;
             targetAvoidedAttack = TRUE;
         }
         else if (GetMoveEffect(ctx->move) == EFFECT_SYNCHRONOISE && !DoBattlersShareType(ctx->battlerAtk, ctx->battlerDef))
         {
+            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone |= 1u << ctx->battlerDef;
             gBattleStruct->moveResultFlags[ctx->battlerDef] = MOVE_RESULT_NO_EFFECT;
             BattleScriptCall(BattleScript_ItDoesntAffectFoe);
             targetAvoidedAttack = TRUE;
@@ -1353,6 +1443,7 @@ static enum CancelerResult CancelerTargetFailure(struct BattleContext *ctx)
             if (ctx->abilityBlocked)
             {
                 ctx->abilityBlocked = FALSE;
+                gBattleStruct->battlerState[ctx->battlerAtk].targetsDone |= 1u << ctx->battlerDef;
                 gBattleStruct->moveResultFlags[ctx->battlerDef] = MOVE_RESULT_FAILED;
                 gBattlerAbility = ctx->battlerDef;
                 RecordAbilityBattle(ctx->battlerDef, ctx->abilityDef);
@@ -1362,6 +1453,7 @@ static enum CancelerResult CancelerTargetFailure(struct BattleContext *ctx)
             else if (ctx->airBalloonBlocked)
             {
                 ctx->airBalloonBlocked = FALSE;
+                gBattleStruct->battlerState[ctx->battlerAtk].targetsDone |= 1u << ctx->battlerDef;
                 gBattleStruct->moveResultFlags[ctx->battlerDef] = MOVE_RESULT_FAILED;
                 BattleScriptCall(BattleScript_DoesntAffectScripting);
                 targetAvoidedAttack = TRUE;
@@ -1565,6 +1657,7 @@ static enum CancelerResult (*const sMoveSuccessOrderCancelers[])(struct BattleCo
     [CANCELER_THAW] = CancelerThaw,
     [CANCELER_STANCE_CHANGE_2] = CancelerStanceChangeTwo,
     [CANCELER_ATTACKSTRING] = CancelerAttackstring,
+    [CANCELER_SET_TARGETS] = CancelerSetTargets,
     [CANCELER_PPDEDUCTION] = CancelerPPDeduction,
     [CANCELER_SKY_BATTLE] = CancelerSkyBattle,
     [CANCELER_WEATHER_PRIMAL] = CancelerWeatherPrimal,
