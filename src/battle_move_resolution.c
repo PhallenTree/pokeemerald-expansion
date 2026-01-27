@@ -753,7 +753,6 @@ static enum CancelerResult CancelerSetTargets(struct BattleContext *ctx)
         if (!ShouldCheckTargetMoveFailure(ctx->battlerAtk, battlerDef, ctx->move, moveTarget))
         {
             gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[battlerDef] = TRUE;
-            gBattleStruct->moveResultFlags[battlerDef] = MOVE_RESULT_NO_EFFECT;
         }
     }
     gBattleStruct->eventState.atkCancelerBattler = 0;
