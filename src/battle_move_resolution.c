@@ -983,7 +983,7 @@ static enum CancelerResult CancelerMoveFailure(struct BattleContext *ctx)
             }
             break;
         default:
-            break;
+            continue;
         }
 
         gBattleStruct->moveResultFlags[battlerDef] = MOVE_RESULT_DOESNT_AFFECT_FOE;
