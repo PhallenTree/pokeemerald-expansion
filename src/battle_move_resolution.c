@@ -988,7 +988,6 @@ static enum CancelerResult CancelerMoveFailure(struct BattleContext *ctx)
 
         gBattleStruct->moveResultFlags[battlerDef] = MOVE_RESULT_DOESNT_AFFECT_FOE;
     }
-    gBattleStruct->eventState.atkCancelerBattler = 0;
 
     switch (GetMoveEffect(ctx->move))
     {
@@ -1115,6 +1114,8 @@ static enum CancelerResult CancelerMoveFailure(struct BattleContext *ctx)
         break;
     }
 
+    gBattleStruct->eventState.atkCancelerBattler = 0;
+
     if (battleScript != NULL && numAffectedTargets == 0)
     {
         gBattlescriptCurrInstr = battleScript;
@@ -1166,8 +1167,8 @@ static enum CancelerResult CancelerPriorityBlock(struct BattleContext *ctx)
     {
         if (!IsBattlerAlive(battler) || IsBattlerAlly(ctx->battlerAtk, battler))
             continue;
-        if (!(gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[1u << battler]
-         && gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[BATTLE_PARTNER(battler)])) // at least one of battler or partner is affected
+        if (gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[battler]
+         && gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[BATTLE_PARTNER(battler)]) // at least one of battler or partner is affected
             continue;
 
         ability = GetBattlerAbility(battler);
