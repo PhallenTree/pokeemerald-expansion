@@ -3550,26 +3550,25 @@ static void Cmd_setpreattackadditionaleffect(void)
 {
     CMD_ARGS();
 
-        u32 numAdditionalEffects = GetMoveAdditionalEffectCount(gCurrentMove);
-        if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter)
-        {
-            const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
-            gBattleStruct->additionalEffectsCounter++;
+    u32 numAdditionalEffects = GetMoveAdditionalEffectCount(gCurrentMove);
+    if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter)
+    {
+        const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
+        gBattleStruct->additionalEffectsCounter++;
 
-            if (!additionalEffect->preAttackEffect)
-                return;
-            
-                SetMoveEffect(
-                    gBattlerAttacker,
-                    gEffectBattler,
-                    additionalEffect->moveEffect,
-                    gBattlescriptCurrInstr,
-                    EFFECT_PRIMARY
-                );
-
+        if (!additionalEffect->preAttackEffect)
             return;
-        }
-    gEffectBattler = 0;
+        
+            SetMoveEffect(
+                gBattlerAttacker,
+                gEffectBattler,
+                additionalEffect->moveEffect,
+                gBattlescriptCurrInstr,
+                EFFECT_PRIMARY
+            );
+
+        return;
+    }
     gBattleStruct->additionalEffectsCounter = 0;
     gBattlescriptCurrInstr = cmd->nextInstr;
 }
@@ -12876,7 +12875,10 @@ void BS_CheckTeaTimeTargets(void)
     for (i = 0; i < gBattlersCount; i++)
     {
         if (IsTeatimeAffected(i))
+        {
             count++;
+            gBattleStruct->battlerState[gBattlerAttacker].targetsDone[i] = FALSE;
+        }
     }
     if (count == 0)
         gBattlescriptCurrInstr = cmd->failInstr;
@@ -14900,9 +14902,14 @@ void BS_GetRototillerTargets(void)
     for (u32 battler = 0; battler < gBattlersCount; battler++)
     {
         if (IsRototillerAffected(battler, gCurrentMove))
+        {
             count++;
+            gBattleStruct->battlerState[gBattlerAttacker].targetsDone[i] = FALSE;
+        }
         else
+        {
             gBattleStruct->moveResultFlags[battler] = MOVE_RESULT_NO_EFFECT;
+        }
     }
 
     if (count == 0)
