@@ -892,7 +892,7 @@ static enum CancelerResult CancelerMoveFailure(struct BattleContext *ctx)
     {
         u32 battlerDef = gBattleStruct->eventState.atkCancelerBattler++;
 
-        if (gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[1u << battlerDef])
+        if (gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[battlerDef])
             continue;
 
         switch (GetMoveEffect(ctx->move))
