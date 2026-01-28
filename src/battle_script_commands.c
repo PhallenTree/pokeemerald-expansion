@@ -3550,20 +3550,6 @@ static void Cmd_setpreattackadditionaleffect(void)
 {
     CMD_ARGS();
 
-    if (IsAnyTargetTurnDamaged(gBattlerAttacker))
-    {
-        gBattlescriptCurrInstr = cmd->nextInstr;
-        return;
-    }
-
-    while (gEffectBattler < gBattlersCount)
-    {
-        if (gBattleStruct->moveResultFlags[gEffectBattler] & MOVE_RESULT_NO_EFFECT && gEffectBattler != gBattlerAttacker)
-        {
-            gEffectBattler = GetNextTarget(GetBattlerMoveTargetType(gBattlerAttacker, gCurrentMove), TRUE);
-            return;
-        }
-
         u32 numAdditionalEffects = GetMoveAdditionalEffectCount(gCurrentMove);
         if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter)
         {
@@ -3572,20 +3558,7 @@ static void Cmd_setpreattackadditionaleffect(void)
 
             if (!additionalEffect->preAttackEffect)
                 return;
-            if ((gEffectBattler == gBattlerAttacker) != additionalEffect->self)
-                return;
-
-            u32 percentChance = CalcSecondaryEffectChance(gBattlerAttacker, GetBattlerAbility(gBattlerAttacker), additionalEffect);
-
-            // Activate effect if it's primary (chance == 0) or if RNGesus says so
-            if ((percentChance == 0) || RandomPercentage(RNG_SECONDARY_EFFECT + gBattleStruct->additionalEffectsCounter, percentChance))
-            {
-                gBattleCommunication[MULTISTRING_CHOOSER] = *((u8 *) &additionalEffect->multistring);
-
-                enum SetMoveEffectFlags flags = NO_FLAGS;
-                if (percentChance == 0) flags |= EFFECT_PRIMARY;
-                if (percentChance >= 100) flags |= EFFECT_CERTAIN;
-
+            
                 SetMoveEffect(
                     gBattlerAttacker,
                     gEffectBattler,
@@ -3593,13 +3566,9 @@ static void Cmd_setpreattackadditionaleffect(void)
                     gBattlescriptCurrInstr,
                     EFFECT_PRIMARY
                 );
-            }
 
             return;
         }
-        gBattleStruct->additionalEffectsCounter = 0;
-        gEffectBattler = GetNextTarget(GetBattlerMoveTargetType(gBattlerAttacker, gCurrentMove), TRUE);
-    }
     gEffectBattler = 0;
     gBattleStruct->additionalEffectsCounter = 0;
     gBattlescriptCurrInstr = cmd->nextInstr;
