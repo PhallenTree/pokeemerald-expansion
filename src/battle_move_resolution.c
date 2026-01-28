@@ -988,6 +988,7 @@ static enum CancelerResult CancelerMoveFailure(struct BattleContext *ctx)
 
         gBattleStruct->moveResultFlags[battlerDef] = MOVE_RESULT_DOESNT_AFFECT_FOE;
     }
+    gBattleStruct->eventState.atkCancelerBattler = 0;
 
     switch (GetMoveEffect(ctx->move))
     {
