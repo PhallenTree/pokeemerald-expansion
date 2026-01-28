@@ -3568,14 +3568,14 @@ static void Cmd_setpreattackadditionaleffect(void)
         if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter)
         {
             const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
-            u32 percentChance = 
             gBattleStruct->additionalEffectsCounter++;
 
             if (!additionalEffect->preAttackEffect)
                 return;
             if ((gEffectBattler == gBattlerAttacker) != additionalEffect->self)
                 return;
-            percentChance = CalcSecondaryEffectChance(gBattlerAttacker, GetBattlerAbility(gBattlerAttacker), additionalEffect);
+
+            u32 percentChance = CalcSecondaryEffectChance(gBattlerAttacker, GetBattlerAbility(gBattlerAttacker), additionalEffect);
 
             // Activate effect if it's primary (chance == 0) or if RNGesus says so
             if ((percentChance == 0) || RandomPercentage(RNG_SECONDARY_EFFECT + gBattleStruct->additionalEffectsCounter, percentChance))
