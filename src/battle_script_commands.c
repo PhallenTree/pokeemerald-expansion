@@ -14904,7 +14904,7 @@ void BS_GetRototillerTargets(void)
         if (IsRototillerAffected(battler, gCurrentMove))
         {
             count++;
-            gBattleStruct->battlerState[gBattlerAttacker].targetsDone[i] = FALSE;
+            gBattleStruct->battlerState[gBattlerAttacker].targetsDone[battler] = FALSE;
         }
         else
         {
