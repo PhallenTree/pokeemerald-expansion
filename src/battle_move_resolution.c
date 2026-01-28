@@ -752,7 +752,8 @@ static enum CancelerResult CancelerSetTargets(struct BattleContext *ctx)
 
         if (!ShouldCheckTargetMoveFailure(ctx->battlerAtk, battlerDef, ctx->move, moveTarget))
         {
-            gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[battlerDef] = TRUE;
+            if (moveTarget != TARGET_FIELD && moveTarget != TARGET_OPPONENTS_FIELD)
+                gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[battlerDef] = TRUE;
         }
     }
     gBattleStruct->eventState.atkCancelerBattler = 0;
@@ -1370,6 +1371,9 @@ static enum CancelerResult CancelerTargetFailure(struct BattleContext *ctx)
     ctx->moveType = GetBattleMoveType(ctx->move);
     ctx->updateFlags = TRUE;
     ctx->runScript = TRUE;
+
+    if (moveTarget == TARGET_FIELD)
+        return CANCELER_RESULT_SUCCESS;
 
     while (gBattleStruct->eventState.atkCancelerBattler < gBattlersCount)
     {

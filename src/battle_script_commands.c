@@ -3549,27 +3549,51 @@ void SetMoveEffect(u32 battlerAtk, u32 effectBattler, enum MoveEffect moveEffect
 static void Cmd_setpreattackadditionaleffect(void)
 {
     CMD_ARGS();
-
-    u32 numAdditionalEffects = GetMoveAdditionalEffectCount(gCurrentMove);
-    if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter)
+    while (gEffectBattler < gBattlersCount)
     {
-        const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
-        gBattleStruct->additionalEffectsCounter++;
-
-        if (!additionalEffect->preAttackEffect)
+        if (gBattleStruct->moveResultFlags[gEffectBattler] & MOVE_RESULT_NO_EFFECT && gEffectBattler != gBattlerAttacker)
+        {
+            gEffectBattler = GetNextTarget(GetBattlerMoveTargetType(gBattlerAttacker, gCurrentMove), TRUE);
             return;
+        }
 
-        SetMoveEffect(
-        	gBattlerAttacker,
-        	additionalEffect->self ? gBattlerAttacker : gBattlerTarget,
-        	additionalEffect->moveEffect,
-        	gBattlescriptCurrInstr,
-        	EFFECT_PRIMARY
-        );
+        u32 numAdditionalEffects = GetMoveAdditionalEffectCount(gCurrentMove);
+        if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter)
+        {
+            const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
+            u32 percentChance = 
+            gBattleStruct->additionalEffectsCounter++;
 
-        return;
+            if (!additionalEffect->preAttackEffect)
+                return;
+            if ((gEffectBattler == gBattlerAttacker) != additionalEffect->self)
+                return;
+            percentChance = CalcSecondaryEffectChance(gBattlerAttacker, GetBattlerAbility(gBattlerAttacker), additionalEffect);
+
+            // Activate effect if it's primary (chance == 0) or if RNGesus says so
+            if ((percentChance == 0) || RandomPercentage(RNG_SECONDARY_EFFECT + gBattleStruct->additionalEffectsCounter, percentChance))
+            {
+                gBattleCommunication[MULTISTRING_CHOOSER] = *((u8 *) &additionalEffect->multistring);
+
+                enum SetMoveEffectFlags flags = NO_FLAGS;
+                if (percentChance == 0) flags |= EFFECT_PRIMARY;
+                if (percentChance >= 100) flags |= EFFECT_CERTAIN;
+
+                SetMoveEffect(
+                    gBattlerAttacker,
+                    gEffectBattler,
+                    additionalEffect->moveEffect,
+                    gBattlescriptCurrInstr,
+                    EFFECT_PRIMARY
+                );
+            }
+
+            return;
+        }
+        gBattleStruct->additionalEffectsCounter = 0;
+        gEffectBattler = GetNextTarget(GetBattlerMoveTargetType(gBattlerAttacker, gCurrentMove), TRUE);
     }
-
+    gEffectBattler = 0;
     gBattleStruct->additionalEffectsCounter = 0;
     gBattlescriptCurrInstr = cmd->nextInstr;
 }
