@@ -3549,6 +3549,13 @@ void SetMoveEffect(u32 battlerAtk, u32 effectBattler, enum MoveEffect moveEffect
 static void Cmd_setpreattackadditionaleffect(void)
 {
     CMD_ARGS();
+
+    if (IsAnyTargetTurnDamaged(gBattlerAttacker))
+    {
+        gBattlescriptCurrInstr = cmd->nextInstr;
+        return;
+    }
+
     while (gEffectBattler < gBattlersCount)
     {
         if (gBattleStruct->moveResultFlags[gEffectBattler] & MOVE_RESULT_NO_EFFECT && gEffectBattler != gBattlerAttacker)
