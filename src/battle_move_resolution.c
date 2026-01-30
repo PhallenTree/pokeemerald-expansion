@@ -742,7 +742,7 @@ static bool32 ShouldCheckTargetMoveFailure(u32 battlerAtk, u32 battlerDef, enum 
 #undef checkFailure
 #undef skipFailure
 
-static inline bool32 IsDragonDartsSecondHit(enum BattlerId battlerAtk, enum Move move)
+static inline bool32 IsDragonDartsSecondHit(u32 battlerAtk, enum Move move)
 {
     if (GetBattlerMoveTargetType(battlerAtk, move) != TARGET_SMART)
         return FALSE;
@@ -753,7 +753,7 @@ static inline bool32 IsDragonDartsSecondHit(enum BattlerId battlerAtk, enum Move
     return FALSE;
 }
 
-bool32 IsAffectedByFollowMe(enum BattlerId battlerAtk, enum BattleSide defSide, enum Move move)
+bool32 IsAffectedByFollowMe(u32 battlerAtk, enum BattleSide defSide, enum Move move)
 {
     enum Ability ability = GetBattlerAbility(battlerAtk);
     enum BattleMoveEffects effect = GetMoveEffect(move);
@@ -927,12 +927,12 @@ static enum CancelerResult CancelerSetTargets(struct BattleContext *ctx)
     if (IsBattlerAlly(gBattlerAttacker, gBattlerTarget) && !IsBattlerAlive(gBattlerTarget) && targetedBattlersCount == 1)
     {
         gBattlescriptCurrInstr = BattleScript_ButItFailed;
-        return MOVE_STEP_FAILURE;
+        return CANCELER_RESULT_FAILURE;
     }
     else if (WasOriginalTargetAlly(moveTarget))
     {
         gBattlescriptCurrInstr = BattleScript_ButItFailed;
-        return MOVE_STEP_FAILURE;
+        return CANCELER_RESULT_FAILURE;
     }
 
     return CANCELER_RESULT_SUCCESS;
@@ -1011,8 +1011,7 @@ static enum CancelerResult CancelerPPDeduction(struct BattleContext *ctx)
             gBattleScripting.animTargetsHit = 0;
 
             // Possibly better to just move type setting and redirection to attackcanceler as a new case at this point
-            SetTypeBeforeUsingMove(ctx->move, ctx->battlerAtk);
-            DetermineTarget(moveTarget, FALSE);
+            SetTypeBeforeUsingMove(ctx->move, ctx->battlerAtk);s
             ClearDamageCalcResults();
             gBattlescriptCurrInstr = GetMoveBattleScript(ctx->move);
             return CANCELER_RESULT_BREAK;
