@@ -12839,8 +12839,8 @@ void BS_SetMagicCoatTarget(void)
     gBattleStruct->attackerBeforeBounce = gBattleScripting.battler = gBattlerAttacker;
     gBattlerAttacker = gBattlerTarget;
     gBattlerTarget = gBattleStruct->attackerBeforeBounce;
-    DetermineTarget(GetBattlerMoveTargetType(gBattlerAttacker, gCurrentMove), FALSE);
     ClearDamageCalcResults();
+    HandleMoveTargetRedirection(GetBattlerMoveTargetType(gBattlerAttacker, gCurrentMove));
     gBattleStruct->eventState.atkCanceler = CANCELER_TARGET_FAILURE;
     gBattleStruct->eventState.atkCancelerBattler = 0;
 
@@ -12877,7 +12877,7 @@ void BS_CheckTeaTimeTargets(void)
         if (IsTeatimeAffected(i))
         {
             count++;
-            gBattleStruct->battlerState[gBattlerAttacker].targetsDone[i] = FALSE;
+            gBattleStruct->battlerState[gBattlerAttacker].targetsDone[i] = FALSE; // workaround for attacker being affected by the move but not nullifying it
         }
     }
     if (count == 0)
@@ -14904,7 +14904,7 @@ void BS_GetRototillerTargets(void)
         if (IsRototillerAffected(battler, gCurrentMove))
         {
             count++;
-            gBattleStruct->battlerState[gBattlerAttacker].targetsDone[battler] = FALSE;
+            gBattleStruct->battlerState[gBattlerAttacker].targetsDone[battler] = FALSE; // workaround for attacker being affected by the move but not nullifying it
         }
         else
         {
