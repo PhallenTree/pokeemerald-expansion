@@ -3560,16 +3560,17 @@ static void Cmd_setpreattackadditionaleffect(void)
         if (!additionalEffect->preAttackEffect)
             return;
         
-            SetMoveEffect(
-                gBattlerAttacker,
-                gEffectBattler,
-                additionalEffect->moveEffect,
-                gBattlescriptCurrInstr,
-                EFFECT_PRIMARY
-            );
+        SetMoveEffect(
+            gBattlerAttacker,
+            additionalEffect->self ? gBattlerAttacker : gBattlerTarget,
+            additionalEffect->moveEffect,
+            gBattlescriptCurrInstr,
+            EFFECT_PRIMARY
+        );
 
         return;
     }
+
     gBattleStruct->additionalEffectsCounter = 0;
     gBattlescriptCurrInstr = cmd->nextInstr;
 }
