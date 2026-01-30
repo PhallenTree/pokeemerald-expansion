@@ -894,9 +894,6 @@ static enum CancelerResult CancelerSetTargets(struct BattleContext *ctx)
         }
         else
         {
-            if (gCalledMove == MOVE_NONE) // Called moves already have a set target at this point
-                gBattlerTarget = gBattleStruct->moveTarget[gBattlerAttacker];
-
             if (!IsBattlerAlive(gBattlerTarget)
             && moveTarget != TARGET_OPPONENTS_FIELD
             && IsDoubleBattle()
