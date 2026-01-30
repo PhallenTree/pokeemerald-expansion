@@ -477,10 +477,6 @@ void HandleAction_UseMove(void)
     {
         gBattlescriptCurrInstr = BattleScript_ButItFailed;
     }
-    else if (WasOriginalTargetAlly(GetBattlerMoveTargetType(gBattlerAttacker, gCurrentMove)))
-    {
-        gBattlescriptCurrInstr = BattleScript_ButItFailed;
-    }
     else
     {
         gBattlescriptCurrInstr = GetMoveBattleScript(gCurrentMove);
