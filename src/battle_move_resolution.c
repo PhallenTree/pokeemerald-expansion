@@ -873,7 +873,7 @@ static enum CancelerResult CancelerSetTargets(struct BattleContext *ctx)
         }
         else if (moveTarget == TARGET_ALLY)
         {
-            if (IsBattlerAlive(BATTLE_PARTNER(gBattlerAttacker)) && !gProtectStructs[BATTLE_PARTNER(gBattlerAttacker)].usedAllySwitch)
+            if (IsDoubleBattle() && IsBattlerAlive(BATTLE_PARTNER(gBattlerAttacker)) && !gProtectStructs[BATTLE_PARTNER(gBattlerAttacker)].usedAllySwitch)
                 gBattlerTarget = BATTLE_PARTNER(gBattlerAttacker);
             else
                 gBattlerTarget = gBattlerAttacker;
@@ -922,6 +922,11 @@ static enum CancelerResult CancelerSetTargets(struct BattleContext *ctx)
     gBattleStruct->eventState.atkCancelerBattler = 0;
 
     if (IsBattlerAlly(gBattlerAttacker, gBattlerTarget) && !IsBattlerAlive(gBattlerTarget) && targetedBattlersCount == 1)
+    {
+        gBattlescriptCurrInstr = BattleScript_ButItFailed;
+        return CANCELER_RESULT_FAILURE;
+    }
+    else if (moveTarget == TARGET_ALLY && !IsDoubleBattle())
     {
         gBattlescriptCurrInstr = BattleScript_ButItFailed;
         return CANCELER_RESULT_FAILURE;
