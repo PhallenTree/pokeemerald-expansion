@@ -810,6 +810,7 @@ bool32 HandleMoveTargetRedirection(enum MoveTarget moveTarget)
      && moveTarget != TARGET_USER
      && moveTarget != TARGET_ALL_BATTLERS
      && moveTarget != TARGET_FIELD
+     && moveEffect != EFFECT_TEATIME
      && moveEffect != EFFECT_SNIPE_SHOT
      && moveEffect != EFFECT_PLEDGE)
     {
@@ -821,7 +822,7 @@ bool32 HandleMoveTargetRedirection(enum MoveTarget moveTarget)
             ability = GetBattlerAbility(battler);
             if ((B_REDIRECT_ABILITY_ALLIES >= GEN_4 || !IsBattlerAlly(gBattlerAttacker, battler))
                 && battler != gBattlerAttacker
-                && gBattleStruct->moveTarget[gBattlerAttacker] != battler
+                && gBattlerTarget != battler
                 && ((ability == ABILITY_LIGHTNING_ROD && moveType == TYPE_ELECTRIC)
                  || (ability == ABILITY_STORM_DRAIN && moveType == TYPE_WATER))
                 && GetBattlerTurnOrderNum(battler) < redirectorOrderNum
@@ -831,7 +832,7 @@ bool32 HandleMoveTargetRedirection(enum MoveTarget moveTarget)
                 redirectorOrderNum = GetBattlerTurnOrderNum(battler);
             }
         }
-        if (redirectorOrderNum != MAX_BATTLERS_COUNT && moveEffect != EFFECT_TEATIME)
+        if (redirectorOrderNum != MAX_BATTLERS_COUNT)
         {
             enum Ability battlerAbility;
             battler = gBattlerByTurnOrder[redirectorOrderNum];
