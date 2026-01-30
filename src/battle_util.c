@@ -371,8 +371,6 @@ static bool32 IsUnnerveAbilityOnOpposingSide(u32 battler)
 // Functions
 void HandleAction_UseMove(void)
 {
-    u32 i;
-
     gBattlerAttacker = gBattlerByTurnOrder[gCurrentTurnActionNumber];
     if (gAbsentBattlerFlags & 1u << gBattlerAttacker
      || gBattleStruct->battlerState[gBattlerAttacker].commandingDondozo
