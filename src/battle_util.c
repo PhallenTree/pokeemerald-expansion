@@ -475,9 +475,7 @@ void HandleAction_UseMove(void)
     }
     else if (IsBattlerAlly(gBattlerAttacker, gBattlerTarget) && !IsBattlerAlive(gBattlerTarget))
     {
-        // Runs until CancelerSetTargets, then fails. Sets target to attacker to avoid assert fails
-        gBattlerTarget = gBattlerAttacker;
-        gBattlescriptCurrInstr = BattleScript_FailedFromAtkCanceler;
+        gBattlescriptCurrInstr = BattleScript_ButItFailed;
     }
     else
     {
