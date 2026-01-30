@@ -473,6 +473,14 @@ void HandleAction_UseMove(void)
             gBattlescriptCurrInstr = BattleScript_MoveUsedLoafingAround;
         }
     }
+    else if (IsBattlerAlly(gBattlerAttacker, gBattlerTarget) && !IsBattlerAlive(gBattlerTarget))
+    {
+        gBattlescriptCurrInstr = BattleScript_ButItFailed;
+    }
+    else if (WasOriginalTargetAlly(moveTarget))
+    {
+        gBattlescriptCurrInstr = BattleScript_ButItFailed;
+    }
     else
     {
         gBattlescriptCurrInstr = GetMoveBattleScript(gCurrentMove);

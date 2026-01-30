@@ -3559,7 +3559,7 @@ static void Cmd_setpreattackadditionaleffect(void)
 
         if (!additionalEffect->preAttackEffect)
             return;
-        
+
         SetMoveEffect(
             gBattlerAttacker,
             additionalEffect->self ? gBattlerAttacker : gBattlerTarget,

@@ -926,11 +926,6 @@ static enum CancelerResult CancelerSetTargets(struct BattleContext *ctx)
         gBattlescriptCurrInstr = BattleScript_ButItFailed;
         return CANCELER_RESULT_FAILURE;
     }
-    else if (moveTarget == TARGET_ALLY && !IsDoubleBattle())
-    {
-        gBattlescriptCurrInstr = BattleScript_ButItFailed;
-        return CANCELER_RESULT_FAILURE;
-    }
     else if (WasOriginalTargetAlly(moveTarget))
     {
         gBattlescriptCurrInstr = BattleScript_ButItFailed;
