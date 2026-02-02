@@ -917,7 +917,7 @@ static enum CancelerResult CancelerSetTargets(struct BattleContext *ctx)
     }
     gBattleStruct->eventState.atkCancelerBattler = 0;
 
-    if (IsBattlerAlly(gBattlerAttacker, gBattlerTarget) && !IsBattlerAlive(gBattlerTarget) && targetedBattlersCount == 1)
+    if (IsBattlerAlly(gBattlerAttacker, gBattlerTarget) && !IsBattlerAlive(gBattlerTarget))
     {
         gBattlescriptCurrInstr = BattleScript_ButItFailed;
         return CANCELER_RESULT_FAILURE;
