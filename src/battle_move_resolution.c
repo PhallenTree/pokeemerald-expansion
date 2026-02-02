@@ -1554,9 +1554,6 @@ static enum CancelerResult CancelerTargetFailure(struct BattleContext *ctx)
     ctx->updateFlags = TRUE;
     ctx->runScript = TRUE;
 
-    if (moveTarget == TARGET_FIELD)
-        return CANCELER_RESULT_SUCCESS;
-
     while (gBattleStruct->eventState.atkCancelerBattler < gBattlersCount)
     {
         ctx->battlerDef = gBattleStruct->eventState.atkCancelerBattler++;
