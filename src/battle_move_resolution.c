@@ -706,8 +706,6 @@ static bool32 IsTargetingOpponentsField(u32 battlerAtk, u32 battlerDef)
 
 static bool32 IsTargetingAllBattlers(u32 battlerAtk, u32 battlerDef)
 {
-    if (GetConfig(CONFIG_CHECK_USER_FAILURE) >= GEN_5 && battlerAtk == battlerDef)
-        return skipFailure;
     return checkFailure;
 }
 
@@ -1059,6 +1057,15 @@ static enum CancelerResult CancelerWeatherPrimal(struct BattleContext *ctx)
     return result;
 }
 
+static bool32 ShouldSkipFailureCheckOnBattler(u32 battlerAtk, u32 battlerDef)
+{
+    if (gBattleStruct->battlerState[battlerAtk].targetsDone[battlerDef])
+        return TRUE;
+    if (GetConfig(CONFIG_CHECK_USER_FAILURE) >= GEN_5 && battlerAtk == battlerDef)
+        return TRUE;
+    return FALSE;
+}
+
 static enum CancelerResult CancelerMoveFailure(struct BattleContext *ctx)
 {
     const u8 *battleScript = NULL;
@@ -1068,7 +1075,7 @@ static enum CancelerResult CancelerMoveFailure(struct BattleContext *ctx)
     {
         u32 battlerDef = gBattleStruct->eventState.atkCancelerBattler++;
 
-        if (gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[battlerDef])
+        if (ShouldSkipFailureCheckOnBattler(ctx->battlerAtk, battlerDef))
             continue;
 
         switch (GetMoveEffect(ctx->move))
@@ -1554,7 +1561,7 @@ static enum CancelerResult CancelerTargetFailure(struct BattleContext *ctx)
     {
         ctx->battlerDef = gBattleStruct->eventState.atkCancelerBattler++;
 
-        if (gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[ctx->battlerDef])
+        if (ShouldSkipFailureCheckOnBattler(ctx->battlerAtk, ctx->battlerDef))
             continue;
 
         ctx->abilityDef = GetBattlerAbility(ctx->battlerDef);

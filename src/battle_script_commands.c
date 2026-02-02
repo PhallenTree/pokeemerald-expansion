@@ -12878,7 +12878,6 @@ void BS_CheckTeaTimeTargets(void)
         if (IsTeatimeAffected(i))
         {
             count++;
-            gBattleStruct->battlerState[gBattlerAttacker].targetsDone[i] = FALSE; // workaround for attacker being affected by the move but not nullifying it
         }
     }
     if (count == 0)
@@ -14905,7 +14904,6 @@ void BS_GetRototillerTargets(void)
         if (IsRototillerAffected(battler, gCurrentMove))
         {
             count++;
-            gBattleStruct->battlerState[gBattlerAttacker].targetsDone[battler] = FALSE; // workaround for attacker being affected by the move but not nullifying it
         }
         else
         {
