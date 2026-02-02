@@ -1019,8 +1019,8 @@ static bool32 ShouldSkipToMoveEnd(void)
 static void Cmd_attackcanceler(void)
 {
     CMD_ARGS();
-    assertf(gBattlerAttacker < gBattlersCount, "invalid gBattlerAttacker: %d\nmove: %S", gBattlerAttacker, GetMoveName(gCurrentMove));
-    assertf(gBattlerTarget < gBattlersCount, "invalid gBattlerTarget: %d\nmove: %S", gBattlerTarget, GetMoveName(gCurrentMove));
+    assertf(gBattlerAttacker < gBattlersCount, "invalid gBattlerAttacker: %d\nmove: %S\nattackCanceler = %d", gBattlerAttacker, GetMoveName(gCurrentMove), gBattleStruct->eventState.atkCanceler);
+    assertf(gBattlerTarget < gBattlersCount, "invalid gBattlerTarget: %d\nmove: %S\nattackCanceler = %d", gBattlerTarget, GetMoveName(gCurrentMove), gBattleStruct->eventState.atkCanceler);
 
     if (gBattleStruct->battlerState[gBattlerAttacker].usedEjectItem)
     {
