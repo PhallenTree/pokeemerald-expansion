@@ -916,7 +916,6 @@ static enum CancelerResult CancelerSetTargets(struct BattleContext *ctx)
         }
     }
     gBattleStruct->eventState.atkCancelerBattler = 0;
-    ctx->battlerDef = gBattlerTarget;
 
     if (IsBattlerAlly(gBattlerAttacker, gBattlerTarget) && !IsBattlerAlive(gBattlerTarget))
     {
@@ -929,7 +928,7 @@ static enum CancelerResult CancelerSetTargets(struct BattleContext *ctx)
         return CANCELER_RESULT_FAILURE;
     }
 
-    return CANCELER_RESULT_SUCCESS;
+    return CANCELER_RESULT_BREAK; // update ctx->battlerDef
 }
 
 static enum CancelerResult CancelerPPDeduction(struct BattleContext *ctx)
