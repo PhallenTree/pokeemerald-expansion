@@ -873,9 +873,14 @@ static enum CancelerResult CancelerSetTargets(struct BattleContext *ctx)
         else if (moveTarget == TARGET_ALLY)
         {
             if (IsDoubleBattle() && IsBattlerAlive(BATTLE_PARTNER(gBattlerAttacker)) && !gProtectStructs[BATTLE_PARTNER(gBattlerAttacker)].usedAllySwitch)
+            {
                 gBattlerTarget = BATTLE_PARTNER(gBattlerAttacker);
+            }
             else
-                gBattlerTarget = gBattlerAttacker;
+            {
+                gBattlescriptCurrInstr = BattleScript_ButItFailed;
+                return CANCELER_RESULT_FAILURE;
+            }
         }
         else if (IsDoubleBattle() && moveTarget == TARGET_FOES_AND_ALLY)
         {
