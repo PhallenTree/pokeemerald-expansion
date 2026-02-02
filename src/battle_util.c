@@ -452,8 +452,16 @@ void HandleAction_UseMove(void)
     gMultiHitCounter = 0;
     gBattleCommunication[MISS_TYPE] = 0;
     gBattlerTarget = gBattleStruct->moveTarget[gBattlerAttacker];
-    if (gBattlerTarget >= gBattlersCount)
-        gBattlerTarget = BATTLE_PARTNER(gBattlerTarget);
+
+    if (GetMoveEffect(gCurrentMove) == EFFECT_REFLECT_DAMAGE)
+    {
+        enum DamageCategory reflectCategory = GetReflectDamageMoveDamageCategory(gBattlerAttacker, gCurrentMove);
+
+        if (reflectCategory == DAMAGE_CATEGORY_PHYSICAL)
+            gBattlerTarget = gBattleStruct->moveTarget[gBattlerAttacker] = gProtectStructs[gBattlerAttacker].physicalBattlerId;
+        else
+            gBattlerTarget = gBattleStruct->moveTarget[gBattlerAttacker] = gProtectStructs[gBattlerAttacker].specialBattlerId;
+    }
 
     if (gBattleTypeFlags & BATTLE_TYPE_PALACE && gProtectStructs[gBattlerAttacker].palaceUnableToUseMove)
     {

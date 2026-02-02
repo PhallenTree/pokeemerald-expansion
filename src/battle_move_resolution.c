@@ -779,16 +779,6 @@ bool32 HandleMoveTargetRedirection(enum MoveTarget moveTarget)
     enum BattleMoveEffects moveEffect = GetMoveEffect(gCurrentMove);
     enum BattleSide side = BATTLE_OPPOSITE(GetBattlerSide(gBattlerAttacker));
 
-    if (moveEffect == EFFECT_REFLECT_DAMAGE)
-    {
-        enum DamageCategory reflectCategory = GetReflectDamageMoveDamageCategory(gBattlerAttacker, gCurrentMove);
-
-        if (reflectCategory == DAMAGE_CATEGORY_PHYSICAL)
-            gBattlerTarget = gBattleStruct->moveTarget[gBattlerAttacker] = gProtectStructs[gBattlerAttacker].physicalBattlerId;
-        else
-            gBattlerTarget = gBattleStruct->moveTarget[gBattlerAttacker] = gProtectStructs[gBattlerAttacker].specialBattlerId;
-    }
-
     if (IsAffectedByFollowMe(gBattlerAttacker, side, gCurrentMove)
      && (moveTarget == TARGET_SELECTED || moveTarget == TARGET_SMART || moveEffect == EFFECT_REFLECT_DAMAGE)
      && !IsBattlerAlly(gBattlerAttacker, gSideTimers[side].followmeTarget))
