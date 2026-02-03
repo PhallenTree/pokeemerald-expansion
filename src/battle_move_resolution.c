@@ -526,7 +526,7 @@ static enum CancelerResult CancelerCallSubmove(struct BattleContext *ctx)
 
         gBattleStruct->submoveAnnouncement = SUBMOVE_SUCCESS;
         gCalledMove = calledMove;
-        if (GetMoveTarget(ctx->move) == TARGET_DEPENDS)
+        if (GetBattlerMoveTargetType(ctx->battlerAtk, ctx->move) == TARGET_DEPENDS) // originally using a move without a set target
             gBattlerTarget = GetBattleMoveTarget(calledMove, TARGET_NONE);
         BattleScriptCall(battleScript);
         return CANCELER_RESULT_BREAK;
