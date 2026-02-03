@@ -480,7 +480,7 @@ static enum CancelerResult CancelerCallSubmove(struct BattleContext *ctx)
     const u8 *battleScript = NULL;
     battleScript = BattleScript_SubmoveAttackstring;
 
-    switch(GetMoveEffect(ctx->move))
+    switch (GetMoveEffect(ctx->move))
     {
     case EFFECT_MIRROR_MOVE:
         calledMove = GetMirrorMoveMove();
@@ -526,7 +526,7 @@ static enum CancelerResult CancelerCallSubmove(struct BattleContext *ctx)
 
         gBattleStruct->submoveAnnouncement = SUBMOVE_SUCCESS;
         gCalledMove = calledMove;
-        if (GetMoveTarget(ctx->move) != GetMoveTarget(calledMove))
+        if (GetMoveTarget(ctx->move) == TARGET_DEPENDS)
             gBattlerTarget = GetBattleMoveTarget(calledMove, TARGET_NONE);
         BattleScriptCall(battleScript);
         return CANCELER_RESULT_BREAK;
