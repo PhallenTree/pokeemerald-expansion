@@ -1333,8 +1333,9 @@ static enum CancelerResult CancelerPriorityBlock(struct BattleContext *ctx)
 {
     bool32 effect = FALSE;
     s32 priority = GetChosenMovePriority(ctx->battlerAtk, ctx->abilityAtk);
+    enum MoveTarget moveTarget = GetBattlerMoveTargetType(ctx->battlerAtk, ctx->abilityAtk);
 
-    if (priority <= 0)
+    if (priority <= 0 || moveTarget == TARGET_ALL_BATTLERS || moveTarget == TARGET_FIELD || moveTarget == TARGET_OPPONENTS_FIELD)
         return CANCELER_RESULT_SUCCESS;
 
     u32 battler;
