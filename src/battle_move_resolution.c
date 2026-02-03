@@ -668,7 +668,7 @@ static bool32 IsTargetingField(u32 battlerAtk, u32 battlerDef)
 
 static bool32 IsTargetingOpponentsField(u32 battlerAtk, u32 battlerDef)
 {
-    if (IsBattlerAlly(battlerDef, BATTLE_OPPOSITE(battlerDef)))
+    if (IsBattlerAlly(battlerDef, BATTLE_OPPOSITE(battlerAtk)))
         return checkFailure;
     return skipFailure;
 }
