@@ -948,6 +948,7 @@ bool32 ProteanTryChangeType(u32 battler, enum Ability ability, enum Move move, e
 {
       if ((ability == ABILITY_PROTEAN || ability == ABILITY_LIBERO)
          && !gBattleMons[gBattlerAttacker].volatiles.usedProteanLibero
+         && !gBattleStruct->bouncedMoveIsUsed
          && (gBattleMons[battler].types[0] != moveType || gBattleMons[battler].types[1] != moveType
              || (gBattleMons[battler].types[2] != moveType && gBattleMons[battler].types[2] != TYPE_MYSTERY))
          && move != MOVE_STRUGGLE
@@ -1018,8 +1019,8 @@ static bool32 ShouldSkipToMoveEnd(void)
 static void Cmd_attackcanceler(void)
 {
     CMD_ARGS();
-    assertf(gBattlerAttacker < gBattlersCount, "invalid gBattlerAttacker: %d\nmove: %S", gBattlerAttacker, GetMoveName(gCurrentMove));
-    assertf(gBattlerTarget < gBattlersCount, "invalid gBattlerTarget: %d\nmove: %S", gBattlerTarget, GetMoveName(gCurrentMove));
+    assertf(gBattlerAttacker < gBattlersCount, "invalid gBattlerAttacker: %d\nmove: %S\nattackCanceler = %d", gBattlerAttacker, GetMoveName(gCurrentMove), gBattleStruct->eventState.atkCanceler);
+    assertf(gBattlerTarget < gBattlersCount, "invalid gBattlerTarget: %d\nmove: %S\nattackCanceler = %d", gBattlerTarget, GetMoveName(gCurrentMove), gBattleStruct->eventState.atkCanceler);
 
     if (gBattleStruct->battlerState[gBattlerAttacker].usedEjectItem)
     {
@@ -3560,11 +3561,11 @@ static void Cmd_setpreattackadditionaleffect(void)
             return;
 
         SetMoveEffect(
-        	gBattlerAttacker,
-        	additionalEffect->self ? gBattlerAttacker : gBattlerTarget,
-        	additionalEffect->moveEffect,
-        	gBattlescriptCurrInstr,
-        	EFFECT_PRIMARY
+            gBattlerAttacker,
+            additionalEffect->self ? gBattlerAttacker : gBattlerTarget,
+            additionalEffect->moveEffect,
+            gBattlescriptCurrInstr,
+            EFFECT_PRIMARY
         );
 
         return;
@@ -6206,7 +6207,6 @@ static void ResetValuesForCalledMove(void)
     gBattleScripting.animTurn = 0;
     gBattleScripting.animTargetsHit = 0;
     SetTypeBeforeUsingMove(gCurrentMove, gBattlerAttacker);
-    DetermineTarget(GetBattlerMoveTargetType(gBattlerAttacker, gCurrentMove), FALSE);
     ClearDamageCalcResults();
 }
 
@@ -12840,9 +12840,8 @@ void BS_SetMagicCoatTarget(void)
     gBattleStruct->attackerBeforeBounce = gBattleScripting.battler = gBattlerAttacker;
     gBattlerAttacker = gBattlerTarget;
     gBattlerTarget = gBattleStruct->attackerBeforeBounce;
-    DetermineTarget(GetBattlerMoveTargetType(gBattlerAttacker, gCurrentMove), FALSE);
     ClearDamageCalcResults();
-    gBattleStruct->eventState.atkCanceler = CANCELER_TARGET_FAILURE;
+    gBattleStruct->eventState.atkCanceler = CANCELER_SET_TARGETS;
     gBattleStruct->eventState.atkCancelerBattler = 0;
 
     gBattlescriptCurrInstr = cmd->nextInstr;
@@ -12876,7 +12875,9 @@ void BS_CheckTeaTimeTargets(void)
     for (i = 0; i < gBattlersCount; i++)
     {
         if (IsTeatimeAffected(i))
+        {
             count++;
+        }
     }
     if (count == 0)
         gBattlescriptCurrInstr = cmd->failInstr;
@@ -14900,9 +14901,13 @@ void BS_GetRototillerTargets(void)
     for (u32 battler = 0; battler < gBattlersCount; battler++)
     {
         if (IsRototillerAffected(battler, gCurrentMove))
+        {
             count++;
+        }
         else
+        {
             gBattleStruct->moveResultFlags[battler] = MOVE_RESULT_NO_EFFECT;
+        }
     }
 
     if (count == 0)
