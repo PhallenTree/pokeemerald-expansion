@@ -5481,7 +5481,6 @@ u32 GetBattleMoveTarget(enum Move move, enum MoveTarget moveTarget)
 {
     u32 targetBattler = 0;
     enum BattleSide side;
-    enum Type moveType = GetBattleMoveType(move);
 
     if (moveTarget == TARGET_NONE)
         moveTarget = GetBattlerMoveTargetType(gBattlerAttacker, move);
