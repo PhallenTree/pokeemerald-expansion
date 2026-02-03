@@ -1344,7 +1344,7 @@ static enum CancelerResult CancelerPriorityBlock(struct BattleContext *ctx)
         if (!IsBattlerAlive(battler) || IsBattlerAlly(ctx->battlerAtk, battler))
             continue;
         if (ShouldSkipFailureCheckOnBattler(ctx->battlerAtk, battler)
-         && ShouldSkipFailureCheckOnBattler(ctx->battlerAtk, BATTLE_PARTNER(battler))) // either battler or partner is affected
+         && (!IsDoubleBattle() || ShouldSkipFailureCheckOnBattler(ctx->battlerAtk, BATTLE_PARTNER(battler)))) // either battler or partner is affected
             continue;
 
         ability = GetBattlerAbility(battler);
