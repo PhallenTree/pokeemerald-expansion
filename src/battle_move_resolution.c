@@ -526,6 +526,8 @@ static enum CancelerResult CancelerCallSubmove(struct BattleContext *ctx)
 
         gBattleStruct->submoveAnnouncement = SUBMOVE_SUCCESS;
         gCalledMove = calledMove;
+        if (GetMoveTarget(ctx->move) != GetMoveTarget(calledMove))
+            gBattlerTarget = GetBattleMoveTarget(calledMove, TARGET_NONE);
         BattleScriptCall(battleScript);
         return CANCELER_RESULT_BREAK;
     }
@@ -866,16 +868,12 @@ static enum CancelerResult CancelerSetTargets(struct BattleContext *ctx)
         }
     }
 
-    u32 targetedBattlersCount = 0;
-
     while (gBattleStruct->eventState.atkCancelerBattler < gBattlersCount)
     {
         u32 battlerDef = gBattleStruct->eventState.atkCancelerBattler++;
 
         if (!ShouldCheckTargetMoveFailure(ctx->battlerAtk, battlerDef, ctx->move, moveTarget))
             gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[battlerDef] = TRUE;
-        else
-            targetedBattlersCount++;
     }
     gBattleStruct->eventState.atkCancelerBattler = 0;
 
@@ -962,7 +960,6 @@ static enum CancelerResult CancelerPPDeduction(struct BattleContext *ctx)
         else
         {
             gBattleStruct->submoveAnnouncement = SUBMOVE_NO_EFFECT;
-            gBattlerTarget = GetBattleMoveTarget(ctx->move, TARGET_NONE);
             gBattleScripting.animTurn = 0;
             gBattleScripting.animTargetsHit = 0;
 
@@ -1042,7 +1039,7 @@ static enum CancelerResult CancelerBide(struct BattleContext *ctx)
             {
                 gCurrentMove = MOVE_BIDE;
                 gBattlerTarget = gBideTarget[ctx->battlerAtk];
-                if (!IsBattlerAlive(ctx->battlerDef))
+                if (!IsBattlerAlive(gBattlerTarget))
                     gBattlerTarget = GetBattleMoveTarget(MOVE_BIDE, TARGET_SELECTED);
                 gBattlescriptCurrInstr = BattleScript_BideAttack;
                 return CANCELER_RESULT_BREAK; // Jumps to a different script but no failure
@@ -1054,7 +1051,7 @@ static enum CancelerResult CancelerBide(struct BattleContext *ctx)
             }
         }
     }
-    return CANCELER_RESULT_SUCCESS;
+    return CANCELER_RESULT_BREAK;
 }
 
 static enum CancelerResult CancelerMoveFailure(struct BattleContext *ctx)
@@ -3907,6 +3904,7 @@ static enum Move GetSleepTalkMove(void)
 
     move = gBattleMons[gBattlerAttacker].moves[movePosition];
     gCurrMovePos = movePosition;
+    gBattlerTarget = GetBattleMoveTarget(move, )
 
     return move;
 }

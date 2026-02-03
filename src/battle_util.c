@@ -5493,43 +5493,9 @@ u32 GetBattleMoveTarget(enum Move move, enum MoveTarget moveTarget)
     case TARGET_OPPONENT:
         side = BATTLE_OPPOSITE(GetBattlerSide(gBattlerAttacker));
         if (IsAffectedByFollowMe(gBattlerAttacker, side, move))
-        {
             targetBattler = gSideTimers[side].followmeTarget;
-        }
         else
-        {
-            enum Ability battlerAbilityOnField = 0;
-
             targetBattler = SetRandomTarget(gBattlerAttacker);
-            if (moveType == TYPE_ELECTRIC && GetBattlerAbility(targetBattler) != ABILITY_LIGHTNING_ROD)
-            {
-                if (B_REDIRECT_ABILITY_ALLIES >= GEN_4)
-                    battlerAbilityOnField = IsAbilityOnField(ABILITY_LIGHTNING_ROD);
-                else
-                    battlerAbilityOnField = IsAbilityOnOpposingSide(targetBattler, ABILITY_LIGHTNING_ROD);
-
-                if (battlerAbilityOnField > 0 && (battlerAbilityOnField - 1) != gBattlerAttacker)
-                {
-                    targetBattler = battlerAbilityOnField - 1;
-                    RecordAbilityBattle(targetBattler, gBattleMons[targetBattler].ability);
-                    gSpecialStatuses[targetBattler].abilityRedirected = TRUE;
-                }
-            }
-            else if (moveType == TYPE_WATER && GetBattlerAbility(targetBattler) != ABILITY_STORM_DRAIN)
-            {
-                if (B_REDIRECT_ABILITY_ALLIES >= GEN_4)
-                    battlerAbilityOnField = IsAbilityOnField(ABILITY_STORM_DRAIN);
-                else
-                    battlerAbilityOnField = IsAbilityOnOpposingSide(targetBattler, ABILITY_STORM_DRAIN);
-
-                if (battlerAbilityOnField > 0 && (battlerAbilityOnField - 1) != gBattlerAttacker)
-                {
-                    targetBattler = battlerAbilityOnField - 1;
-                    RecordAbilityBattle(targetBattler, gBattleMons[targetBattler].ability);
-                    gSpecialStatuses[targetBattler].abilityRedirected = TRUE;
-                }
-            }
-        }
         break;
     case TARGET_DEPENDS:
     case TARGET_BOTH:
@@ -5545,10 +5511,8 @@ u32 GetBattleMoveTarget(enum Move move, enum MoveTarget moveTarget)
         side = BATTLE_OPPOSITE(GetBattlerSide(gBattlerAttacker));
         if (IsAffectedByFollowMe(gBattlerAttacker, side, move))
             targetBattler = gSideTimers[side].followmeTarget;
-        else if (IsDoubleBattle())
-            targetBattler = SetRandomTarget(gBattlerAttacker);
         else
-            targetBattler = GetOpposingSideBattler(gBattlerAttacker);
+            targetBattler = SetRandomTarget(gBattlerAttacker);
         break;
     case TARGET_USER:
     default:
