@@ -870,7 +870,7 @@ static enum CancelerResult CancelerSetTargets(struct BattleContext *ctx)
                 gBattlerTarget = GetPartnerBattler(gBattlerTarget);
             }
         }
-        else if (moveTarget == TARGET_ALLY)
+        else if (moveTarget == TARGET_ALLY && !IsBattlerAlly(gBattlerTarget, gBattlerAttacker))
         {
             gBattlerTarget = BATTLE_PARTNER(gBattlerAttacker);
         }
@@ -888,15 +888,12 @@ static enum CancelerResult CancelerSetTargets(struct BattleContext *ctx)
         {
             gBattlerTarget = gBattlerAttacker;
         }
-        else
+        else if (!IsBattlerAlive(gBattlerTarget)
+              && moveTarget != TARGET_OPPONENTS_FIELD
+              && IsDoubleBattle()
+              && (!IsBattlerAlly(gBattlerAttacker, gBattlerTarget)))
         {
-            if (!IsBattlerAlive(gBattlerTarget)
-            && moveTarget != TARGET_OPPONENTS_FIELD
-            && IsDoubleBattle()
-            && (!IsBattlerAlly(gBattlerAttacker, gBattlerTarget)))
-            {
-                gBattlerTarget = GetBattlerAtPosition(BATTLE_PARTNER(GetBattlerPosition(gBattlerTarget)));
-            }
+            gBattlerTarget = GetBattlerAtPosition(BATTLE_PARTNER(GetBattlerPosition(gBattlerTarget)));
         }
     }
 
@@ -907,13 +904,9 @@ static enum CancelerResult CancelerSetTargets(struct BattleContext *ctx)
         u32 battlerDef = gBattleStruct->eventState.atkCancelerBattler++;
 
         if (!ShouldCheckTargetMoveFailure(ctx->battlerAtk, battlerDef, ctx->move, moveTarget))
-        {
             gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[battlerDef] = TRUE;
-        }
         else
-        {
             targetedBattlersCount++;
-        }
     }
     gBattleStruct->eventState.atkCancelerBattler = 0;
 
@@ -1058,6 +1051,8 @@ static enum CancelerResult CancelerWeatherPrimal(struct BattleContext *ctx)
 static bool32 ShouldSkipFailureCheckOnBattler(u32 battlerAtk, u32 battlerDef)
 {
     if (gBattleStruct->battlerState[battlerAtk].targetsDone[battlerDef])
+        return TRUE;
+    if (gBattleStruct->moveResultFlags[battlerDef] & MOVE_RESULT_NO_EFFECT)
         return TRUE;
     if (GetConfig(CONFIG_CHECK_USER_FAILURE) >= GEN_5 && battlerAtk == battlerDef)
         return TRUE;
@@ -1348,8 +1343,8 @@ static enum CancelerResult CancelerPriorityBlock(struct BattleContext *ctx)
     {
         if (!IsBattlerAlive(battler) || IsBattlerAlly(ctx->battlerAtk, battler))
             continue;
-        if (gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[battler]
-         && gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[BATTLE_PARTNER(battler)]) // at least one of battler or partner is affected
+        if (ShouldSkipFailureCheckOnBattler(ctx->battlerAtk, battler)
+         && ShouldSkipFailureCheckOnBattler(ctx->battlerAtk, BATTLE_PARTNER(battler))) // either battler or partner is affected
             continue;
 
         ability = GetBattlerAbility(battler);
