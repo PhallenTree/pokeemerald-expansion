@@ -431,37 +431,6 @@ static enum CancelerResult CancelerInfatuation(struct BattleContext *ctx)
     return CANCELER_RESULT_SUCCESS;
 }
 
-static enum CancelerResult CancelerBide(struct BattleContext *ctx)
-{
-    if (gBattleMons[ctx->battlerAtk].volatiles.bideTurns)
-    {
-        if (--gBattleMons[ctx->battlerAtk].volatiles.bideTurns)
-        {
-            gBattlescriptCurrInstr = BattleScript_BideStoringEnergy;
-        }
-        else
-        {
-            // This is removed in FRLG and Emerald for some reason
-            //gBattleMons[gBattlerAttacker].volatiles.multipleTurns = FALSE;
-            if (gBideDmg[ctx->battlerAtk])
-            {
-                gCurrentMove = MOVE_BIDE;
-                gBattlerTarget = gBideTarget[ctx->battlerAtk];
-                if (!IsBattlerAlive(ctx->battlerDef))
-                    gBattlerTarget = GetBattleMoveTarget(MOVE_BIDE, TARGET_SELECTED);
-                gBattlescriptCurrInstr = BattleScript_BideAttack;
-                return CANCELER_RESULT_BREAK; // Jumps to a different script but no failure
-            }
-            else
-            {
-                gBattlescriptCurrInstr = BattleScript_BideNoEnergyToAttack;
-                return CANCELER_RESULT_FAILURE;
-            }
-        }
-    }
-    return CANCELER_RESULT_SUCCESS;
-}
-
 static enum CancelerResult CancelerZMoves(struct BattleContext *ctx)
 {
     if (GetActiveGimmick(ctx->battlerAtk) == GIMMICK_Z_MOVE)
@@ -1057,6 +1026,35 @@ static bool32 ShouldSkipFailureCheckOnBattler(u32 battlerAtk, u32 battlerDef)
     if (GetConfig(CONFIG_CHECK_USER_FAILURE) >= GEN_5 && battlerAtk == battlerDef)
         return TRUE;
     return FALSE;
+}
+
+static enum CancelerResult CancelerBide(struct BattleContext *ctx)
+{
+    if (gBattleMons[ctx->battlerAtk].volatiles.bideTurns)
+    {
+        if (--gBattleMons[ctx->battlerAtk].volatiles.bideTurns)
+        {
+            gBattlescriptCurrInstr = BattleScript_BideStoringEnergy;
+        }
+        else
+        {
+            if (gBideDmg[ctx->battlerAtk])
+            {
+                gCurrentMove = MOVE_BIDE;
+                gBattlerTarget = gBideTarget[ctx->battlerAtk];
+                if (!IsBattlerAlive(ctx->battlerDef))
+                    gBattlerTarget = GetBattleMoveTarget(MOVE_BIDE, TARGET_SELECTED);
+                gBattlescriptCurrInstr = BattleScript_BideAttack;
+                return CANCELER_RESULT_BREAK; // Jumps to a different script but no failure
+            }
+            else
+            {
+                gBattlescriptCurrInstr = BattleScript_BideNoEnergyToAttack;
+                return CANCELER_RESULT_FAILURE;
+            }
+        }
+    }
+    return CANCELER_RESULT_SUCCESS;
 }
 
 static enum CancelerResult CancelerMoveFailure(struct BattleContext *ctx)
@@ -1823,7 +1821,6 @@ static enum CancelerResult (*const sMoveSuccessOrderCancelers[])(struct BattleCo
     [CANCELER_CONFUSED] = CancelerConfused,
     [CANCELER_PARALYZED] = CancelerParalyzed,
     [CANCELER_INFATUATION] = CancelerInfatuation,
-    [CANCELER_BIDE] = CancelerBide,
     [CANCELER_Z_MOVES] = CancelerZMoves,
     [CANCELER_CHOICE_LOCK] = CancelerChoiceLock,
     [CANCELER_CALLSUBMOVE] = CancelerCallSubmove,
@@ -1835,6 +1832,7 @@ static enum CancelerResult (*const sMoveSuccessOrderCancelers[])(struct BattleCo
     [CANCELER_SKY_BATTLE] = CancelerSkyBattle,
     [CANCELER_WEATHER_PRIMAL] = CancelerWeatherPrimal,
     [CANCELER_FOCUS_PRE_GEN5] = CancelerFocusPreGen5,
+    [CANCELER_BIDE] = CancelerBide,
     [CANCELER_MOVE_FAILURE] = CancelerMoveFailure,
     [CANCELER_POWDER_STATUS] = CancelerPowderStatus,
     [CANCELER_PRIORITY_BLOCK] = CancelerPriorityBlock,
@@ -2259,6 +2257,7 @@ static enum MoveEndResult MoveEndFaintBlock(void)
             break;
         case FAINT_BLOCK_CHECK_TARGET_FAINTED: // Stop if target already ran the block / is alive or absent
             if (IsBattlerAlive(gBattlerTarget)
+             || (gAbsentBattlerFlags & 1u << gBattlerTarget)
              || gBattleStruct->battlerState[gBattlerTarget].fainted)
             {
                 gBattleScripting.moveendState++;
