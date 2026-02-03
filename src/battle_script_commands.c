@@ -12841,8 +12841,7 @@ void BS_SetMagicCoatTarget(void)
     gBattlerAttacker = gBattlerTarget;
     gBattlerTarget = gBattleStruct->attackerBeforeBounce;
     ClearDamageCalcResults();
-    HandleMoveTargetRedirection(GetBattlerMoveTargetType(gBattlerAttacker, gCurrentMove));
-    gBattleStruct->eventState.atkCanceler = CANCELER_TARGET_FAILURE;
+    gBattleStruct->eventState.atkCanceler = CANCELER_SET_TARGETS;
     gBattleStruct->eventState.atkCancelerBattler = 0;
 
     gBattlescriptCurrInstr = cmd->nextInstr;

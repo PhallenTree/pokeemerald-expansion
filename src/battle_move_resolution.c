@@ -798,7 +798,7 @@ bool32 HandleMoveTargetRedirection(enum MoveTarget moveTarget)
     }
 
     enum Type moveType = GetBattleMoveType(gCurrentMove);
-    enum Ability ability = GetBattlerAbility(gBattleStruct->moveTarget[gBattlerAttacker]);
+    enum Ability ability = GetBattlerAbility(gBattlerTarget);
     bool32 currTargetCantAbsorb = ((ability != ABILITY_LIGHTNING_ROD && moveType == TYPE_ELECTRIC)
                                 || (ability != ABILITY_STORM_DRAIN && moveType == TYPE_WATER));
 
@@ -935,6 +935,7 @@ static enum CancelerResult CancelerPPDeduction(struct BattleContext *ctx)
 {
     if (gBattleMons[ctx->battlerAtk].volatiles.multipleTurns
      || gSpecialStatuses[ctx->battlerAtk].dancerUsedMove
+     || gBattleStruct->bouncedMoveIsUsed
      || ctx->move == MOVE_STRUGGLE)
         return CANCELER_RESULT_SUCCESS;
 
