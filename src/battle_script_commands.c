@@ -6278,16 +6278,17 @@ static u32 GetPossibleNextTarget(u32 currTarget)
         RIGHT_FOE(gBattlerAttacker),
     };
 
-    if (currTarget == MAX_BATTLERS_COUNT)
-        return MAX_BATTLERS_COUNT;
-
-    for (i = 0; i < MAX_BATTLERS_COUNT; i++)
+    if (currTarget != MAX_BATTLERS_COUNT)
     {
-        if (targetOrder[i] == currTarget)
-            break;
+        for (i = 0; i < MAX_BATTLERS_COUNT; i++)
+        {
+            if (targetOrder[i] == currTarget)
+                break;
+        }
+        i++;
     }
 
-    for (i++; i < MAX_BATTLERS_COUNT; i++)
+    for ( ; i < MAX_BATTLERS_COUNT; i++)
     {
         u32 battler = targetOrder[i];
 
@@ -6306,7 +6307,7 @@ static void Cmd_getpossiblenexttarget(void)
 {
     CMD_ARGS(const u8 *jumpInstr);
 
-    u32 nextTarget = GetPossibleNextTarget(gBattlerTarget);
+    u32 nextTarget = GetPossibleNextTarget(MAX_BATTLERS_COUNT);
     if (nextTarget != MAX_BATTLERS_COUNT)
     {
         gBattleStruct->moveTarget[gBattlerAttacker] = gBattlerTarget = nextTarget;
