@@ -616,21 +616,21 @@ static enum CancelerResult CancelerAttackstring(struct BattleContext *ctx)
 
 #define checkFailure TRUE
 #define skipFailure FALSE
-static bool32 IsSingleTarget(u32 battlerAtk, u32 battlerDef)
+static bool32 IsSingleTarget(enum BattlerId battlerAtk, enum BattlerId battlerDef)
 {
     if (battlerDef != gBattlerTarget)
         return skipFailure;
     return checkFailure;
 }
 
-static bool32 IsSmartTarget(u32 battlerAtk, u32 battlerDef)
+static bool32 IsSmartTarget(enum BattlerId battlerAtk, enum BattlerId battlerDef)
 {
     if (!IsBattlerAlly(gBattlerTarget, battlerDef) || battlerAtk == battlerDef)
         return skipFailure;
     return checkFailure;
 }
 
-static bool32 IsTargetingBothFoes(u32 battlerAtk, u32 battlerDef)
+static bool32 IsTargetingBothFoes(enum BattlerId battlerAtk, enum BattlerId battlerDef)
 {
     if (battlerDef == BATTLE_PARTNER(battlerAtk) || battlerAtk == battlerDef)
     {
@@ -642,12 +642,12 @@ static bool32 IsTargetingBothFoes(u32 battlerAtk, u32 battlerDef)
     return checkFailure;
 }
 
-static bool32 IsTargetingSelf(u32 battlerAtk, u32 battlerDef)
+static bool32 IsTargetingSelf(enum BattlerId battlerAtk, enum BattlerId battlerDef)
 {
     return skipFailure;
 }
 
-static bool32 IsTargetingAlly(u32 battlerAtk, u32 battlerDef)
+static bool32 IsTargetingAlly(enum BattlerId battlerAtk, enum BattlerId battlerDef)
 {
     if (battlerDef != BATTLE_PARTNER(battlerAtk))
     {
@@ -657,7 +657,7 @@ static bool32 IsTargetingAlly(u32 battlerAtk, u32 battlerDef)
     return checkFailure;
 }
 
-static bool32 IsTargetingSelfAndAlly(u32 battlerAtk, u32 battlerDef)
+static bool32 IsTargetingSelfAndAlly(enum BattlerId battlerAtk, enum BattlerId battlerDef)
 {
     if (battlerDef != BATTLE_PARTNER(battlerAtk))
     {
@@ -668,7 +668,7 @@ static bool32 IsTargetingSelfAndAlly(u32 battlerAtk, u32 battlerDef)
     return checkFailure; // In Gen3 the user checks it's own failure. Unclear because no such moves exists
 }
 
-static bool32 IsTargetingSelfOrAlly(u32 battlerAtk, u32 battlerDef)
+static bool32 IsTargetingSelfOrAlly(enum BattlerId battlerAtk, enum BattlerId battlerDef)
 {
     if (battlerDef == battlerAtk)
         return skipFailure;
@@ -682,32 +682,32 @@ static bool32 IsTargetingSelfOrAlly(u32 battlerAtk, u32 battlerDef)
     return checkFailure;
 }
 
-static bool32 IsTargetingFoesAndAlly(u32 battlerAtk, u32 battlerDef)
+static bool32 IsTargetingFoesAndAlly(enum BattlerId battlerAtk, enum BattlerId battlerDef)
 {
     if (battlerAtk == battlerDef)
         return skipFailure;  // Don't set result flags for user
     return checkFailure;
 }
 
-static bool32 IsTargetingField(u32 battlerAtk, u32 battlerDef)
+static bool32 IsTargetingField(enum BattlerId battlerAtk, enum BattlerId battlerDef)
 {
     return skipFailure;
 }
 
-static bool32 IsTargetingOpponentsField(u32 battlerAtk, u32 battlerDef)
+static bool32 IsTargetingOpponentsField(enum BattlerId battlerAtk, enum BattlerId battlerDef)
 {
     if (IsBattlerAlly(battlerDef, BATTLE_OPPOSITE(battlerAtk)))
         return checkFailure;
     return skipFailure;
 }
 
-static bool32 IsTargetingAllBattlers(u32 battlerAtk, u32 battlerDef)
+static bool32 IsTargetingAllBattlers(enum BattlerId battlerAtk, enum BattlerId battlerDef)
 {
     return checkFailure;
 }
 
 // ShouldCheckFailureOnTarget
-static bool32 (*const sShouldCheckTargetMoveFailure[])(u32 battlerAtk, u32 battlerDef) =
+static bool32 (*const sShouldCheckTargetMoveFailure[])(enum BattlerId battlerAtk, enum BattlerId battlerDef) =
 {
     [TARGET_NONE] = IsTargetingField,
     [TARGET_SELECTED] = IsSingleTarget,
@@ -726,7 +726,7 @@ static bool32 (*const sShouldCheckTargetMoveFailure[])(u32 battlerAtk, u32 battl
     [TARGET_ALL_BATTLERS] = IsTargetingAllBattlers,
 };
 
-static bool32 ShouldCheckTargetMoveFailure(u32 battlerAtk, u32 battlerDef, enum Move move, enum MoveTarget moveTarget)
+static bool32 ShouldCheckTargetMoveFailure(enum BattlerId battlerAtk, enum BattlerId battlerDef, enum Move move, enum MoveTarget moveTarget)
 {
     // For Bounced moves
     if (IsBattlerUnaffectedByMove(battlerDef))
@@ -737,7 +737,7 @@ static bool32 ShouldCheckTargetMoveFailure(u32 battlerAtk, u32 battlerDef, enum 
 #undef checkFailure
 #undef skipFailure
 
-static inline bool32 IsDragonDartsConsecutiveHit(u32 battlerAtk, enum Move move)
+static inline bool32 IsDragonDartsConsecutiveHit(enum BattlerId battlerAtk, enum Move move)
 {
     if (GetBattlerMoveTargetType(battlerAtk, move) != TARGET_SMART)
         return FALSE;
@@ -748,7 +748,7 @@ static inline bool32 IsDragonDartsConsecutiveHit(u32 battlerAtk, enum Move move)
     return FALSE;
 }
 
-bool32 IsAffectedByFollowMe(u32 battlerAtk, enum BattleSide defSide, enum Move move)
+bool32 IsAffectedByFollowMe(enum BattlerId battlerAtk, enum BattleSide defSide, enum Move move)
 {
     enum Ability ability = GetBattlerAbility(battlerAtk);
     enum BattleMoveEffects effect = GetMoveEffect(move);
@@ -896,7 +896,7 @@ static enum CancelerResult CancelerSetTargets(struct BattleContext *ctx)
 
     while (gBattleStruct->eventState.atkCancelerBattler < gBattlersCount)
     {
-        u32 battlerDef = gBattleStruct->eventState.atkCancelerBattler++;
+        enum BattlerId battlerDef = gBattleStruct->eventState.atkCancelerBattler++;
 
         if (!ShouldCheckTargetMoveFailure(ctx->battlerAtk, battlerDef, ctx->move, moveTarget))
             gBattleStruct->battlerState[ctx->battlerAtk].targetsDone[battlerDef] = TRUE;
@@ -1040,7 +1040,7 @@ static enum CancelerResult CancelerWeatherPrimal(struct BattleContext *ctx)
     return result;
 }
 
-static bool32 ShouldSkipFailureCheckOnBattler(u32 battlerAtk, u32 battlerDef)
+static bool32 ShouldSkipFailureCheckOnBattler(enum BattlerId battlerAtk, enum BattlerId battlerDef)
 {
     if (gBattleStruct->battlerState[battlerAtk].targetsDone[battlerDef])
         return TRUE;
@@ -1086,7 +1086,7 @@ static enum CancelerResult CancelerMoveFailure(struct BattleContext *ctx)
 
     while (gBattleStruct->eventState.atkCancelerBattler < gBattlersCount)
     {
-        u32 battlerDef = gBattleStruct->eventState.atkCancelerBattler++;
+        enum BattlerId battlerDef = gBattleStruct->eventState.atkCancelerBattler++;
 
         if (ShouldSkipFailureCheckOnBattler(ctx->battlerAtk, battlerDef))
             continue;
@@ -3500,7 +3500,7 @@ static bool32 ShouldSetStompingTantrumTimer(void)
     if (!IsDoubleSpreadMove())
         return gBattleStruct->moveResultFlags[gBattlerTarget] & (MOVE_RESULT_FAILED | MOVE_RESULT_DOESNT_AFFECT_FOE);
 
-    for (u32 battlerDef = 0; battlerDef < gBattlersCount; battlerDef++)
+    for (enum BattlerId battlerDef = 0; battlerDef < gBattlersCount; battlerDef++)
     {
         if (gBattlerAttacker == battlerDef)
             continue;
