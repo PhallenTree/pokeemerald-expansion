@@ -2279,6 +2279,7 @@ BattleScript_MoveEnd::
 
 BattleScript_EffectHit_RetFromAccCheck::
 	accuracycheck BattleScript_MoveMissedPause
+	copybyte gEffectBattler, gBattlerAttacker
 	setpreattackadditionaleffect
 	damagecalc
 BattleScript_Hit_RetFromAtkAnimation::
