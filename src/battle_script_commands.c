@@ -332,7 +332,7 @@ static bool32 CanAbilityPreventStatLoss(enum Ability abilityDef);
 static void AccuracyCheck(bool32 recalcDragonDarts, const u8 *nextInstr, const u8 *failInstr);
 static void ResetValuesForCalledMove(void);
 static bool32 CanAbilityShieldActivateForBattler(u32 battler);
-static u32 GetPossibleNextTarget(void);
+static u32 GetPossibleNextTarget(u32 currTarget);
 
 static void Cmd_attackcanceler(void);
 static void Cmd_accuracycheck(void);
@@ -3578,7 +3578,7 @@ static void Cmd_setpreattackadditionaleffect(void)
 
             return;
         }
-        gEffectBattler = GetPossibleNextTarget();
+        gEffectBattler = GetPossibleNextTarget(gEffectBattler);
         gBattleStruct->additionalEffectsCounter = 0;
     }
 
@@ -6271,8 +6271,9 @@ static void Cmd_futuresighttargetfailure(void)
 }
 #undef DONE_TARGET_FAILURE
 
-static u32 GetPossibleNextTarget(void)
+static u32 GetPossibleNextTarget(u32 currTarget)
 {
+    u32 i;
     const u8 targetOrder[MAX_BATTLERS_COUNT] = {
         gBattlerAttacker,
         BATTLE_PARTNER(gBattlerAttacker),
@@ -6280,7 +6281,16 @@ static u32 GetPossibleNextTarget(void)
         RIGHT_FOE(gBattlerAttacker),
     };
 
+    if (currTarget == MAX_BATTLERS_COUNT)
+        return MAX_BATTLERS_COUNT;
+
     for (u32 i = 0; i < MAX_BATTLERS_COUNT; i++)
+    {
+        if (targetOrder[i] == currTarget)
+            break;
+    }
+
+    for (i++; i < MAX_BATTLERS_COUNT; i++)
     {
         u32 battler = targetOrder[i];
 
@@ -6299,11 +6309,10 @@ static void Cmd_getpossiblenexttarget(void)
 {
     CMD_ARGS(const u8 *jumpInstr);
 
-    u32 nextTarget = GetPossibleNextTarget();
+    u32 nextTarget = GetPossibleNextTarget(gBattlerTarget);
     if (nextTarget != MAX_BATTLERS_COUNT)
     {
         gBattleStruct->moveTarget[gBattlerAttacker] = gBattlerTarget = nextTarget;
-        gBattleStruct->battlerState[gBattlerAttacker].targetsDone[gBattlerTarget] = TRUE;
         gBattlescriptCurrInstr = cmd->jumpInstr;
     }
     else
