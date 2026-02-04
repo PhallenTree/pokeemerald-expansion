@@ -6273,7 +6273,7 @@ static void Cmd_futuresighttargetfailure(void)
 
 static u32 GetPossibleNextTarget(u32 currTarget)
 {
-    u32 i;
+    u32 i = 0;
     const u8 targetOrder[MAX_BATTLERS_COUNT] = {
         gBattlerAttacker,
         BATTLE_PARTNER(gBattlerAttacker),
@@ -6284,7 +6284,7 @@ static u32 GetPossibleNextTarget(u32 currTarget)
     if (currTarget == MAX_BATTLERS_COUNT)
         return MAX_BATTLERS_COUNT;
 
-    for (u32 i = 0; i < MAX_BATTLERS_COUNT; i++)
+    for (i = 0; i < MAX_BATTLERS_COUNT; i++)
     {
         if (targetOrder[i] == currTarget)
             break;
