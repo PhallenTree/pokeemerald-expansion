@@ -179,7 +179,6 @@ bool32 EndOrContinueWeather(void);
 enum DamageCategory GetReflectDamageMoveDamageCategory(u32 battler, enum Move move);
 bool32 IsUnnerveBlocked(u32 battler, enum Item itemId);
 bool32 IsAffectedByFollowMe(u32 battlerAtk, enum BattleSide defSide, enum Move move);
-bool32 HandleMoveTargetRedirection(enum MoveTarget moveTarget);
 void HandleAction_UseMove(void);
 void HandleAction_Switch(void);
 void HandleAction_UseItem(void);

@@ -711,7 +711,7 @@ static bool32 ShouldCheckTargetMoveFailure(u32 battlerAtk, u32 battlerDef, enum 
 #undef checkFailure
 #undef skipFailure
 
-static inline bool32 IsDragonDartsSecondHit(u32 battlerAtk, enum Move move)
+static inline bool32 IsDragonDartsConsecutiveHit(u32 battlerAtk, enum Move move)
 {
     if (GetBattlerMoveTargetType(battlerAtk, move) != TARGET_SMART)
         return FALSE;
@@ -728,7 +728,7 @@ bool32 IsAffectedByFollowMe(u32 battlerAtk, enum BattleSide defSide, enum Move m
     enum BattleMoveEffects effect = GetMoveEffect(move);
 
     if (gSideTimers[defSide].followmeTimer == 0
-        || (!IsBattlerAlive(gSideTimers[defSide].followmeTarget) && !IsDragonDartsSecondHit(battlerAtk, move))
+        || (!IsBattlerAlive(gSideTimers[defSide].followmeTarget) && !IsDragonDartsConsecutiveHit(battlerAtk, move))
         || effect == EFFECT_SNIPE_SHOT
         || effect == EFFECT_SKY_DROP
         || IsAbilityAndRecord(battlerAtk, ability, ABILITY_PROPELLER_TAIL)
@@ -744,7 +744,7 @@ bool32 IsAffectedByFollowMe(u32 battlerAtk, enum BattleSide defSide, enum Move m
     return TRUE;
 }
 
-bool32 HandleMoveTargetRedirection(enum MoveTarget moveTarget)
+static bool32 HandleMoveTargetRedirection(enum MoveTarget moveTarget)
 {
     u32 redirectorOrderNum = MAX_BATTLERS_COUNT;
     enum BattleMoveEffects moveEffect = GetMoveEffect(gCurrentMove);
@@ -1329,7 +1329,7 @@ static enum CancelerResult CancelerPriorityBlock(struct BattleContext *ctx)
     s32 priority = GetChosenMovePriority(ctx->battlerAtk, ctx->abilityAtk);
     enum MoveTarget moveTarget = GetBattlerMoveTargetType(ctx->battlerAtk, ctx->move);
 
-    if (priority <= 0 || moveTarget == TARGET_ALL_BATTLERS || moveTarget == TARGET_FIELD || moveTarget == TARGET_OPPONENTS_FIELD)
+    if (priority <= 0 || GetMoveEffect(ctx->move) == EFFECT_TEATIME || moveTarget == TARGET_FIELD || moveTarget == TARGET_OPPONENTS_FIELD)
         return CANCELER_RESULT_SUCCESS;
 
     u32 battler;
