@@ -6313,6 +6313,7 @@ static void Cmd_getpossiblenexttarget(void)
     if (nextTarget != MAX_BATTLERS_COUNT)
     {
         gBattleStruct->moveTarget[gBattlerAttacker] = gBattlerTarget = nextTarget;
+        gBattleStruct->battlerState[gBattlerAttacker].targetsDone[gBattlerTarget] = TRUE;
         gBattlescriptCurrInstr = cmd->jumpInstr;
     }
     else
