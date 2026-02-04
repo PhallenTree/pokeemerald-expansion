@@ -332,6 +332,7 @@ static bool32 CanAbilityPreventStatLoss(enum Ability abilityDef);
 static void AccuracyCheck(bool32 recalcDragonDarts, const u8 *nextInstr, const u8 *failInstr);
 static void ResetValuesForCalledMove(void);
 static bool32 CanAbilityShieldActivateForBattler(u32 battler);
+static u32 GetPossibleNextTarget(void);
 
 static void Cmd_attackcanceler(void);
 static void Cmd_accuracycheck(void);
@@ -1534,7 +1535,7 @@ static void Cmd_attackanimation(void)
         moveResultFlags = UpdateEffectivenessResultFlagsForDoubleSpreadMoves(gBattleStruct->moveResultFlags[gBattlerTarget]);
 
     bool32 isAnimDisabled = (gHitMarker & (HITMARKER_NO_ANIMATIONS | HITMARKER_DISABLE_ANIMATION)
-                          || gBattleStruct->preAttackAnimPlayed);
+                          || gBattleStruct->attackAnimPlayed);
     if (isAnimDisabled
         && effect != EFFECT_TRANSFORM
         && effect != EFFECT_SUBSTITUTE
@@ -1589,6 +1590,9 @@ static void Cmd_attackanimation(void)
             {
                 multihit = gMultiHitCounter;
             }
+
+            if (multihit <= 1)
+                gBattleStruct->attackAnimPlayed = TRUE;
 
             BtlController_EmitMoveAnimation(gBattlerAttacker,
                                             B_COMM_TO_CONTROLLER,
@@ -3476,7 +3480,7 @@ void SetMoveEffect(u32 battlerAtk, u32 effectBattler, enum MoveEffect moveEffect
             	gSideStatuses[i] &= ~SIDE_STATUS_SCREEN_ANY;
             	gBattleScripting.animTurn = 1;
             	gBattleScripting.animTargetsHit = 1;
-            	gBattleStruct->preAttackAnimPlayed = TRUE; // The whole brick break animation is covered by the move so don't play twice
+            	gBattleStruct->attackAnimPlayed = TRUE; // The whole brick break animation is covered by the move so don't play twice
             	BattleScriptPush(battleScript);
             	gBattlescriptCurrInstr = BattleScript_BreakScreens;
         	}
@@ -3534,7 +3538,6 @@ void SetMoveEffect(u32 battlerAtk, u32 effectBattler, enum MoveEffect moveEffect
 
             if (gBattleStruct->stolenStats[0] != 0)
             {
-                gBattleStruct->preAttackAnimPlayed = FALSE; // if set by the previous move effect, reset it for final Spectral Thief anim
                 BattleScriptPush(battleScript);
                 gBattlescriptCurrInstr = BattleScript_StealStats;
             }
@@ -3551,26 +3554,35 @@ static void Cmd_setpreattackadditionaleffect(void)
 {
     CMD_ARGS();
 
-    u32 numAdditionalEffects = GetMoveAdditionalEffectCount(gCurrentMove);
-    if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter)
+    while (gEffectBattler != MAX_BATTLERS_COUNT)
     {
-        const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
-        gBattleStruct->additionalEffectsCounter++;
+        u32 numAdditionalEffects = GetMoveAdditionalEffectCount(gCurrentMove);
+        if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter)
+        {
+            const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
+            gBattleStruct->additionalEffectsCounter++;
 
-        if (!additionalEffect->preAttackEffect)
+            if (!additionalEffect->preAttackEffect)
+                return;
+
+            if ((gEffectBattler == gBattlerAttacker) != additionalEffect->self)
+                return;
+
+            SetMoveEffect(
+                gBattlerAttacker,
+                gEffectBattler,
+                additionalEffect->moveEffect,
+                gBattlescriptCurrInstr,
+                EFFECT_PRIMARY
+            );
+
             return;
-
-        SetMoveEffect(
-            gBattlerAttacker,
-            additionalEffect->self ? gBattlerAttacker : gBattlerTarget,
-            additionalEffect->moveEffect,
-            gBattlescriptCurrInstr,
-            EFFECT_PRIMARY
-        );
-
-        return;
+        }
+        gEffectBattler = GetPossibleNextTarget();
+        gBattleStruct->additionalEffectsCounter = 0;
     }
 
+    gEffectBattler = gBattlerAttacker;
     gBattleStruct->additionalEffectsCounter = 0;
     gBattlescriptCurrInstr = cmd->nextInstr;
 }
