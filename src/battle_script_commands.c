@@ -1591,9 +1591,6 @@ static void Cmd_attackanimation(void)
                 multihit = gMultiHitCounter;
             }
 
-            if (multihit <= 1)
-                gBattleStruct->attackAnimPlayed = TRUE;
-
             BtlController_EmitMoveAnimation(gBattlerAttacker,
                                             B_COMM_TO_CONTROLLER,
                                             gCurrentMove,
