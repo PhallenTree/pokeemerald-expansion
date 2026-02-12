@@ -1689,6 +1689,7 @@ static enum MoveEndResult MoveEndFlingConsumeItem(void)
             return MOVEEND_RESULT_RUN_SCRIPT;
         }
     }
+    gBattleScripting.moveendState++;
     return MOVEEND_RESULT_CONTINUE;
 }
 
@@ -1774,6 +1775,7 @@ static enum MoveEndResult MoveEndSetAdditionalEffects(void)
     }
     gBattleStruct->additionalEffectsCounter = 0;
     gBattleScripting.moveEffect = 0;
+    gBattleScripting.moveendState++;
     return MOVEEND_RESULT_CONTINUE;
 }
 
