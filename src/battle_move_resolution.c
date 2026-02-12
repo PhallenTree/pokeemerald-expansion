@@ -822,10 +822,8 @@ static enum CancelerResult CancelerMoveFailure(struct BattleContext *ctx)
             battleScript = BattleScript_ButItFailed;
         break;
     case EFFECT_FLING:
-        if (!CanFling(ctx->battlerAtk))
+        if (!CanFling(ctx->battlerAtk, ctx->abilityAtk))
             battleScript = BattleScript_ButItFailed;
-        else if (!IsBattlerAlive(ctx->battlerDef)) // Edge case for removing a mon's item when there is no target available after using Fling.
-            battleScript = BattleScript_FlingFailConsumeItem;
         break;
     case EFFECT_FOLLOW_ME:
         if (B_UPDATED_MOVE_DATA >= GEN_8 && !(gBattleTypeFlags & BATTLE_TYPE_DOUBLE))
@@ -947,6 +945,14 @@ static enum CancelerResult CancelerMoveFailure(struct BattleContext *ctx)
         gBattlescriptCurrInstr = battleScript;
         return CANCELER_RESULT_FAILURE;
     }
+
+    return CANCELER_RESULT_SUCCESS;
+}
+
+static enum CancelerResult CancelerSetFlingItem(struct BattleContext *ctx)
+{
+    if (MoveHasAdditionalEffect(ctx->move, MOVE_EFFECT_FLING))
+        gBattleStruct->flingItem = gLastUsedItem = gBattleMons[ctx->battlerAtk].item;
 
     return CANCELER_RESULT_SUCCESS;
 }
@@ -1369,10 +1375,7 @@ static enum CancelerResult CancelerTargetFailure(struct BattleContext *ctx)
         {
             gBattleStruct->moveResultFlags[ctx->battlerDef] |= MOVE_RESULT_FAILED;
             gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_AVOIDED_ATK;
-            if (GetMoveEffect(ctx->move) == EFFECT_FLING)
-                BattleScriptCall(BattleScript_TargetAvoidsAttackConsumeFlingItem);
-            else
-                BattleScriptCall(BattleScript_TargetAvoidsAttack);
+            BattleScriptCall(BattleScript_TargetAvoidsAttack);
             targetAvoidedAttack = TRUE;
         }
         else if (IsBattlerProtected(ctx))
@@ -1380,10 +1383,7 @@ static enum CancelerResult CancelerTargetFailure(struct BattleContext *ctx)
             SetOrClearRageVolatile();
             gBattleStruct->moveResultFlags[ctx->battlerDef] |= MOVE_RESULT_MISSED;
             gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_PROTECTED;
-            if (GetMoveEffect(ctx->move) == EFFECT_FLING)
-                BattleScriptCall(BattleScript_TargetAvoidsAttackConsumeFlingItem);
-            else
-                BattleScriptCall(BattleScript_TargetAvoidsAttack);
+            BattleScriptCall(BattleScript_TargetAvoidsAttack);
             targetAvoidedAttack = TRUE;
         }
         else if (CanBattlerBounceBackMove(ctx))
@@ -1627,6 +1627,7 @@ static enum CancelerResult (*const sMoveSuccessOrderCancelers[])(struct BattleCo
     [CANCELER_WEATHER_PRIMAL] = CancelerWeatherPrimal,
     [CANCELER_FOCUS_PRE_GEN5] = CancelerFocusPreGen5,
     [CANCELER_MOVE_FAILURE] = CancelerMoveFailure,
+    [CANCELER_SET_FLING_ITEM] = CancelerSetFlingItem,
     [CANCELER_POWDER_STATUS] = CancelerPowderStatus,
     [CANCELER_PRIORITY_BLOCK] = CancelerPriorityBlock,
     [CANCELER_PROTEAN] = CancelerProtean,
@@ -1675,6 +1676,104 @@ static enum MoveEndResult MoveEndSetValues(void)
     gBattleStruct->eventState.moveEndBattler = 0;
     gBattleStruct->eventState.moveEndBlock = 0;
     gBattleScripting.moveendState++;
+    return MOVEEND_RESULT_CONTINUE;
+}
+
+static enum MoveEndResult MoveEndFlingConsumeItem(void)
+{
+    if (gBattleStruct->flingItem != ITEM_NONE && gBattleMons[gBattlerAttacker].item == gBattleStruct->flingItem) // Modify
+    {
+        if (!gBattleStruct->unableToUseMove || !IsAnyTargetAffected())
+        {
+            BattleScriptCall(BattleScript_FlingRemoveItem);
+            return MOVEEND_RESULT_RUN_SCRIPT;
+        }
+    }
+    return MOVEEND_RESULT_CONTINUE;
+}
+
+static bool32 CanApplyAdditionalEffect(const struct AdditionalEffect *additionalEffect)
+{
+    if (additionalEffect->preAttackEffect)
+        return FALSE;
+
+    // If Toxic Chain will activate it blocks all other non volatile effects
+    if (gBattleStruct->toxicChainPriority && additionalEffect->moveEffect <= MOVE_EFFECT_FROSTBITE)
+        return FALSE;
+
+    if (additionalEffect->self
+     && NumAffectedSpreadMoveTargets() > 1
+     && GetNextTarget(GetBattlerMoveTargetType(gBattlerAttacker, gCurrentMove), TRUE) != MAX_BATTLERS_COUNT)
+        return FALSE;
+
+    // Certain move effects only apply if the target raised stats this turn (e.g. Burning Jealousy)
+    if (additionalEffect->onlyIfTargetRaisedStats && !gProtectStructs[gBattlerTarget].statRaised)
+        return FALSE;
+
+    // Certain additional effects only apply on a two-turn move's charge turn
+    if (additionalEffect->onChargeTurnOnly != gProtectStructs[gBattlerAttacker].chargingTurn)
+        return FALSE;
+
+    return TRUE;
+}
+
+static void SetToxicChainPriority(void)
+{
+    if (gBattleStruct->toxicChainPriority)
+        return;
+
+    enum Ability abilityAtk = GetBattlerAbility(gBattlerAttacker);
+    if (abilityAtk == ABILITY_TOXIC_CHAIN
+     && IsBattlerAlive(gBattlerTarget)
+     && CanBePoisoned(gBattlerAttacker, gBattlerTarget, abilityAtk, GetBattlerAbility(gBattlerTarget))
+     && IsBattlerTurnDamaged(gBattlerTarget)
+     && RandomWeighted(RNG_TOXIC_CHAIN, 7, 3))
+        gBattleStruct->toxicChainPriority = TRUE;
+}
+
+static enum MoveEndResult MoveEndSetAdditionalEffects(void)
+{
+    if (!IsBattlerUnaffectedByMove(gBattlerTarget))
+    {
+        u32 numAdditionalEffects = GetMoveAdditionalEffectCount(gCurrentMove);
+        SetToxicChainPriority();
+        if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter)
+        {
+            u32 percentChance;
+            const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
+
+            // Various checks for if this move effect can be applied this turn
+            if (CanApplyAdditionalEffect(additionalEffect))
+            {
+                percentChance = CalcSecondaryEffectChance(gBattlerAttacker, GetBattlerAbility(gBattlerAttacker), additionalEffect);
+
+                // Activate effect if it's primary (chance == 0) or if RNGesus says so
+                if ((percentChance == 0) || RandomPercentage(RNG_SECONDARY_EFFECT + gBattleStruct->additionalEffectsCounter, percentChance))
+                {
+                    gBattleCommunication[MULTISTRING_CHOOSER] = *((u8 *) &additionalEffect->multistring);
+
+                    enum SetMoveEffectFlags flags = NO_FLAGS;
+                    if (percentChance == 0) flags |= EFFECT_PRIMARY;
+                    if (percentChance >= 100) flags |= EFFECT_CERTAIN;
+
+                    SetMoveEffect(
+                        gBattlerAttacker,
+                        additionalEffect->self ? gBattlerAttacker : gBattlerTarget,
+                        additionalEffect->moveEffect,
+                        gBattlescriptCurrInstr,
+                        flags
+                    );
+
+                    gBattleStruct->additionalEffectsCounter++;
+                    return MOVEEND_RESULT_RUN_SCRIPT;
+                }
+            }
+
+            gBattleStruct->additionalEffectsCounter++;
+        }
+    }
+    gBattleStruct->additionalEffectsCounter = 0;
+    gBattleScripting.moveEffect = 0;
     return MOVEEND_RESULT_CONTINUE;
 }
 
@@ -3429,6 +3528,8 @@ static enum MoveEndResult MoveEndPursuitNextAction(void)
 static enum MoveEndResult (*const sMoveEndHandlers[])(void) =
 {
     [MOVEEND_SET_VALUES] = MoveEndSetValues,
+    [MOVEEND_FLING_CONSUME_ITEM] = MoveEndFlingConsumeItem,
+    [MOVEEND_SET_ADDITIONAL_EFFECTS] = MoveEndSetAdditionalEffects,
     [MOVEEND_PROTECT_LIKE_EFFECT] = MoveEndProtectLikeEffect,
     [MOVEEND_ABSORB] = MoveEndAbsorb,
     [MOVEEND_RAGE] = MoveEndRage,

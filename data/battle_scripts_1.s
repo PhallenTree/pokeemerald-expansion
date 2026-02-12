@@ -557,59 +557,26 @@ BattleScript_SkyDropFlyingAlreadyConfused:
 
 BattleScript_EffectFling::
 	attackcanceler
-	setlastuseditem BS_ATTACKER
-	accuracycheck BattleScript_FlingMissed
+	accuracycheck BattleScript_MoveMissedPause
 	pause B_WAIT_TIME_SHORT
 	printstring STRINGID_PKMNFLUNG
 	waitmessage B_WAIT_TIME_SHORT
-	damagecalc
+	goto BattleScript_HitFromDamageCalc
+
+BattleScript_FlingRemoveItem::
 	removeitem BS_ATTACKER
-	attackanimation
-	waitanimation
-	effectivenesssound
-	hitanimation BS_TARGET
-	waitstate
-	healthbarupdate BS_TARGET, MOVE_DAMAGE_HP_UPDATE
-	datahpupdate BS_TARGET, MOVE_DAMAGE_HP_UPDATE
-	critmessage
-	waitmessage B_WAIT_TIME_MED
-	resultmessage
-	waitmessage B_WAIT_TIME_MED
-	tryflingholdeffect
-	goto BattleScript_FlingEnd
+    return
 
 BattleScript_EffectFlingConsumeBerry::
-	savebattleritem
-	battleritemtolastuseditem
-	setbyte sBERRY_OVERRIDE, 1 @ override the requirements for eating berries
 	orword gHitMarker, HITMARKER_DISABLE_ANIMATION
 	consumeberry BS_TARGET, FALSE
 	bicword gHitMarker, HITMARKER_DISABLE_ANIMATION
-	setbyte sBERRY_OVERRIDE, 0
-	restorebattleritem
-BattleScript_FlingEnd:
-	trysymbiosis BS_ATTACKER
-	goto BattleScript_MoveEnd
-
-BattleScript_FlingFailConsumeItem::
-	removeitem BS_ATTACKER
-	goto BattleScript_ButItFailed
-
-BattleScript_TargetAvoidsAttackConsumeFlingItem::
-	pause B_WAIT_TIME_SHORT
-	printfromtable gMissStringIds
-	waitmessage B_WAIT_TIME_LONG
-	removeitem BS_ATTACKER
 	return
 
 BattleScript_FlingBlockedByShieldDust::
 	printstring STRINGID_ITEMWASUSEDUP
 	waitmessage B_WAIT_TIME_LONG
-	goto BattleScript_FlingEnd
-
-BattleScript_FlingMissed:
-	removeitem BS_ATTACKER
-	goto BattleScript_MoveMissedPause
+	return
 
 BattleScript_EffectClangorousSoul::
 	attackcanceler
@@ -2263,7 +2230,6 @@ BattleScript_Hit_RetFromAtkAnimation::
 	waitmessage B_WAIT_TIME_LONG
 	resultmessage
 	waitmessage B_WAIT_TIME_LONG
-	setadditionaleffects
 	return
 
 BattleScript_MakeMoveMissed::
