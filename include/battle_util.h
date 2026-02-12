@@ -419,6 +419,7 @@ bool32 IsAnyTargetAffected(void);
 bool32 IsMimikyuDisguised(enum BattlerId battler);
 bool32 IsDoubleSpreadMove(void);
 bool32 IsBattlerInvalidForSpreadMove(enum BattlerId battlerAtk, enum BattlerId battlerDef);
+u32 NumAffectedSpreadMoveTargets(void);
 void SetStartingStatus(enum StartingStatus status);
 void ResetStartingStatuses(void);
 bool32 IsUsableWhileAsleepEffect(enum BattleMoveEffects effect);
