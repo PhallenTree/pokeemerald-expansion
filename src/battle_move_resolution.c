@@ -2611,7 +2611,7 @@ static enum MoveEndResult MoveEndSkyDropConfuse(void)
             }
 
             gBattleScripting.battler = targetId;
-            BattleScriptCall(BattleScript_ThrashConfusesRet); // Jump to "confused due to fatigue" script
+            BattleScriptCall(BattleScript_ThrashConfusesScripting); // Jump to "confused due to fatigue" script
 
             // Clear skyDropTargets data
             gBattleStruct->skyDropTargets[battler] = SKY_DROP_NO_TARGET;
