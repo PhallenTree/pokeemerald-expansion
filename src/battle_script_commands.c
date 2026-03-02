@@ -2380,10 +2380,6 @@ static inline bool32 IgnoreTargetingForMoveEffect(enum MoveEffect moveEffect) //
     case MOVE_EFFECT_ELECTRIC_TERRAIN:
     case MOVE_EFFECT_PSYCHIC_TERRAIN:
     case MOVE_EFFECT_DEFOG:
-    case MOVE_EFFECT_REFLECT:
-    case MOVE_EFFECT_LIGHT_SCREEN:
-    case MOVE_EFFECT_AURORA_VEIL:
-    case MOVE_EFFECT_GRAVITY:
     case MOVE_EFFECT_HEAL_TEAM:
     case MOVE_EFFECT_AROMATHERAPY:
     case MOVE_EFFECT_RECYCLE_BERRIES:
@@ -2927,17 +2923,18 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
     case MOVE_EFFECT_TRAP_BOTH:
         if (!(gBattleMons[effectBattler].volatiles.escapePrevention || gBattleMons[battlerAtk].volatiles.escapePrevention))
         {
+            if (!gBattleMons[effectBattler].volatiles.escapePrevention)
+                gBattleMons[effectBattler].volatiles.battlerPreventingEscape = battlerAtk;
+
+            if (!gBattleMons[battlerAtk].volatiles.escapePrevention)
+                gBattleMons[battlerAtk].volatiles.battlerPreventingEscape = effectBattler;
+
+            gBattleMons[effectBattler].volatiles.escapePrevention = TRUE;
+            gBattleMons[battlerAtk].volatiles.escapePrevention = TRUE;
+
             BattleScriptPush(battleScript);
             gBattlescriptCurrInstr = BattleScript_BothCanNoLongerEscape;
         }
-        if (!gBattleMons[effectBattler].volatiles.escapePrevention)
-            gBattleMons[effectBattler].volatiles.battlerPreventingEscape = battlerAtk;
-
-        if (!gBattleMons[battlerAtk].volatiles.escapePrevention)
-            gBattleMons[battlerAtk].volatiles.battlerPreventingEscape = effectBattler;
-
-        gBattleMons[effectBattler].volatiles.escapePrevention = TRUE;
-        gBattleMons[battlerAtk].volatiles.escapePrevention = TRUE;
         break;
     case MOVE_EFFECT_REMOVE_ARG_TYPE:
     {
@@ -2975,7 +2972,7 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
         {
             gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_POINTEDSTONESFLOAT;
             BattleScriptPush(battleScript);
-            gBattlescriptCurrInstr = BattleScript_StealthRockActivates;
+            gBattlescriptCurrInstr = BattleScript_MoveEffectStealthRock;
         }
         break;
     case MOVE_EFFECT_SYRUP_BOMB:
@@ -3012,6 +3009,8 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
                 moveEffect = MOVE_EFFECT_PARALYSIS;
                 break;
             }
+
+            SetMoveEffect(battlerAtk, effectBattler, moveEffect, battleScript, effectFlags);
         }
         else
         {
@@ -3033,14 +3032,14 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
             gBattleMons[gEffectBattler].volatiles.healBlock = TRUE;
             gBattleMons[gEffectBattler].volatiles.healBlockTimer = 2;
             BattleScriptPush(battleScript);
-            gBattlescriptCurrInstr = BattleScript_EffectPsychicNoise;
+            gBattlescriptCurrInstr = BattleScript_MoveEffectPsychicNoise;
         }
         break;
     }
     case MOVE_EFFECT_TERA_BLAST:
         if (GetActiveGimmick(gEffectBattler) == GIMMICK_TERA
-            && GetBattlerTeraType(gEffectBattler) == TYPE_STELLAR
-            && !NoAliveMonsForEitherParty())
+         && GetBattlerTeraType(gEffectBattler) == TYPE_STELLAR
+         && !NoAliveMonsForEitherParty())
         {
             BattleScriptPush(battleScript);
             gBattlescriptCurrInstr = BattleScript_LowerAtkSpAtk;
@@ -3109,17 +3108,17 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
         }
         break;
     case MOVE_EFFECT_REFLECT:
-        if (TrySetReflect(battlerAtk))
+        if (TrySetReflect(effectBattler))
         {
             BattleScriptPush(battleScript);
-            gBattlescriptCurrInstr = BattleScript_MoveEffectReflect;
+            gBattlescriptCurrInstr = BattleScript_MoveEffectScreens;
         }
         break;
     case MOVE_EFFECT_LIGHT_SCREEN:
-        if (TrySetLightScreen(battlerAtk))
+        if (TrySetLightScreen(effectBattler))
         {
             BattleScriptPush(battleScript);
-            gBattlescriptCurrInstr = BattleScript_MoveEffectLightScreen;
+            gBattlescriptCurrInstr = BattleScript_MoveEffectScreens;
         }
         break;
     case MOVE_EFFECT_SALT_CURE:
@@ -3281,7 +3280,7 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
         {
             gBattleCommunication[MULTISTRING_CHOOSER] = msg;
             BattleScriptPush(battleScript);
-            gBattlescriptCurrInstr = BattleScript_EffectSetWeather;
+            gBattlescriptCurrInstr = BattleScript_MoveEffectSetWeather;
         }
         break;
     }
@@ -3315,7 +3314,7 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
         if (TryChangeBattleTerrain(battlerAtk, statusFlag))
         {
             BattleScriptPush(battleScript);
-            gBattlescriptCurrInstr = BattleScript_EffectSetTerrain;
+            gBattlescriptCurrInstr = BattleScript_MoveEffectSetTerrain;
         }
         break;
     }
@@ -3333,7 +3332,7 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
             gSideTimers[side].damageNonTypesType = moveType;
             BattleScriptPush(battleScript);
             ChooseDamageNonTypesString(moveType);
-            gBattlescriptCurrInstr = BattleScript_DamageNonTypesStarts;
+            gBattlescriptCurrInstr = BattleScript_MoveEffectDamageNonTypes;
         }
         break;
     }
@@ -3342,7 +3341,7 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
         {
             gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_SHARPSTEELFLOATS;
             BattleScriptPush(battleScript);
-            gBattlescriptCurrInstr = BattleScript_EffectSteelsurge;
+            gBattlescriptCurrInstr = BattleScript_MoveEffectSteelsurge;
         }
         break;
     case MOVE_EFFECT_DEFOG:
@@ -3356,16 +3355,16 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
         }
         break;
     case MOVE_EFFECT_AURORA_VEIL:
-        if (!(gSideStatuses[GetBattlerSide(battlerAtk)] & SIDE_STATUS_AURORA_VEIL))
+        if (!(gSideStatuses[GetBattlerSide(effectBattler)] & SIDE_STATUS_AURORA_VEIL))
         {
-            gSideStatuses[GetBattlerSide(battlerAtk)] |= SIDE_STATUS_AURORA_VEIL;
-            if (GetBattlerHoldEffect(battlerAtk) == HOLD_EFFECT_LIGHT_CLAY)
-                gSideTimers[GetBattlerSide(battlerAtk)].auroraVeilTimer = 8;
+            gSideStatuses[GetBattlerSide(effectBattler)] |= SIDE_STATUS_AURORA_VEIL;
+            if (GetBattlerHoldEffect(effectBattler) == HOLD_EFFECT_LIGHT_CLAY)
+                gSideTimers[GetBattlerSide(effectBattler)].auroraVeilTimer = 8;
             else
-                gSideTimers[GetBattlerSide(battlerAtk)].auroraVeilTimer = 5;
+                gSideTimers[GetBattlerSide(effectBattler)].auroraVeilTimer = 5;
             gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_SET_SAFEGUARD;
             BattleScriptPush(battleScript);
-            gBattlescriptCurrInstr = BattleScript_MoveEffectAuroraVeil;
+            gBattlescriptCurrInstr = BattleScript_MoveEffectScreens;
         }
         break;
     case MOVE_EFFECT_GRAVITY:
@@ -3374,7 +3373,7 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
             gFieldStatuses |= STATUS_FIELD_GRAVITY;
             gFieldTimers.gravityTimer = 5;
             BattleScriptPush(battleScript);
-            gBattlescriptCurrInstr = BattleScript_EffectGravitySuccess;
+            gBattlescriptCurrInstr = BattleScript_MoveEffectGravity;
         }
         break;
     case MOVE_EFFECT_SANDBLAST_SIDE:
@@ -3404,7 +3403,7 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
         {
             gBattleMons[effectBattler].volatiles.yawn = 2;
             BattleScriptPush(battleScript);
-            gBattlescriptCurrInstr = BattleScript_MoveEffectYawnSide;
+            gBattlescriptCurrInstr = BattleScript_MoveEffectYawnFoe;
         }
         break;
     case MOVE_EFFECT_SPITE:
@@ -3412,7 +3411,7 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
          && gLastMoves[effectBattler] != MOVE_UNAVAILABLE)
         {
             BattleScriptPush(battleScript);
-            gBattlescriptCurrInstr = BattleScript_EffectTryReducePP;
+            gBattlescriptCurrInstr = BattleScript_MoveEffectSpite;
         }
         break;
     case MOVE_EFFECT_PARALYZE_SIDE:

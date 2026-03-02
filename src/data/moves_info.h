@@ -17590,6 +17590,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .metronomeBanned = TRUE,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_LIGHT_SCREEN,
+            .self = TRUE,
         }),
         .battleAnimScript = gBattleAnimMove_GlitzyGlow,
     },
@@ -17612,6 +17613,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .metronomeBanned = TRUE,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_REFLECT,
+            .self = TRUE,
         }),
         .battleAnimScript = gBattleAnimMove_BaddyBad,
     },
@@ -22557,6 +22559,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .battleAnimScript = gBattleAnimMove_GMaxResonance,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_AURORA_VEIL,
+            .self = TRUE,
         }),
     },
 
@@ -22740,6 +22743,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .battleAnimScript = gBattleAnimMove_GMaxGravitas,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_GRAVITY,
+            .self = TRUE,
         }),
     },
 
