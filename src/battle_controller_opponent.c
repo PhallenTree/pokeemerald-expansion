@@ -462,7 +462,7 @@ static void OpponentHandleChooseMove(enum BattlerId battler)
             u32 chosenMove = moveInfo->moves[chosenMoveIndex];
             enum MoveTarget target = GetBattlerMoveTargetType(battler, chosenMove);
 
-            if (target == TARGET_USER)
+            if (target == TARGET_USER || target == TARGET_USER_OR_ALLY)
                 gBattlerTarget = battler;
 
             if (target == TARGET_ALLY)
