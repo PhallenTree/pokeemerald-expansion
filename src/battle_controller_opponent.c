@@ -505,7 +505,7 @@ static void OpponentHandleChooseMove(enum BattlerId battler)
         }
         else if (moveTarget == TARGET_ALLY)
         {
-            BtlController_EmitTwoReturnValues(battler, B_COMM_TO_ENGINE, B_ACTION_EXEC_SCRIPT, (chosenMoveIndex) | (BATTLE_PARTNER(battler) << 8))
+            BtlController_EmitTwoReturnValues(battler, B_COMM_TO_ENGINE, B_ACTION_EXEC_SCRIPT, (chosenMoveIndex) | (BATTLE_PARTNER(battler) << 8));
         }
         else if (IsDoubleBattle())
         {
