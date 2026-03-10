@@ -8,7 +8,6 @@ ASSUMPTIONS
 
 SINGLE_BATTLE_TEST("Secret Power paralyzes in Electric Terrain")
 {
-    u32 j;
     GIVEN {
         PLAYER(SPECIES_WOBBUFFET);
         OPPONENT(SPECIES_WOBBUFFET);

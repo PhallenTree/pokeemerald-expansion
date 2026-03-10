@@ -6032,11 +6032,15 @@ BattleScript_EmergencyExitTrainer:
 	switchoutabilities BS_SCRIPTING
 	return
 
-BattleScript_EmergencyExitEnd2::
+BattleScript_EmergencyExitRet::
 	call BattleScript_EmergencyExit
-	jumpifnotbattletype BATTLE_TYPE_TRAINER, BattleScript_EmergencyExitEnd2_Ret
+	jumpifnotbattletype BATTLE_TYPE_TRAINER, BattleScript_EmergencyExitRet_End
 	call BattleScript_QueuedSwitchOpenPartyScreen
-BattleScript_EmergencyExitEnd2_Ret::
+BattleScript_EmergencyExitRet_End::
+	return
+
+BattleScript_EmergencyExitEnd2::
+	call BattleScript_EmergencyExitRet
 	end2
 
 BattleScript_QueuedSwitchOpenPartyScreen::
@@ -7674,7 +7678,8 @@ BattleScript_EjectButtonEnd:
 	return
 
 BattleScript_EjectPackActivate_Ret::
-	goto BattleScript_EjectButtonActivates
+	call BattleScript_EjectButtonActivates
+	goto BattleScript_QueuedSwitchOpenPartyScreen
 
 BattleScript_EjectPackActivate_End2::
 	call BattleScript_EjectPackActivate_Ret
@@ -7683,8 +7688,7 @@ BattleScript_EjectPackActivate_End2::
 
 BattleScript_EjectPackActivates::
 	jumpifcantswitch BS_SCRIPTING, BattleScript_EjectButtonEnd
-	call BattleScript_EjectPackActivate_Ret
-	goto BattleScript_QueuedSwitchOpenPartyScreen
+	goto BattleScript_EjectButtonActivates
 
 BattleScript_DoesntAffectTargetAtkString::
 	pause B_WAIT_TIME_SHORT

@@ -354,6 +354,7 @@ extern const u8 BattleScript_FriskMsg[];
 extern const u8 BattleScript_FriskMsgWithPopup[];
 extern const u8 BattleScript_MoodyActivates[];
 extern const u8 BattleScript_EmergencyExit[];
+extern const u8 BattleScript_EmergencyExitRet[];
 extern const u8 BattleScript_EmergencyExitEnd2[];
 extern const u8 BattleScript_QueuedSwitch[];
 extern const u8 BattleScript_QueuedSwitchEnd2[];
