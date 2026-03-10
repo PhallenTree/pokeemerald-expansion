@@ -3789,7 +3789,7 @@ static enum MoveEndResult MoveEndPursuitNextAction(void)
         {
             gBattlerAttacker = gBattlerTarget;
             if (gBattleStruct->pursuitStoredSwitch == PARTY_SIZE)
-                gBattlescriptCurrInstr = BattleScript_MoveSwitchDoSwitchOut;
+                gBattlescriptCurrInstr = BattleScript_MoveSwitchOpenPartyScreen;
             else
                 gBattlescriptCurrInstr = BattleScript_DoSwitchOut;
             gBattleStruct->monToSwitchIntoId[gBattlerTarget] = gBattleStruct->pursuitStoredSwitch;
