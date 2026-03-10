@@ -6034,6 +6034,9 @@ BattleScript_EmergencyExitTrainer:
 
 BattleScript_EmergencyExitEnd2::
 	call BattleScript_EmergencyExit
+	jumpifnotbattletype BATTLE_TYPE_TRAINER, BattleScript_EmergencyExitEnd2_Ret
+	call BattleScript_QueuedSwitchOpenPartyScreen
+BattleScript_EmergencyExitEnd2_Ret::
 	end2
 
 BattleScript_QueuedSwitchOpenPartyScreen::
