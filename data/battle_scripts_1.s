@@ -230,7 +230,7 @@ BattleScript_MoveSwitchPursuitRet:
 	jumpifcantswitch SWITCH_IGNORE_ESCAPE_PREVENTION | BS_ATTACKER, BattleScript_MoveSwitchEnd
 	printstring STRINGID_PKMNWENTBACK
 	waitmessage B_WAIT_TIME_SHORT
-	jumpifnopursuitswitchdmg BattleScript_MoveSwitchOpenPartyScreen
+	jumpifnopursuitswitchdmg BattleScript_MoveSwitchOpenPartyScreenRet
 	return
 
 BattleScript_MoveSwitch::
@@ -239,19 +239,23 @@ BattleScript_MoveSwitch::
 	printstring STRINGID_PKMNWENTBACK
 	waitmessage B_WAIT_TIME_SHORT
 BattleScript_MoveSwitchOpenPartyScreen::
+	call BattleScript_MoveSwitchOpenPartyScreenRet
+BattleScript_MoveSwitchEnd:
+	end
+
+BattleScript_MoveSwitchOpenPartyScreenRet:
 	call BattleScript_MoveSwitchOpenPartyScreenReturnWithNoAnim
 	switchinanim BS_ATTACKER, FALSE, FALSE
 	waitstate
 	switchineffects BS_ATTACKER
 	switchinevents
-BattleScript_MoveSwitchEnd:
-	end
+	return
 
 BattleScript_MoveSwitchOpenPartyScreenReturnWithNoAnim:
-	openpartyscreen BS_ATTACKER, BattleScript_MoveSwitchEnd
-	waitstate
 	returntoball BS_ATTACKER, FALSE
 	switchoutabilities BS_ATTACKER
+	openpartyscreen BS_ATTACKER, BattleScript_MoveSwitchEnd
+	waitstate
 	switchhandleorder BS_ATTACKER, 2
 	getswitchedmondata BS_ATTACKER
 	switchindataupdate BS_ATTACKER
@@ -3261,10 +3265,10 @@ BattleScript_EffectBatonPass::
 	jumpifcantswitch SWITCH_IGNORE_ESCAPE_PREVENTION | BS_ATTACKER, BattleScript_ButItFailed
 	attackanimation
 	waitanimation
-	openpartyscreen BS_ATTACKER, BattleScript_ButItFailed
-	waitstate
 	returntoball BS_ATTACKER, FALSE
 	switchoutabilities BS_ATTACKER
+	openpartyscreen BS_ATTACKER, BattleScript_ButItFailed
+	waitstate
 	switchhandleorder BS_ATTACKER, 2
 	getswitchedmondata BS_ATTACKER
 	switchindataupdate BS_ATTACKER
@@ -6028,10 +6032,25 @@ BattleScript_EmergencyExit::
 	finishaction
 	return
 BattleScript_EmergencyExitTrainer:
-	openpartyscreen BS_SCRIPTING, BattleScript_EmergencyExitRet
-	waitstate
 	returntoball BS_SCRIPTING, FALSE
 	switchoutabilities BS_SCRIPTING
+	return
+
+BattleScript_EmergencyExitRet::
+	call BattleScript_EmergencyExit
+	jumpifnotbattletype BATTLE_TYPE_TRAINER, BattleScript_EmergencyExitRet_End
+	call BattleScript_QueuedSwitchOpenPartyScreen
+BattleScript_EmergencyExitRet_End::
+	return
+
+BattleScript_EmergencyExitEnd2::
+	call BattleScript_EmergencyExitRet
+	end2
+
+BattleScript_QueuedSwitchOpenPartyScreen::
+	openpartyscreen BS_SCRIPTING, BattleScript_QueuedSwitchRet
+	waitstate
+BattleScript_QueuedSwitch::
 	switchhandleorder BS_SCRIPTING, 2
 	getswitchedmondata BS_SCRIPTING
 	switchindataupdate BS_SCRIPTING
@@ -6041,11 +6060,15 @@ BattleScript_EmergencyExitTrainer:
 	waitstate
 	switchineffects BS_SCRIPTING
 	switchinevents
-BattleScript_EmergencyExitRet:
+BattleScript_QueuedSwitchRet:
 	return
 
-BattleScript_EmergencyExitEnd2::
-	call BattleScript_EmergencyExit
+BattleScript_QueuedSwitchOpenPartyScreenEnd2::
+	call BattleScript_QueuedSwitchOpenPartyScreen
+	end2
+
+BattleScript_QueuedSwitchEnd2::
+	call BattleScript_QueuedSwitch
 	end2
 
 BattleScript_TraceActivates::
@@ -7651,36 +7674,25 @@ BattleScript_EjectButtonActivates::
 	removeitem BS_SCRIPTING
 	undodynamax BS_SCRIPTING
 	makeinvisible BS_SCRIPTING
-	openpartyscreen BS_SCRIPTING, BattleScript_EjectButtonEnd
-	waitstate
 	returntoball BS_SCRIPTING, FALSE
 	copybyte sSAVED_BATTLER, sBATTLER
 	switchoutabilities BS_SCRIPTING
 	copybyte sBATTLER, sSAVED_BATTLER
-	switchhandleorder BS_SCRIPTING, 0x2
-	getswitchedmondata BS_SCRIPTING
-	switchindataupdate BS_SCRIPTING
-	hpthresholds BS_SCRIPTING
-	trytoclearprimalweather
-	flushtextbox
-	printstring 0x3
-	switchinanim BS_SCRIPTING, FALSE, TRUE
-	waitstate
-	switchineffects BS_SCRIPTING
-	switchinevents
 BattleScript_EjectButtonEnd:
 	return
 
 BattleScript_EjectPackActivate_Ret::
-	goto BattleScript_EjectButtonActivates
+	call BattleScript_EjectButtonActivates
+	goto BattleScript_QueuedSwitchOpenPartyScreen
 
 BattleScript_EjectPackActivate_End2::
 	call BattleScript_EjectPackActivate_Ret
+	call BattleScript_QueuedSwitchOpenPartyScreen
 	end2
 
 BattleScript_EjectPackActivates::
 	jumpifcantswitch BS_SCRIPTING, BattleScript_EjectButtonEnd
-	goto BattleScript_EjectPackActivate_Ret
+	goto BattleScript_EjectButtonActivates
 
 BattleScript_DoesntAffectTargetAtkString::
 	pause B_WAIT_TIME_SHORT
