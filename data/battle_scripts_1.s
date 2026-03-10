@@ -7670,6 +7670,7 @@ BattleScript_EjectButtonActivates::
 	copybyte sSAVED_BATTLER, sBATTLER
 	switchoutabilities BS_SCRIPTING
 	copybyte sBATTLER, sSAVED_BATTLER
+BattleScript_EjectButtonEnd:
 	return
 
 BattleScript_EjectPackActivate_Ret::
