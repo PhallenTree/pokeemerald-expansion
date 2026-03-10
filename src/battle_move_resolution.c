@@ -3427,6 +3427,7 @@ static enum MoveEndResult MoveEndPickpocket(void)
         {
             enum BattlerId battlerDef = battlers[i];
             if (battlerDef != gBattlerAttacker
+              && !gBattleStruct->battlerState[battlerDef].switchedOut
               && !IsBattlerUnaffectedByMove(battlerDef)
               && GetBattlerAbility(battlerDef) == ABILITY_PICKPOCKET
               && IsMoveMakingContact(gBattlerAttacker, battlerDef, GetBattlerAbility(gBattlerAttacker), GetBattlerHoldEffect(gBattlerAttacker), gCurrentMove)
