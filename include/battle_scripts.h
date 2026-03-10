@@ -353,6 +353,7 @@ extern const u8 BattleScript_FriskActivates[];
 extern const u8 BattleScript_FriskMsg[];
 extern const u8 BattleScript_FriskMsgWithPopup[];
 extern const u8 BattleScript_MoodyActivates[];
+extern const u8 BattleScript_SwitchOutEffects[];
 extern const u8 BattleScript_EmergencyExit[];
 extern const u8 BattleScript_EmergencyExitRet[];
 extern const u8 BattleScript_EmergencyExitEnd2[];

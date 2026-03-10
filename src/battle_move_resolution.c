@@ -3606,23 +3606,23 @@ static enum MoveEndResult MoveEndSendOutReplacements(void)
 {
     while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
-        enum BattlerId battler = gBattleStruct->eventState.moveEndBattler++;
+        enum BattlerId battler = gBattlersBySpeed[gBattleStruct->eventState.moveEndBattler++];
 
         switch (gSpecialStatuses[battler].queuedSwitch)
         {
-            case NO_QUEUED_SWITCH:
-                continue;
-            case QUEUED_SWITCH_SEND_REPLACEMENT:
-                gBattleScripting.battler = battler;
-                BattleScriptCall(BattleScript_QueuedSwitch);
-                return MOVEEND_RESULT_RUN_SCRIPT;
-            case QUEUED_SWITCH_OPEN_PARTY_SCREEN:
-                gBattleScripting.battler = battler;
-                BattleScriptCall(BattleScript_QueuedSwitchOpenPartyScreen);
-                return MOVEEND_RESULT_RUN_SCRIPT;
-            default:
-                errorf("Invalid value - queuedSwitch");
-                break;
+        case NO_QUEUED_SWITCH:
+            continue;
+        case QUEUED_SWITCH_SEND_REPLACEMENT:
+            gBattleScripting.battler = battler;
+            BattleScriptCall(BattleScript_QueuedSwitch);
+            return MOVEEND_RESULT_RUN_SCRIPT;
+        case QUEUED_SWITCH_OPEN_PARTY_SCREEN:
+            gBattleScripting.battler = battler;
+            BattleScriptCall(BattleScript_QueuedSwitchOpenPartyScreen);
+            return MOVEEND_RESULT_RUN_SCRIPT;
+        default:
+            errorf("Invalid value - queuedSwitch");
+            break;
         }
     }
     gBattleStruct->eventState.moveEndBattler = 0;

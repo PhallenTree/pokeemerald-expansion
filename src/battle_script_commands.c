@@ -9343,7 +9343,8 @@ static void Cmd_jumpifnopursuitswitchdmg(void)
     }
     else if (gSpecialStatuses[gBattlerAttacker].queuedSwitch != NO_QUEUED_SWITCH) // Hit Escape uses queued switch
     {
-        gBattlescriptCurrInstr = cmd->nextInstr;
+        gBattleScripting.battler = gBattlerAttacker;
+        gBattlescriptCurrInstr = BattleScript_SwitchOutEffects; // returntoball and switchoutabilities
     }
     else
     {
