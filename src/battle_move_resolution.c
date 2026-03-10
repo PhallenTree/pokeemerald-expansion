@@ -3405,7 +3405,7 @@ static enum MoveEndResult MoveEndHitEscape(void)
      && !NoAliveMonsForBattlerSide(gBattlerTarget))
     {
         result = MOVEEND_RESULT_RUN_SCRIPT;
-        gSpecialStatuses[battler].queuedSwitch = QUEUED_SWITCH_OPEN_PARTY_SCREEN;
+        gSpecialStatuses[gBattlerAttacker].queuedSwitch = QUEUED_SWITCH_OPEN_PARTY_SCREEN;
         BattleScriptCall(BattleScript_EffectHitEscape);
     }
 
