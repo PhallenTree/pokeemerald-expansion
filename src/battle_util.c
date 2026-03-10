@@ -4915,7 +4915,7 @@ enum Ability GetBattlerAbilityInternal(enum BattlerId battler, bool32 ignoreMold
     bool32 hasAbilityShield = !noAbilityShield && GetBattlerHoldEffectIgnoreAbility(battler) == HOLD_EFFECT_ABILITY_SHIELD;
     bool32 abilityCantBeSuppressed = gAbilitiesInfo[gBattleMons[battler].ability].cantBeSuppressed;
 
-    if (gBattleStruct->battlerState[battler].switchedOut || gBattleStruct->battlerState[battler].fainted)
+    if (gBattleStruct->battlerState[battler].notOnField)
         return ABILITY_NONE;
 
     if (abilityCantBeSuppressed)
@@ -5742,7 +5742,7 @@ enum HoldEffect GetBattlerHoldEffectIgnoreAbility(enum BattlerId battler)
 
 enum HoldEffect GetBattlerHoldEffectInternal(enum BattlerId battler, enum Ability ability)
 {
-    if (gBattleStruct->battlerState[battler].switchedOut || gBattleStruct->battlerState[battler].fainted)
+    if (gBattleStruct->battlerState[battler].notOnField)
         return HOLD_EFFECT_NONE;
     if (gBattleMons[battler].volatiles.embargo)
         return HOLD_EFFECT_NONE;

@@ -2167,7 +2167,7 @@ static enum MoveEndResult MoveEndAbsorb(void)
     if (IsExplosionMove(gCurrentMove)
      && (gBattleStruct->doneDoublesSpreadHit || !IsDoubleSpreadMove())
      && !IsBattlerAlive(gBattlerAttacker)
-     && !gBattleStruct->battlerState[gBattlerAttacker].fainted)
+     && !gBattleStruct->battlerState[gBattlerAttacker].notOnField)
     {
         gBattleStruct->passiveHpUpdate[gBattlerAttacker] = 0;
         BattleScriptCall(BattleScript_FaintAttackerForExplosion);
@@ -2461,7 +2461,7 @@ static enum MoveEndResult MoveEndFaintBlock(void)
         case FAINT_BLOCK_CHECK_TARGET_FAINTED: // Stop if target already ran the block / is alive or absent
             if (IsBattlerAlive(gBattlerTarget)
              || (gAbsentBattlerFlags & 1u << gBattlerTarget)
-             || gBattleStruct->battlerState[gBattlerTarget].fainted)
+             || gBattleStruct->battlerState[gBattlerTarget].notOnField)
             {
                 gBattleScripting.moveendState++;
                 return MOVEEND_RESULT_CONTINUE;
@@ -3427,7 +3427,7 @@ static enum MoveEndResult MoveEndPickpocket(void)
         {
             enum BattlerId battlerDef = battlers[i];
             if (battlerDef != gBattlerAttacker
-              && !gBattleStruct->battlerState[battlerDef].switchedOut
+              && !gBattleStruct->battlerState[battlerDef].notOnField
               && !IsBattlerUnaffectedByMove(battlerDef)
               && GetBattlerAbility(battlerDef) == ABILITY_PICKPOCKET
               && IsMoveMakingContact(gBattlerAttacker, battlerDef, GetBattlerAbility(gBattlerAttacker), GetBattlerHoldEffect(gBattlerAttacker), gCurrentMove)

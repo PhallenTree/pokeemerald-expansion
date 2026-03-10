@@ -3911,7 +3911,7 @@ static void Cmd_tryfaintmon(void)
     else
     {
         if (!IsBattlerAlive(battler)
-         && !(gBattleStruct->battlerState[battler].fainted))
+         && !(gBattleStruct->battlerState[battler].notOnField))
         {
             if (gBattleMons[battler].volatiles.neutralizingGas)
             {
@@ -3963,7 +3963,7 @@ static void Cmd_dofaintanimation(void)
 
     enum BattlerId battler = GetBattlerForBattleScript(cmd->battler);
 
-    gBattleStruct->battlerState[battler].fainted = TRUE;
+    gBattleStruct->battlerState[battler].notOnField = TRUE;
 
     BtlController_EmitFaintAnimation(battler, B_COMM_TO_CONTROLLER);
     MarkBattlerForControllerExec(battler);
@@ -10215,7 +10215,7 @@ static void Cmd_switchoutabilities(void)
     enum BattlerId battler = GetBattlerForBattleScript(cmd->battler);
     enum Ability ability = GetBattlerAbility(battler);
 
-    gBattleStruct->battlerState[battler].switchedOut = TRUE;
+    gBattleStruct->battlerState[battler].notOnField = TRUE;
 
     if (gBattleMons[battler].volatiles.neutralizingGas)
     {
