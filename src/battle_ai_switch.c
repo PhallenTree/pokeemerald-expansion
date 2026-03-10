@@ -2116,7 +2116,9 @@ static u32 GetBestMonIntegrated(struct Pokemon *party, int firstId, int lastId, 
     // Save existing battler data
     struct AiLogicData *savedAiLogicData = AllocSaveAiLogicData();
     struct BattlePokemon *savedBattleMons = AllocSaveBattleMons();
+    u32 savedNotOnField = gBattleStruct->battlerState[battler].notOnField;
 
+    gBattleStruct->battlerState[battler].notOnField = FALSE;
     // Iterate through mons
     for (u32 monIndex = firstId; monIndex < lastId; monIndex++)
     {
@@ -2313,6 +2315,7 @@ static u32 GetBestMonIntegrated(struct Pokemon *party, int firstId, int lastId, 
     }
 
     // Restore battler data
+    gBattleStruct->battlerState[battler].notOnField = savedNotOnField;
     FreeRestoreAiLogicData(savedAiLogicData);
     FreeRestoreBattleMons(savedBattleMons);
     SetBattlerAiData(battler, gAiLogicData);
@@ -2374,6 +2377,9 @@ static u32 GetBestMonVanilla(struct Pokemon *party, int firstId, int lastId, enu
     // Save existing battler data
     struct AiLogicData *savedAiLogicData = AllocSaveAiLogicData();
     struct BattlePokemon *savedBattleMons = AllocSaveBattleMons();
+    u32 savedNotOnField = gBattleStruct->battlerState[battler].notOnField;
+
+    gBattleStruct->battlerState[battler].notOnField = FALSE;
 
     // Iterate through mons
     for (u32 monIndex = firstId; monIndex < lastId; monIndex++)
@@ -2438,6 +2444,7 @@ static u32 GetBestMonVanilla(struct Pokemon *party, int firstId, int lastId, enu
     }
 
     // Restore battler data
+    gBattleStruct->battlerState[battler].notOnField = savedNotOnField;
     FreeRestoreAiLogicData(savedAiLogicData);
     FreeRestoreBattleMons(savedBattleMons);
     SetBattlerAiData(battler, gAiLogicData);
@@ -2547,6 +2554,9 @@ u32 AI_SelectRevivalBlessingMon(enum BattlerId battler)
     // Save existing battler data
     struct AiLogicData *savedAiLogicData = AllocSaveAiLogicData();
     struct BattlePokemon *savedBattleMons = AllocSaveBattleMons();
+    u32 savedNotOnField = gBattleStruct->battlerState[battler].notOnField;
+
+    gBattleStruct->battlerState[battler].notOnField = FALSE;
 
     GetAIPartyIndexes(battler, &firstId, &lastId);
 
@@ -2598,6 +2608,7 @@ u32 AI_SelectRevivalBlessingMon(enum BattlerId battler)
     }
 
     // Restore battler data
+    gBattleStruct->battlerState[battler].notOnField = savedNotOnField;
     FreeRestoreAiLogicData(savedAiLogicData);
     FreeRestoreBattleMons(savedBattleMons);
     SetBattlerAiData(battler, gAiLogicData);
