@@ -7678,7 +7678,6 @@ BattleScript_EjectPackActivate_Ret::
 
 BattleScript_EjectPackActivate_End2::
 	call BattleScript_EjectPackActivate_Ret
-	call BattleScript_QueuedSwitchOpenPartyScreen
 	end2
 
 BattleScript_EjectPackActivates::
