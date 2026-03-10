@@ -3259,6 +3259,7 @@ static bool32 TryEjectButton(enum BattlerId battlerAtk, u32 ejectButtonBattler)
     gBattleScripting.battler = ejectButtonBattler;
     gLastUsedItem = gBattleMons[ejectButtonBattler].item;
     gBattleStruct->battlerState[ejectButtonBattler].usedEjectItem = TRUE;
+    gSpecialStatuses[ejectButtonBattler].queuedSwitch = QUEUED_SWITCH_OPEN_PARTY_SCREEN;
     BattleScriptCall(BattleScript_EjectButtonActivates);
     gAiLogicData->ejectButtonSwitch = TRUE;
     return TRUE;
@@ -3380,6 +3381,7 @@ static enum MoveEndResult MoveEndEmergencyExit(void)
             continue;
 
         gBattleScripting.battler = battler;
+        gSpecialStatuses[battler].queuedSwitch = QUEUED_SWITCH_OPEN_PARTY_SCREEN;
         BattleScriptCall(BattleScript_EmergencyExit);
         result = MOVEEND_RESULT_RUN_SCRIPT;
         break; // Only the fastest Emergency Exit / Wimp Out activates
@@ -3403,6 +3405,7 @@ static enum MoveEndResult MoveEndHitEscape(void)
      && !NoAliveMonsForBattlerSide(gBattlerTarget))
     {
         result = MOVEEND_RESULT_RUN_SCRIPT;
+        gSpecialStatuses[battler].queuedSwitch = QUEUED_SWITCH_OPEN_PARTY_SCREEN;
         BattleScriptCall(BattleScript_EffectHitEscape);
     }
 
@@ -3622,6 +3625,7 @@ static enum MoveEndResult MoveEndEjectPack(void)
         gBattleScripting.battler = battler;
         gLastUsedItem = gBattleMons[battler].item;
         gBattleStruct->battlerState[battler].usedEjectItem = TRUE;
+        gSpecialStatuses[battler].queuedSwitch = QUEUED_SWITCH_OPEN_PARTY_SCREEN;
         BattleScriptCall(BattleScript_EjectPackActivates);
         gAiLogicData->ejectPackSwitch = TRUE;
         result = MOVEEND_RESULT_RUN_SCRIPT;
@@ -3630,6 +3634,34 @@ static enum MoveEndResult MoveEndEjectPack(void)
 
     gBattleScripting.moveendState++;
     return result;
+}
+
+static enum MoveEndResult MoveEndSendOutReplacements(void)
+{
+    while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
+    {
+        enum BattlerId battler = gBattleStruct->eventState.moveEndBattler++;
+
+        switch (gSpecialStatuses[battler].queuedSwitch)
+        {
+            case NO_QUEUED_SWITCH:
+                continue;
+            case QUEUED_SWITCH_SEND_REPLACEMENT:
+                gBattleScripting.battler = battler;
+                BattleScriptCall(BattleScript_QueuedSwitch);
+                return MOVEEND_RESULT_RUN_SCRIPT;
+            case QUEUED_SWITCH_OPEN_PARTY_SCREEN:
+                gBattleScripting.battler = battler;
+                BattleScriptCall(BattleScript_QueuedSwitchOpenPartyScreen);
+                return MOVEEND_RESULT_RUN_SCRIPT;
+            default:
+                errorf("Invalid value - queuedSwitch");
+                break;
+        }
+    }
+    gBattleStruct->eventState.moveEndBattler = 0;
+    gBattleScripting.moveendState++;
+    return MOVEEND_RESULT_CONTINUE;
 }
 
 static bool32 ShouldSetStompingTantrumTimer(void)
@@ -3757,7 +3789,7 @@ static enum MoveEndResult MoveEndPursuitNextAction(void)
         {
             gBattlerAttacker = gBattlerTarget;
             if (gBattleStruct->pursuitStoredSwitch == PARTY_SIZE)
-                gBattlescriptCurrInstr = BattleScript_MoveSwitchOpenPartyScreen;
+                gBattlescriptCurrInstr = BattleScript_MoveSwitchDoSwitchOut;
             else
                 gBattlescriptCurrInstr = BattleScript_DoSwitchOut;
             gBattleStruct->monToSwitchIntoId[gBattlerTarget] = gBattleStruct->pursuitStoredSwitch;
@@ -3815,6 +3847,7 @@ static enum MoveEndResult (*const sMoveEndHandlers[])(void) =
     [MOVEEND_MIRROR_HERB] = MoveEndMirrorHerb,
     [MOVEEND_THIRD_MOVE_BLOCK] = MoveEndThirdMoveBlock,
     [MOVEEND_PICKPOCKET] = MoveEndPickpocket,
+    [MOVEEND_SEND_OUT_REPLACEMENTS] = MoveEndSendOutReplacements,
     [MOVEEND_CLEAR_BITS] = MoveEndClearBits,
     [MOVEEND_DANCER] = MoveEndDancer,
     [MOVEEND_PURSUIT_NEXT_ACTION] = MoveEndPursuitNextAction,

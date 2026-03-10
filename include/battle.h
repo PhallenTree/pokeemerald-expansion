@@ -125,6 +125,7 @@ struct SpecialStatus
     u8 teraShellAbilityDone:1;
     u8 backUpTarget:3;
     // End of byte
+    enum QueuedSwitch queuedSwitch;
 };
 
 struct SideTimer
