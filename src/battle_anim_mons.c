@@ -827,7 +827,7 @@ bool8 IsBattlerSpritePresent(enum BattlerId battler)
         if (GetBattlerPosition(battler) == B_POSITION_ABSENT)
             return FALSE;
 
-        if (gBattleStruct->battlerState[battler].fainted)
+        if (gBattleStruct->battlerState[battler].fainted || gBattleStruct->battlerState[battler].switchedOut)
             return FALSE;
 
         if (gAbsentBattlerFlags & 1u << battler)
