@@ -506,7 +506,7 @@ struct BattlerState
     u16 switchIn:1;
     u16 notOnField:1;
     u16 isFirstTurn:2;
-    u16 padding:11;
+    u16 padding:12;
 };
 
 struct PartyState
