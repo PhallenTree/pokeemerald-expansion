@@ -523,6 +523,7 @@ static enum ItemEffect TryShellBell(enum BattlerId battlerAtk)
 
     if (gBattleScripting.savedDmg > 0
      && !gBattleStruct->unableToUseMove
+     && gLastPrintedMoves[battlerAtk] == gCurrentMove
      && (IsAnyTargetTurnDamaged(battlerAtk) || gBattleScripting.savedDmg > 0)
      && !IsBattlerAtMaxHp(battlerAtk)
      && IsBattlerAlive(battlerAtk)
@@ -544,6 +545,7 @@ static enum ItemEffect TryLifeOrb(enum BattlerId battlerAtk)
 
     if (IsBattlerAlive(battlerAtk)
      && !gBattleStruct->unableToUseMove
+     && gLastPrintedMoves[battlerAtk] == gCurrentMove
      && (IsAnyTargetTurnDamaged(battlerAtk) || gBattleScripting.savedDmg > 0)
      && !IsAbilityAndRecord(battlerAtk, GetBattlerAbility(battlerAtk), ABILITY_MAGIC_GUARD)
      && GetMoveEffect(gCurrentMove) != EFFECT_PAIN_SPLIT

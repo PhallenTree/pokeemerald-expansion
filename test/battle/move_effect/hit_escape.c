@@ -215,7 +215,7 @@ SINGLE_BATTLE_TEST("Hit Escape: U-Turn switches user out and target activates Pi
         PLAYER(SPECIES_EKANS) { Ability(ABILITY_INTIMIDATE); }
         OPPONENT(SPECIES_TINKATON) { Ability(ABILITY_PICKPOCKET); }
     } WHEN {
-        TURN { MOVE(player, MOVE_U_TURN); SEND_OUT(opponent, 1); }
+        TURN { MOVE(player, MOVE_U_TURN); SEND_OUT(player, 1); }
     } SCENE {
         ANIMATION(ANIM_TYPE_MOVE, MOVE_U_TURN, player);
         HP_BAR(opponent);

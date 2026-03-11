@@ -285,7 +285,7 @@ SINGLE_BATTLE_TEST("Emergency Exit activates and attacker's Throat Spray activat
         ASSUME(GetItemHoldEffect(ITEM_THROAT_SPRAY) == HOLD_EFFECT_THROAT_SPRAY);
         ASSUME(IsSoundMove(MOVE_HYPER_VOICE));
         PLAYER(SPECIES_WOBBUFFET) { Item(ITEM_THROAT_SPRAY); }
-        OPPONENT(SPECIES_GOLISOPOD) { Ability(ABILITY_EMERGENCY_EXIT); }
+        OPPONENT(SPECIES_GOLISOPOD) { Ability(ABILITY_EMERGENCY_EXIT); HP(251); MaxHP(500); }
         OPPONENT(SPECIES_EKANS) { Ability(ABILITY_INTIMIDATE); }
     } WHEN {
         TURN { MOVE(player, MOVE_HYPER_VOICE); SEND_OUT(opponent, 1); }
