@@ -3309,7 +3309,8 @@ static enum MoveEndResult MoveEndFormChange(void)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
 
-    if (gBattleStruct->savedDmg > 0 && TryBattleFormChange(gBattlerAttacker, FORM_CHANGE_BATTLE_AFTER_MOVE, GetBattlerAbility(gBattlerAttacker)))
+    if (!gBattleStruct->battlerState[gBattlerAttacker].redCardSwitched
+     && TryBattleFormChange(gBattlerAttacker, FORM_CHANGE_BATTLE_AFTER_MOVE, GetBattlerAbility(gBattlerAttacker)))
     {
         result = MOVEEND_RESULT_RUN_SCRIPT;
         BattleScriptCall(BattleScript_AttackerFormChangeMoveEffect);
@@ -3779,6 +3780,7 @@ static enum MoveEndResult MoveEndClearBits(void)
     for (enum BattlerId i = 0; i < gBattlersCount; i++)
     {
         gBattleStruct->battlerState[gBattlerAttacker].targetsDone[i] = FALSE;
+        gBattleStruct->battlerState[i].redCardSwitched = FALSE;
         gBattleMons[i].volatiles.tryEjectPack = FALSE;
 
         if (gBattleStruct->battlerState[i].commanderSpecies != SPECIES_NONE && !IsBattlerAlive(i))

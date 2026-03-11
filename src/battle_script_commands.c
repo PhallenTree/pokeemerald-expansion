@@ -8285,7 +8285,7 @@ static void Cmd_forcerandomswitch(void)
         else
         {
             if (gBattleScripting.switchCase == B_SWITCH_RED_CARD)
-                gBattleStruct->savedDmg = 0; // Don't activate Life Orb/Shell Bell/Form Change for incoming mon
+                gBattleStruct->battlerState[gBattlerAttacker].redCardSwitched = TRUE;
             gBattleStruct->battlerPartyIndexes[gBattlerTarget] = gBattlerPartyIndexes[gBattlerTarget];
             gBattlescriptCurrInstr = BattleScript_RoarSuccessSwitch;
             gProtectStructs[gBattlerTarget].forcedSwitch = TRUE;
