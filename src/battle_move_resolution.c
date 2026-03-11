@@ -3294,17 +3294,6 @@ static enum MoveEndResult MoveEndCardButton(void)
     return result;
 }
 
-static enum MoveEndResult MoveEndLifeOrbShellBell(void)
-{
-    enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
-
-    if (ItemBattleEffects(gBattlerAttacker, 0, GetBattlerHoldEffect(gBattlerAttacker), IsLifeOrbShellBellActivation))
-        result = MOVEEND_RESULT_RUN_SCRIPT;
-
-    gBattleScripting.moveendState++;
-    return result;
-}
-
 static enum MoveEndResult MoveEndFormChange(void)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
@@ -3315,6 +3304,17 @@ static enum MoveEndResult MoveEndFormChange(void)
         result = MOVEEND_RESULT_RUN_SCRIPT;
         BattleScriptCall(BattleScript_AttackerFormChangeMoveEffect);
     }
+
+    gBattleScripting.moveendState++;
+    return result;
+}
+
+static enum MoveEndResult MoveEndLifeOrbShellBell(void)
+{
+    enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
+
+    if (ItemBattleEffects(gBattlerAttacker, 0, GetBattlerHoldEffect(gBattlerAttacker), IsLifeOrbShellBellActivation))
+        result = MOVEEND_RESULT_RUN_SCRIPT;
 
     gBattleScripting.moveendState++;
     return result;
@@ -3874,8 +3874,8 @@ static enum MoveEndResult (*const sMoveEndHandlers[])(void) =
     [MOVEEND_COLOR_CHANGE] = MoveEndColorChange,
     [MOVEEND_KEE_MARANGA_HP_THRESHOLD_ITEM_TARGET] = MoveEndKeeMarangaHpThresholdItemTarget,
     [MOVEEND_CARD_BUTTON] = MoveEndCardButton,
-    [MOVEEND_LIFE_ORB_SHELL_BELL] = MoveEndLifeOrbShellBell,
     [MOVEEND_FORM_CHANGE] = MoveEndFormChange,
+    [MOVEEND_LIFE_ORB_SHELL_BELL] = MoveEndLifeOrbShellBell,
     [MOVEEND_EMERGENCY_EXIT] = MoveEndEmergencyExit,
     [MOVEEND_HIT_ESCAPE] = MoveEndHitEscape,
     [MOVEEND_PICKPOCKET] = MoveEndPickpocket,
