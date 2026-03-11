@@ -401,14 +401,16 @@ static enum ItemEffect TryBlunderPolicy(enum BattlerId battlerAtk)
     enum ItemEffect effect = ITEM_NO_EFFECT;
 
     if (gBattleStruct->blunderPolicy
+     && !gBattleStruct->battlerState[battlerAtk].redCardSwitched
      && IsBattlerAlive(battlerAtk)
      && CompareStat(battlerAtk, STAT_SPEED, MAX_STAT_STAGE, CMP_LESS_THAN, GetBattlerAbility(battlerAtk)))
     {
-        gBattleStruct->blunderPolicy = FALSE;
         SET_STATCHANGER(STAT_SPEED, 2, FALSE);
         BattleScriptCall(BattleScript_AttackerItemStatRaise);
         effect = ITEM_STATS_CHANGE;
     }
+
+    gBattleStruct->blunderPolicy = FALSE;
 
     return effect;
 }
@@ -478,7 +480,7 @@ static enum ItemEffect TryThroatSpray(enum BattlerId battlerAtk)
     enum ItemEffect effect = ITEM_NO_EFFECT;
 
     if (IsSoundMove(gCurrentMove)
-     && gMultiHitCounter == 0
+     && !gBattleStruct->battlerState[battlerAtk].redCardSwitched
      && IsBattlerAlive(battlerAtk)
      && IsAnyTargetTurnDamaged(battlerAtk)
      && CompareStat(battlerAtk, STAT_SPATK, MAX_STAT_STAGE, CMP_LESS_THAN, GetBattlerAbility(battlerAtk))
