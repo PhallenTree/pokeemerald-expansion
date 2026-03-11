@@ -3655,28 +3655,6 @@ static enum MoveEndResult MoveEndSendOutReplacements(void)
     return MOVEEND_RESULT_CONTINUE;
 }
 
-static bool32 ShouldSetStompingTantrumTimer(void)
-{
-    u32 numNotAffectedTargets = 0;
-
-    if (gBattleStruct->pledgeMove == TRUE // Is the battler that uses the first Pledge move in the combo
-     || gBattleStruct->unableToUseMove)
-        return TRUE;
-
-    if (!IsDoubleSpreadMove())
-        return gBattleStruct->moveResultFlags[gBattlerTarget] & (MOVE_RESULT_FAILED | MOVE_RESULT_DOESNT_AFFECT_FOE);
-
-    for (enum BattlerId battlerDef = 0; battlerDef < gBattlersCount; battlerDef++)
-    {
-        if (gBattlerAttacker == battlerDef)
-            continue;
-        if (gBattleStruct->moveResultFlags[battlerDef] & (MOVE_RESULT_FAILED | MOVE_RESULT_DOESNT_AFFECT_FOE))
-            numNotAffectedTargets++;
-    }
-
-    return numNotAffectedTargets == gBattleStruct->numSpreadTargets;
-}
-
 static enum MoveEndResult MoveEndRampage(void)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
@@ -3727,6 +3705,40 @@ static enum MoveEndResult MoveEndConfusionAfterSkyDrop(void)
 
     gBattleScripting.moveendState++;
     return result;
+}
+
+static enum MoveEndResult MoveEndSprayLeppaBlunder(void)
+{
+    enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
+    enum HoldEffect holdEffect = GetBattlerHoldEffect(gBattlerAttacker);
+
+    if (ItemBattleEffects(gBattlerAttacker, 0, holdEffect, IsSprayLeppaBlunderActivation))
+        result = MOVEEND_RESULT_RUN_SCRIPT;
+
+    gBattleScripting.moveendState++;
+    return result;
+}
+
+static bool32 ShouldSetStompingTantrumTimer(void)
+{
+    u32 numNotAffectedTargets = 0;
+
+    if (gBattleStruct->pledgeMove == TRUE // Is the battler that uses the first Pledge move in the combo
+     || gBattleStruct->unableToUseMove)
+        return TRUE;
+
+    if (!IsDoubleSpreadMove())
+        return gBattleStruct->moveResultFlags[gBattlerTarget] & (MOVE_RESULT_FAILED | MOVE_RESULT_DOESNT_AFFECT_FOE);
+
+    for (enum BattlerId battlerDef = 0; battlerDef < gBattlersCount; battlerDef++)
+    {
+        if (gBattlerAttacker == battlerDef)
+            continue;
+        if (gBattleStruct->moveResultFlags[battlerDef] & (MOVE_RESULT_FAILED | MOVE_RESULT_DOESNT_AFFECT_FOE))
+            numNotAffectedTargets++;
+    }
+
+    return numNotAffectedTargets == gBattleStruct->numSpreadTargets;
 }
 
 static enum MoveEndResult MoveEndClearBits(void)
@@ -3886,6 +3898,7 @@ static enum MoveEndResult (*const sMoveEndHandlers[])(void) =
     [MOVEEND_THIRD_MOVE_BLOCK] = MoveEndThirdMoveBlock,
     [MOVEEND_RAMPAGE] = MoveEndRampage,
     [MOVEEND_CONFUSION_AFTER_SKY_DROP] = MoveEndConfusionAfterSkyDrop,
+    [MOVEEND_SPRAY_LEPPA_BLUNDER] = MoveEndSprayLeppaBlunder,
     [MOVEEND_EJECT_PACK] = MoveEndEjectPack,
     [MOVEEND_SEND_OUT_REPLACEMENTS] = MoveEndSendOutReplacements,
     [MOVEEND_CLEAR_BITS] = MoveEndClearBits,
