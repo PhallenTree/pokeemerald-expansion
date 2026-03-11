@@ -3325,8 +3325,7 @@ static enum MoveEndResult MoveEndEmergencyExit(void)
     u32 numEmergencyExitBattlers = 0;
     u32 emergencyExitBattlers = 0;
 
-    if (HasAnyBattlerQueuedSwitch()
-     || gLastPrintedMoves[gBattlerAttacker] != gCurrentMove)
+    if (HasAnyBattlerQueuedSwitch())
     {
         gBattleScripting.moveendState++;
         return result;
