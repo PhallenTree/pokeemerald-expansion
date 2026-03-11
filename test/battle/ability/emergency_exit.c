@@ -293,7 +293,6 @@ SINGLE_BATTLE_TEST("Emergency Exit activates and attacker's Throat Spray activat
         ANIMATION(ANIM_TYPE_MOVE, MOVE_HYPER_VOICE, player);
         HP_BAR(opponent);
         ABILITY_POPUP(opponent, ABILITY_EMERGENCY_EXIT);
-        ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_HELD_ITEM_EFFECT, player);
         ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_STATS_CHANGE, player);
         ABILITY_POPUP(opponent, ABILITY_INTIMIDATE);
     }
