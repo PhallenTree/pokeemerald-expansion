@@ -10192,9 +10192,6 @@ static void Cmd_switchoutabilities(void)
     CMD_ARGS(u8 battler);
 
     enum BattlerId battler = GetBattlerForBattleScript(cmd->battler);
-    enum Ability ability = GetBattlerAbility(battler);
-
-    gBattleStruct->battlerState[battler].notOnField = TRUE;
 
     if (gBattleMons[battler].volatiles.neutralizingGas)
     {
@@ -10207,7 +10204,7 @@ static void Cmd_switchoutabilities(void)
         }
     }
 
-    switch (ability)
+    switch (GetBattlerAbility(battler))
     {
     case ABILITY_NATURAL_CURE:
         if (gBattleMons[battler].status1 & STATUS1_SLEEP)
@@ -10236,6 +10233,8 @@ static void Cmd_switchoutabilities(void)
     default:
         break;
     }
+
+    gBattleStruct->battlerState[battler].notOnField = TRUE;
 
     gBattlescriptCurrInstr = cmd->nextInstr;
 }

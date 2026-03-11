@@ -53,3 +53,25 @@ DOUBLE_BATTLE_TEST("Magician steal the item from the fastest possible target")
             EXPECT(playerLeft->item == ITEM_ULTRA_BALL);
     }
 }
+
+SINGLE_BATTLE_TEST("Magician allows activation of stolen Throat Spray")
+{
+    GIVEN {
+        ASSUME(GetItemHoldEffect(ITEM_THROAT_SPRAY) == HOLD_EFFECT_THROAT_SPRAY);
+        ASSUME(IsSoundMove(MOVE_HYPER_VOICE));
+        PLAYER(SPECIES_DELPHOX) { Ability(ABILITY_MAGICIAN); Item(ITEM_NONE); }
+        OPPONENT(SPECIES_WOBBUFFET) { Item(ITEM_THROAT_SPRAY); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_HYPER_VOICE); }
+    } SCENE {
+        // 1st turn
+        MESSAGE("Delphox used Scratch!");
+        ABILITY_POPUP(player, ABILITY_MAGICIAN);
+        MESSAGE("Delphox stole the opposing Wobbuffet's Throat Spray!");
+        ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_STATS_CHANGE, player);
+    } THEN {
+        EXPECT_EQ(player->item, ITEM_NONE);
+        EXPECT_EQ(opponent->item, ITEM_NONE);
+        EXPECT_GT(player->statStages[STAT_SPATK], DEFAULT_STAT_STAGE);
+    }
+}
