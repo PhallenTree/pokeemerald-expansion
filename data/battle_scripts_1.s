@@ -6024,7 +6024,10 @@ BattleScript_EmergencyExit::
 
 BattleScript_SwitchOutEffects::
 	returntoball BS_SCRIPTING, FALSE
-	switchoutabilities BS_SCRIPTING
+	savetarget
+	copybyte gBattlerTarget, sBATTLER
+	switchoutabilities BS_TARGET
+	restoretarget
 	return
 
 BattleScript_EmergencyExitRet::
@@ -6092,10 +6095,10 @@ BattleScript_RainDishActivates::
 	end2
 
 BattleScript_CheekPouchActivates::
-	copybyte sSAVED_BATTLER, gBattlerAttacker
+	saveattacker
 	copybyte gBattlerAttacker, gBattlerAbility
 	call BattleScript_AbilityHpHeal
-	copybyte gBattlerAttacker, sSAVED_BATTLER
+	restoreattacker
 	return
 
 BattleScript_PickupActivates::
@@ -7666,9 +7669,10 @@ BattleScript_EjectButtonActivates::
 	undodynamax BS_SCRIPTING
 	makeinvisible BS_SCRIPTING
 	returntoball BS_SCRIPTING, FALSE
-	copybyte sSAVED_BATTLER, sBATTLER
-	switchoutabilities BS_SCRIPTING
-	copybyte sBATTLER, sSAVED_BATTLER
+	savetarget
+	copybyte gBattlerTarget, sBATTLER
+	switchoutabilities BS_TARGET
+	restoretarget
 BattleScript_EjectButtonEnd:
 	return
 
