@@ -3565,7 +3565,6 @@ static inline bool32 CanEjectPackTrigger(enum BattlerId battlerAtk, enum Battler
      && IsBattlerAlive(battlerDef)
      && CanBattlerSwitch(battlerDef)
      && !gProtectStructs[battlerDef].disableEjectPack
-     && !(moveEffect == EFFECT_HIT_SWITCH_TARGET && CanBattlerSwitch(battlerAtk))
      && !(moveEffect == EFFECT_PARTING_SHOT && CanBattlerSwitch(battlerAtk)))
         return TRUE;
     return FALSE;
