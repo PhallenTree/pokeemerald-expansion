@@ -3382,7 +3382,7 @@ static enum MoveEndResult MoveEndHitEscape(void)
 
     if (GetMoveEffect(gCurrentMove) == EFFECT_HIT_ESCAPE
      && !HasAnyBattlerQueuedSwitch()
-     && gLastPrintedMoves[gBattlerAttacker] == gCurrentMove
+     && !gBattleStruct->battlerState[gBattlerAttacker].redCardSwitched
      && !gBattleStruct->unableToUseMove
      && IsAnyTargetTurnDamaged(gBattlerAttacker)
      && IsBattlerAlive(gBattlerAttacker)
@@ -3712,6 +3712,7 @@ static enum MoveEndResult MoveEndSprayLeppaBlunder(void)
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
     enum HoldEffect holdEffect = GetBattlerHoldEffect(gBattlerAttacker);
 
+    // Throat Spray, Leppa Berry, Blunder Policy
     if (ItemBattleEffects(gBattlerAttacker, 0, holdEffect, IsSprayLeppaBlunderActivation))
         result = MOVEEND_RESULT_RUN_SCRIPT;
 
@@ -3722,6 +3723,9 @@ static enum MoveEndResult MoveEndSprayLeppaBlunder(void)
 static bool32 ShouldSetStompingTantrumTimer(void)
 {
     u32 numNotAffectedTargets = 0;
+
+    if (gBattleStruct->battlerState[gBattlerAttacker].redCardSwitched) // no longer the same battler
+        return FALSE;
 
     if (gBattleStruct->pledgeMove == TRUE // Is the battler that uses the first Pledge move in the combo
      || gBattleStruct->unableToUseMove)
