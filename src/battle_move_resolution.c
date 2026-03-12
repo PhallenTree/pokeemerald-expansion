@@ -3195,9 +3195,6 @@ static bool32 HasAnyBattlerQueuedSwitch(void)
 {
     for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
     {
-        if (!IsBattlerAlive(battler))
-            continue;
-
         if (gSpecialStatuses[battler].queuedSwitch != NO_QUEUED_SWITCH)
             return TRUE;
     }
@@ -3233,9 +3230,6 @@ static bool32 TryEjectButton(enum BattlerId battlerAtk, u32 ejectButtonBattler)
      || !IsBattlerAlive(ejectButtonBattler)
      || !CanBattlerSwitch(ejectButtonBattler))
         return FALSE;
-
-    for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
-        gBattleMons[battler].volatiles.tryEjectPack = FALSE;
 
     gBattleScripting.battler = ejectButtonBattler;
     gLastUsedItem = gBattleMons[ejectButtonBattler].item;
@@ -3283,9 +3277,10 @@ static enum MoveEndResult MoveEndCardButton(void)
             result = MOVEEND_RESULT_RUN_SCRIPT;
         else if (ejectButtonBattlers & 1u << battler && TryEjectButton(gBattlerAttacker, battler))
             result = MOVEEND_RESULT_RUN_SCRIPT;
+        else
+            continue;
 
-        if (result == MOVEEND_RESULT_RUN_SCRIPT)
-            break;
+        break;
     }
 
     gBattleScripting.moveendState++;
