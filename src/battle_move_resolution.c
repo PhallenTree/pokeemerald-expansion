@@ -3231,6 +3231,9 @@ static bool32 TryEjectButton(enum BattlerId battlerAtk, u32 ejectButtonBattler)
      || !CanBattlerSwitch(ejectButtonBattler))
         return FALSE;
 
+    for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
+        gBattleMons[battler].volatiles.tryEjectPack = FALSE;
+
     gBattleScripting.battler = ejectButtonBattler;
     gLastUsedItem = gBattleMons[ejectButtonBattler].item;
     gBattleStruct->battlerState[ejectButtonBattler].usedEjectItem = TRUE;
