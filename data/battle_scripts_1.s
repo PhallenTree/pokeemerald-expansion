@@ -6024,10 +6024,7 @@ BattleScript_EmergencyExit::
 
 BattleScript_SwitchOutEffects::
 	returntoball BS_SCRIPTING, FALSE
-	savetarget
-	copybyte gBattlerTarget, sBATTLER
-	switchoutabilities BS_TARGET
-	restoretarget
+	switchoutabilities BS_SCRIPTING
 	return
 
 BattleScript_EmergencyExitRet::
@@ -7669,10 +7666,7 @@ BattleScript_EjectButtonActivates::
 	undodynamax BS_SCRIPTING
 	makeinvisible BS_SCRIPTING
 	returntoball BS_SCRIPTING, FALSE
-	savetarget
-	copybyte gBattlerTarget, sBATTLER
-	switchoutabilities BS_TARGET
-	restoretarget
+	switchoutabilities BS_SCRIPTING
 BattleScript_EjectButtonEnd:
 	return
 
@@ -7734,6 +7728,7 @@ BattleScript_PastelVeilEnd:
 	return
 
 BattleScript_NeutralizingGasExits::
+	copybyte sSAVED_BATTLER, sBATTLER
 	saveattacker
 	savetarget
 	pause B_WAIT_TIME_SHORT
@@ -7752,6 +7747,7 @@ BattleScript_NeutralizingGasExitsLoopIncrement:
 	jumpifbytenotequal gBattlerAttacker, gBattlersCount, BattleScript_NeutralizingGasExitsLoop
 	restoreattacker
 	restoretarget
+	copybyte sBATTLER, sSAVED_BATTLER
 	return
 
 BattleScript_MagicianActivates::

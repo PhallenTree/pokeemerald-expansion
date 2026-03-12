@@ -3002,8 +3002,8 @@ static bool32 TryDancer(void)
     // Set target for other Dancer mons; set bit so that mon cannot activate Dancer off of its own move
     if (!gSpecialStatuses[gBattlerAttacker].dancerUsedMove)
     {
-        gBattleScripting.savedBattler = gBattlerTarget | 0x4;
-        gBattleScripting.savedBattler |= (gBattlerAttacker << 4);
+        gBattleStruct->dancerSavedTarget = gBattlerTarget;
+        gBattleStruct->dancerSavedAttacker = gBattlerAttacker;
         gSpecialStatuses[gBattlerAttacker].dancerUsedMove = TRUE;
     }
 
@@ -3020,11 +3020,11 @@ static bool32 TryDancer(void)
         RecordAbilityBattle(gBattlerAttacker, ABILITY_DANCER);
 
         // Set the target to the original target of the mon that first used a Dance move
-        gBattlerTarget = gBattleScripting.savedBattler & 0x3;
+        gBattlerTarget = gBattleStruct->dancerSavedTarget;
 
         // Make sure that the target isn't an ally - if it is, target the original user
         if (IsBattlerAlly(gBattlerTarget, gBattlerAttacker))
-            gBattlerTarget = (gBattleScripting.savedBattler & 0xF0) >> 4;
+            gBattlerTarget = gBattleStruct->dancerSavedAttacker;
 
         BattleScriptExecute(BattleScript_DancerActivates);
         return TRUE;
