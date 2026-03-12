@@ -3283,8 +3283,6 @@ static enum MoveEndResult MoveEndCardButton(void)
 
         if (result == MOVEEND_RESULT_RUN_SCRIPT)
         {
-            for (enum BattlerId i = 0; i < gBattlersCount; i++)
-                gBattleMons[i].volatiles.tryEjectPack = FALSE;
             gBattleScripting.moveendState++;
             return result;
         }
