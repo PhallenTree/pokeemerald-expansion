@@ -3171,10 +3171,7 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
             {
             case FLUNG_ITEM_NONE:
                 gBattleStruct->flungItem = FLUNG_ITEM_REMOVE;
-                if (GetMoveEffect(gCurrentMove) != EFFECT_FLING)
-                    item = gLastUsedItem = gBattleStruct->flingItem = gBattleMons[battlerAtk].item;
-                else
-                    item = gLastUsedItem = gBattleStruct->flingItem;
+                item = gLastUsedItem = gBattleStruct->flingItem = gBattleMons[battlerAtk].item;
                 break;
             case FLUNG_ITEM_REMOVE:
             case FLUNG_ITEM_REMOVED:
