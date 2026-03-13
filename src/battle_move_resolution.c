@@ -3071,7 +3071,7 @@ static enum MoveEndResult MoveEndMoveBlock(void)
         {
             gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_POINTEDSTONESFLOAT;
             BattleScriptPushCursor();
-            gBattlescriptCurrInstr = BattleScript_StealthRockActivates;
+            gBattlescriptCurrInstr = BattleScript_MoveEffectStealthRock;
             result = MOVEEND_RESULT_RUN_SCRIPT;
         }
         break;
@@ -3089,7 +3089,7 @@ static enum MoveEndResult MoveEndMoveBlock(void)
             else
             {
                 BattleScriptPushCursor();
-                gBattlescriptCurrInstr = BattleScript_SpikesActivates;
+                gBattlescriptCurrInstr = BattleScript_MoveEffectSpikes;
                 result = MOVEEND_RESULT_RUN_SCRIPT;
             }
         }
