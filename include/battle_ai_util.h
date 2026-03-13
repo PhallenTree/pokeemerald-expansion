@@ -91,14 +91,6 @@ bool32 IsAiBattlerAssumingStab(enum BattlerId battlerId);
 bool32 IsAiBattlerAssumingStatusMoves(enum BattlerId battlerId);
 bool32 IsAiBattlerPredictingAbility(enum BattlerId battlerId);
 bool32 ShouldRecordStatusMove(enum Move move);
-void ClearBattlerMoveHistory(enum BattlerId battlerId);
-void RecordLastUsedMoveBy(enum BattlerId battlerId, enum Move move);
-void RecordAllMoves(enum BattlerId battler);
-void RecordKnownMove(enum BattlerId battlerId, enum Move move);
-void RecordAbilityBattle(enum BattlerId battlerId, enum Ability abilityId);
-void ClearBattlerAbilityHistory(enum BattlerId battlerId);
-void RecordItemEffectBattle(enum BattlerId battlerId, enum HoldEffect itemEffect);
-void ClearBattlerItemEffectHistory(enum BattlerId battlerId);
 void SaveBattlerData(enum BattlerId battlerId);
 void SetBattlerData(enum BattlerId battlerId);
 void SetBattlerAiData(enum BattlerId battler, struct AiLogicData *aiData);
@@ -305,6 +297,7 @@ bool32 SideHasMoveCategory(enum BattlerId battlerId, enum DamageCategory categor
 void GetAIPartyIndexes(enum BattlerId battlerId, s32 *firstId, s32 *lastId);
 u32 GetActiveBattlerIds(enum BattlerId battler, enum BattlerId *battlerIn1, enum BattlerId *battlerIn2);
 bool32 IsPartyMonOnFieldOrChosenToSwitch(u32 partyIndex, enum BattlerId battlerIn1, enum BattlerId battlerIn2);
+bool32 IsPartyMonPlannedToBeSwitchedInByPartner(u32 partyIndex, enum BattlerId battler);
 
 // score increases
 enum AIScore IncreaseStatUpScore(enum BattlerId battlerAtk, enum BattlerId battlerDef, enum StatChange statId);
@@ -328,7 +321,6 @@ bool32 IsBattlerItemEnabled(enum BattlerId battler);
 bool32 IsBattlerPredictedToSwitch(enum BattlerId battler);
 enum Move GetIncomingMove(enum BattlerId battler, enum BattlerId opposingBattler, struct AiLogicData *aiData);
 enum Move GetIncomingMoveSpeedCheck(enum BattlerId battler, enum BattlerId opposingBattler, struct AiLogicData *aiData);
-bool32 IsNaturalEnemy(u32 speciesAttacker, u32 speciesTarget);
 bool32 AI_OpponentCanFaintAiWithMod(enum BattlerId battler, u32 healAmount);
 void SetBattlerFieldStatusForSwitchin(enum BattlerId battler);
 bool32 ShouldInstructPartner(enum BattlerId partner, enum Move move);

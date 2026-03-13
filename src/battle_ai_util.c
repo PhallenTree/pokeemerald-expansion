@@ -222,66 +222,6 @@ enum Move GetIncomingMoveSpeedCheck(enum BattlerId battler, enum BattlerId oppos
     return MOVE_NONE;
 }
 
-void ClearBattlerMoveHistory(enum BattlerId battlerId)
-{
-    memset(gBattleHistory->usedMoves[battlerId], 0, sizeof(gBattleHistory->usedMoves[battlerId]));
-    memset(gBattleHistory->moveHistory[battlerId], 0, sizeof(gBattleHistory->moveHistory[battlerId]));
-    gBattleHistory->moveHistoryIndex[battlerId] = 0;
-}
-
-void RecordLastUsedMoveBy(enum BattlerId battlerId, enum Move move)
-{
-    u8 *index = &gBattleHistory->moveHistoryIndex[battlerId];
-
-    if (++(*index) >= AI_MOVE_HISTORY_COUNT)
-        *index = 0;
-    gBattleHistory->moveHistory[battlerId][*index] = move;
-}
-
-void RecordKnownMove(enum BattlerId battler, enum Move move)
-{
-    s32 moveIndex;
-
-    for (moveIndex = 0; moveIndex < MAX_MON_MOVES; moveIndex++)
-    {
-        if (gBattleMons[battler].moves[moveIndex] == move)
-            break;
-    }
-
-    if (moveIndex < MAX_MON_MOVES && gBattleHistory->usedMoves[battler][moveIndex] == MOVE_NONE)
-    {
-        gBattleHistory->usedMoves[battler][moveIndex] = move;
-        gAiPartyData->mons[GetBattlerSide(battler)][gBattlerPartyIndexes[battler]].moves[moveIndex] = move;
-    }
-}
-
-void RecordAllMoves(enum BattlerId battler)
-{
-    memcpy(gAiPartyData->mons[GetBattlerSide(battler)][gBattlerPartyIndexes[battler]].moves, gBattleMons[battler].moves, MAX_MON_MOVES * sizeof(u16));
-}
-
-void RecordAbilityBattle(enum BattlerId battlerId, enum Ability abilityId)
-{
-    gBattleHistory->abilities[battlerId] = abilityId;
-    gAiPartyData->mons[GetBattlerSide(battlerId)][gBattlerPartyIndexes[battlerId]].ability = abilityId;
-}
-
-void ClearBattlerAbilityHistory(enum BattlerId battlerId)
-{
-    gBattleHistory->abilities[battlerId] = ABILITY_NONE;
-}
-
-void RecordItemEffectBattle(enum BattlerId battlerId, enum HoldEffect itemEffect)
-{
-    gBattleHistory->itemEffects[battlerId] = itemEffect;
-    gAiPartyData->mons[GetBattlerSide(battlerId)][gBattlerPartyIndexes[battlerId]].heldEffect = itemEffect;
-}
-
-void ClearBattlerItemEffectHistory(enum BattlerId battlerId)
-{
-    gBattleHistory->itemEffects[battlerId] = HOLD_EFFECT_NONE;
-}
-
 void SaveBattlerData(enum BattlerId battlerId)
 {
     if (!BattlerHasAi(battlerId) && !gAiThinkingStruct->saved[battlerId].saved)
@@ -428,12 +368,12 @@ void SetBattlerData(enum BattlerId battlerId)
             gBattleMons[battlerId].ability = ABILITY_NONE;
 
         if (gAiPartyData->mons[side][gBattlerPartyIndexes[battlerId]].heldEffect == 0)
-            gBattleMons[battlerId].item = 0;
+            gBattleMons[battlerId].item = ITEM_NONE;
 
         for (u32 moveIndex = 0; moveIndex < MAX_MON_MOVES; moveIndex++)
         {
             if (gAiPartyData->mons[side][gBattlerPartyIndexes[battlerId]].moves[moveIndex] == 0)
-                gBattleMons[battlerId].moves[moveIndex] = 0;
+                gBattleMons[battlerId].moves[moveIndex] = MOVE_NONE;
         }
     }
 }
@@ -487,7 +427,7 @@ bool32 IsBattlerTrapped(enum BattlerId battlerAtk, enum BattlerId battlerDef)
         return TRUE;
     if (gBattleMons[battlerDef].volatiles.escapePrevention)
         return TRUE;
-    if (gBattleMons[battlerDef].volatiles.semiInvulnerable == STATE_SKY_DROP)
+    if (gBattleMons[battlerDef].volatiles.semiInvulnerable == STATE_SKY_DROP_TARGET)
         return TRUE;
     if (gBattleMons[battlerDef].volatiles.root)
         return TRUE;
@@ -3756,7 +3696,7 @@ bool32 AI_CanBeConfused(enum BattlerId battlerAtk, enum BattlerId battlerDef, en
     if (gBattleMons[battlerDef].volatiles.confusionTurns > 0
      || (abilityDef == ABILITY_OWN_TEMPO && !DoesBattlerIgnoreAbilityChecks(battlerAtk, gAiLogicData->abilities[battlerAtk], move))
      || IsMistyTerrainAffected(battlerDef, abilityDef, gAiLogicData->holdEffects[battlerDef], gFieldStatuses)
-     || gSideStatuses[GetBattlerSide(battlerDef)] & SIDE_STATUS_SAFEGUARD
+     || IsSafeguardProtected(battlerAtk, battlerDef, gAiLogicData->abilities[battlerAtk])
      || DoesSubstituteBlockMove(battlerAtk, battlerDef, move))
         return FALSE;
     return TRUE;
@@ -6321,31 +6261,6 @@ enum AIScore BattlerBenefitsFromAbilityScore(enum BattlerId battler, enum Abilit
     return WEAK_EFFECT;
 }
 
-bool32 IsNaturalEnemy(u32 speciesAttacker, u32 speciesTarget)
-{
-    if (B_WILD_NATURAL_ENEMIES != TRUE)
-        return FALSE;
-
-    switch (speciesAttacker)
-    {
-    case SPECIES_ZANGOOSE:
-        return (speciesTarget == SPECIES_SEVIPER);
-    case SPECIES_SEVIPER:
-        return (speciesTarget == SPECIES_ZANGOOSE);
-    case SPECIES_HEATMOR:
-        return (speciesTarget == SPECIES_DURANT);
-    case SPECIES_DURANT:
-        return (speciesTarget == SPECIES_HEATMOR);
-    case SPECIES_SABLEYE:
-        return (speciesTarget == SPECIES_CARBINK);
-    case SPECIES_MAREANIE:
-        return (speciesTarget == SPECIES_CORSOLA);
-    default:
-        return FALSE;
-    }
-    return FALSE;
-}
-
 u32 GetAIExplosionChanceFromHP(u32 hpPercent)
 {
     if (hpPercent >= EXPLOSION_HIGHER_HP_THRESHOLD)
@@ -6513,6 +6428,14 @@ bool32 IsPartyMonOnFieldOrChosenToSwitch(u32 partyIndex, enum BattlerId battlerI
         return TRUE;
     if (partyIndex == gBattleStruct->monToSwitchIntoId[battlerIn1]
             || partyIndex == gBattleStruct->monToSwitchIntoId[battlerIn2])
+        return TRUE;
+    return FALSE;
+}
+
+bool32 IsPartyMonPlannedToBeSwitchedInByPartner(u32 partyIndex, enum BattlerId battler)
+{
+    enum BattlerId battlerPartner = BATTLE_PARTNER(battler);
+    if (partyIndex == gAiLogicData->mostSuitableMonId[battlerPartner] && (gAiLogicData->shouldSwitch & (1u << battlerPartner)))
         return TRUE;
     return FALSE;
 }

@@ -1,7 +1,7 @@
 #include "global.h"
 #include "battle.h"
 #include "battle_anim.h"
-#include "battle_ai_util.h" // maybe move some stuff over to battle.h
+#include "battle_ai_record.h"
 #include "battle_controllers.h"
 #include "battle_util.h"
 #include "battle_hold_effects.h"
@@ -906,7 +906,7 @@ static enum ItemEffect HealConfuseBerry(enum BattlerId battler, enum Item itemId
 {
     enum ItemEffect effect = ITEM_NO_EFFECT;
     u32 hpFraction = B_CONFUSE_BERRIES_HEAL >= GEN_7 ? 4 : 2;
-    u32 ability = GetBattlerAbility(battler);
+    enum Ability ability = GetBattlerAbility(battler);
 
     if (HasEnoughHpToEatBerry(battler, ability, hpFraction, itemId)
      && !(B_HEAL_BLOCKING >= GEN_5 && gBattleMons[battler].volatiles.healBlock))

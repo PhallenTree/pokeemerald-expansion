@@ -7,6 +7,7 @@
 #include "battle_ai_items.h"
 #include "battle_ai_switch.h"
 #include "battle_ai_main.h"
+#include "battle_ai_record.h"
 #include "battle_controllers.h"
 #include "battle_factory.h"
 #include "battle_setup.h"
@@ -141,6 +142,35 @@ static s32 (*const sBattleAiFuncTable[])(enum BattlerId, enum BattlerId, enum Mo
 };
 
 // Functions
+void BattleAI_SetupAIData(u8 defaultScoreMoves, enum BattlerId battler)
+{
+    u32 moveLimitations;
+    u64 flags[MAX_BATTLERS_COUNT];
+
+    // Clear AI data but preserve the flags.
+    memcpy(&flags[0], &gAiThinkingStruct->aiFlags[0], sizeof(u64) * MAX_BATTLERS_COUNT);
+    memset(gAiThinkingStruct, 0, sizeof(struct AiThinkingStruct));
+    memcpy(&gAiThinkingStruct->aiFlags[0], &flags[0], sizeof(u64) * MAX_BATTLERS_COUNT);
+
+    moveLimitations = gAiLogicData->moveLimitations[battler];
+
+    // Conditional score reset, unlike Ruby.
+    for (u32 moveIndex = 0; moveIndex < MAX_MON_MOVES; moveIndex++)
+    {
+        if (moveLimitations & (1u << moveIndex))
+            SET_SCORE(battler, moveIndex, 0);
+        else if (defaultScoreMoves & 1)
+            SET_SCORE(battler, moveIndex, AI_SCORE_DEFAULT);
+        else
+            SET_SCORE(battler, moveIndex, 0);
+
+        defaultScoreMoves >>= 1;
+    }
+
+    gBattlerTarget = SetRandomTarget(battler);
+    gAiBattleData->chosenTarget[battler] = gBattlerTarget;
+}
+
 void BattleAI_SetupItems(void)
 {
     u8 *data = (u8 *)gBattleHistory;
@@ -294,35 +324,6 @@ void BattleAI_SetupFlags(void)
     }
 }
 
-void BattleAI_SetupAIData(u8 defaultScoreMoves, enum BattlerId battler)
-{
-    u32 moveLimitations;
-    u64 flags[MAX_BATTLERS_COUNT];
-
-    // Clear AI data but preserve the flags.
-    memcpy(&flags[0], &gAiThinkingStruct->aiFlags[0], sizeof(u64) * MAX_BATTLERS_COUNT);
-    memset(gAiThinkingStruct, 0, sizeof(struct AiThinkingStruct));
-    memcpy(&gAiThinkingStruct->aiFlags[0], &flags[0], sizeof(u64) * MAX_BATTLERS_COUNT);
-
-    moveLimitations = gAiLogicData->moveLimitations[battler];
-
-    // Conditional score reset, unlike Ruby.
-    for (u32 moveIndex = 0; moveIndex < MAX_MON_MOVES; moveIndex++)
-    {
-        if (moveLimitations & (1u << moveIndex))
-            SET_SCORE(battler, moveIndex, 0);
-        else if (defaultScoreMoves & 1)
-            SET_SCORE(battler, moveIndex, AI_SCORE_DEFAULT);
-        else
-            SET_SCORE(battler, moveIndex, 0);
-
-        defaultScoreMoves >>= 1;
-    }
-
-    gBattlerTarget = SetRandomTarget(battler);
-    gAiBattleData->chosenTarget[battler] = gBattlerTarget;
-}
-
 bool32 BattlerChooseNonMoveAction(void)
 {
     if (gAiThinkingStruct->aiAction & AI_ACTION_FLEE)
@@ -444,6 +445,8 @@ void AI_TrySwitchOrUseItem(enum BattlerId battler)
                         if (!IsValidForBattle(&party[monToSwitchId]))
                             continue;
                         if (IsPartyMonOnFieldOrChosenToSwitch(monToSwitchId, battlerIn1, battlerIn2))
+                            continue;
+                        if (IsPartyMonPlannedToBeSwitchedInByPartner(monToSwitchId, battler))
                             continue;
                         if (IsAceMon(battler, monToSwitchId))
                             continue;
@@ -811,7 +814,7 @@ static u32 ChooseMoveOrAction_Singles(enum BattlerId battler)
 
     gAiThinkingStruct->aiLogicId = 0;
     gAiThinkingStruct->movesetIndex = 0;
-    gAiLogicData->partnerMove = 0;   // no ally
+    gAiLogicData->partnerMove = MOVE_NONE;   // no ally
 
     while (flags != 0)
     {
@@ -2779,7 +2782,7 @@ static s32 AI_CheckBadMove(enum BattlerId battlerAtk, enum BattlerId battlerDef,
             ADJUST_SCORE(-10);
         break;
     case EFFECT_FLING:
-        if (!CanFling(battlerAtk))
+        if (!CanFling(battlerAtk, abilityAtk))
         {
             ADJUST_SCORE(-10);
         }
@@ -4326,6 +4329,8 @@ static s32 AI_CalcMoveEffectScore(enum BattlerId battlerAtk, enum BattlerId batt
     bool32 isBattle1v1 = IsBattle1v1();
     bool32 hasTwoOpponents = HasTwoOpponents(battlerAtk);
     bool32 hasPartner = HasPartner(battlerAtk);
+    enum BattlerId battlerAtkPartner = BATTLE_PARTNER(battlerAtk);
+    enum BattlerId battlerDefPartner = BATTLE_PARTNER(battlerDef);
     enum MoveTarget moveTarget = AI_GetBattlerMoveTargetType(battlerAtk, move);
     bool32 moveTargetsBothOpponents = hasTwoOpponents && (IsSpreadMove(moveTarget) || moveTarget == TARGET_ALL_BATTLERS || moveTarget == TARGET_FIELD);
 
@@ -4366,7 +4371,7 @@ static s32 AI_CalcMoveEffectScore(enum BattlerId battlerAtk, enum BattlerId batt
     }
 
     // check guaranteed flinch, a la Fake Out
-    if (IsFlinchGuaranteed(battlerAtk, battlerDef, move))
+    if (IsFlinchGuaranteed(battlerAtk, battlerDef, move) && !IsDoubleBattle())
         ADJUST_SCORE(BEST_EFFECT);
 
     if (IsExplosionMove(move) && gAiThinkingStruct->aiFlags[battlerAtk] & AI_FLAG_WILL_SUICIDE && gBattleMons[battlerDef].statStages[STAT_EVASION] <= DEFAULT_STAT_STAGE)
@@ -5009,8 +5014,65 @@ static s32 AI_CalcMoveEffectScore(enum BattlerId battlerAtk, enum BattlerId batt
         ADJUST_SCORE(IncreaseStatUpScore(battlerAtk, battlerDef, STAT_CHANGE_DEF));
         break;
     case EFFECT_FIRST_TURN_ONLY:
-        if (gBattleStruct->battlerState[battlerAtk].isFirstTurn && IsBestDmgMove(battlerAtk, battlerDef, AI_ATTACKING, move))
-            ADJUST_SCORE(BEST_EFFECT);
+        if (gBattleStruct->battlerState[battlerAtk].isFirstTurn && !IsTargetingPartner(battlerAtk, battlerDef))
+        {
+            // Fake Out in doubles
+            if (IsDoubleBattle() && IsFlinchGuaranteed(battlerAtk, battlerDef, move))
+            {
+                bool32 atkKoDef = CanAIFaintTarget(battlerAtk, battlerDef, 1);
+                bool32 atkKoDefPartner = CanAIFaintTarget(battlerAtk, battlerDefPartner, 1);
+                bool32 defKoAtkPartner = CanAIFaintTarget(battlerDef, battlerAtkPartner, 1);
+                bool32 atkPartnerKoDef = CanAIFaintTarget(battlerAtkPartner, battlerDef, 1);
+                bool32 atkPartnerKoDefPartner = CanAIFaintTarget(battlerAtkPartner, battlerDefPartner, 1);
+                bool32 defPartnerKoAtkPartner = CanAIFaintTarget(battlerDefPartner, battlerAtkPartner, 1);
+                bool32 atkPartnerDoubleFastKOd = (defKoAtkPartner && AI_WhoStrikesFirst(battlerAtkPartner, battlerDef, gBattleMons[battlerAtkPartner].moves[gAiBattleData->chosenMoveIndex[battlerAtkPartner]], predictedMoveSpeedCheck, CONSIDER_PRIORITY) == AI_IS_SLOWER)
+                 && (defPartnerKoAtkPartner && AI_WhoStrikesFirst(battlerAtkPartner, battlerDefPartner, gBattleMons[battlerAtkPartner].moves[gAiBattleData->chosenMoveIndex[battlerAtkPartner]], MOVE_SCRATCH, CONSIDER_PRIORITY) == AI_IS_SLOWER);
+
+                // If either opponent has Fake Out, it's their first turn but user is faster - incentivise Fake Out on both
+                if ((HasMove(battlerDef, MOVE_FAKE_OUT) && gBattleStruct->battlerState[battlerDef].isFirstTurn
+                 && AI_WhoStrikesFirst(battlerAtk, battlerDef, MOVE_FAKE_OUT, MOVE_FAKE_OUT, CONSIDER_PRIORITY) == AI_IS_FASTER)
+                 || (HasMove(battlerDefPartner, MOVE_FAKE_OUT) && gBattleStruct->battlerState[battlerDefPartner].isFirstTurn
+                 && AI_WhoStrikesFirst(battlerAtk, battlerDefPartner, MOVE_FAKE_OUT, MOVE_FAKE_OUT, CONSIDER_PRIORITY) == AI_IS_FASTER))
+                {    
+                    ADJUST_SCORE(FAST_KILL + 2);
+                }
+                // If ally has KO on target's partner, but target can fast KO ally (checking move and priority combinations for everything likely gets a bit complicated)
+                else if (hasPartner && atkPartnerKoDefPartner
+                 && (defKoAtkPartner && AI_WhoStrikesFirst(battlerAtkPartner, battlerDef, gBattleMons[battlerAtkPartner].moves[gAiBattleData->chosenMoveIndex[battlerAtkPartner]], predictedMoveSpeedCheck, CONSIDER_PRIORITY) == AI_IS_SLOWER)
+                 && !(atkKoDef && AI_WhoStrikesFirst(battlerAtk, battlerDef, move, predictedMoveSpeedCheck, DONT_CONSIDER_PRIORITY) == AI_IS_FASTER))
+                {
+                    if (AI_WhoStrikesFirst(battlerAtkPartner, battlerDefPartner, gBattleMons[battlerAtkPartner].moves[gAiBattleData->chosenMoveIndex[battlerAtkPartner]], predictedMoveSpeedCheck, CONSIDER_PRIORITY) == AI_IS_FASTER)
+                        ADJUST_SCORE(FAST_KILL + 2); // No point fast KOing target's partner when user can save ally who will do it anyway
+                    else if (atkPartnerDoubleFastKOd)
+                    {
+                        if (RandomPercentage(RNG_AI_FAKE_OUT_SAVE_ALLY, FAKE_OUT_SAVE_ALLY_CHANCE))
+                            ADJUST_SCORE(FAST_KILL + 2); // Still Fake Out in case the ally is not double targeted
+                        else
+                            ADJUST_SCORE(SLOW_KILL + 2); // Prioritize fast KO
+                    }
+                    else
+                    {
+                        ADJUST_SCORE(SLOW_KILL + 2);
+                    }
+                }
+                // If ally has slow KO with their chosen move, user sees no KOs while outspeeding (checking move and priority combinations for everything likely gets a bit complicated)
+                else if (hasPartner 
+                 && (atkPartnerKoDef && AI_WhoStrikesFirst(battlerAtkPartner, battlerDef, gBattleMons[battlerAtkPartner].moves[gAiBattleData->chosenMoveIndex[battlerAtkPartner]], predictedMoveSpeedCheck, CONSIDER_PRIORITY) == AI_IS_SLOWER)
+                 && !(atkKoDef && AI_WhoStrikesFirst(battlerAtk, battlerDef, move, predictedMoveSpeedCheck, DONT_CONSIDER_PRIORITY) == AI_IS_FASTER)
+                 && !(atkKoDefPartner && AI_WhoStrikesFirst(battlerAtk, battlerDefPartner, move, MOVE_SCRATCH, DONT_CONSIDER_PRIORITY) == AI_IS_FASTER))
+                {
+                    ADJUST_SCORE(GOOD_EFFECT);
+                }
+                else
+                {    
+                    ADJUST_SCORE(DECENT_EFFECT);
+                }
+            }
+            else if (IsBestDmgMove(battlerAtk, battlerDef, AI_ATTACKING, move))
+            {
+                ADJUST_SCORE(BEST_EFFECT);
+            }
+        }
         break;
     case EFFECT_STOCKPILE:
         if (aiData->abilities[battlerAtk] == ABILITY_CONTRARY)
@@ -5952,6 +6014,31 @@ static s32 AI_CalcAdditionalEffectScore(enum BattlerId battlerAtk, enum BattlerI
                 case MOVE_EFFECT_EVS_PLUS_2:
                     ADJUST_SCORE(IncreaseStatUpScore(battlerAtk, battlerDef, STAT_CHANGE_EVASION));
                     break;
+                case MOVE_EFFECT_ORDER_UP:
+                {
+                    enum StatChange stageStatId = STAT_CHANGE_ATK;
+                    bool32 commanderAffected = TRUE;
+
+                    switch (gBattleStruct->battlerState[battlerAtk].commanderSpecies)
+                    {
+                    case SPECIES_TATSUGIRI_CURLY:
+                        stageStatId = STAT_CHANGE_ATK;
+                        break;
+                    case SPECIES_TATSUGIRI_DROOPY:
+                        stageStatId = STAT_CHANGE_DEF;
+                        break;
+                    case SPECIES_TATSUGIRI_STRETCHY:
+                        stageStatId = STAT_CHANGE_SPEED;
+                        break;
+                    default:
+                        commanderAffected = FALSE;
+                        break;
+                    }
+
+                    if (commanderAffected)
+                        ADJUST_SCORE(IncreaseStatUpScore(battlerAtk, battlerDef, stageStatId));
+                    break;
+                }
                 default:
                     break;
                 }
