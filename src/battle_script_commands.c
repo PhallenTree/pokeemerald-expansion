@@ -2790,8 +2790,6 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
         s32 recoil = (gBattleMons[effectBattler].maxHP) / 4;
         if (recoil == 0)
             recoil = 1;
-        if (abilities[effectBattler] == ABILITY_PARENTAL_BOND)
-            recoil *= 2;
         SetPassiveDamageAmount(effectBattler, recoil);
         TryUpdateEvolutionTracker(IF_RECOIL_DAMAGE_GE, gBattleStruct->passiveHpUpdate[battlerAtk], MOVE_NONE);
         BattleScriptPush(battleScript);
