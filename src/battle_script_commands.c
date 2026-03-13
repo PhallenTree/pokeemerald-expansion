@@ -2612,16 +2612,16 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
         break;
     }
     case MOVE_EFFECT_WRAP:
-        if (gBattleMons[gEffectBattler].volatiles.wrapped)
+        if (gBattleMons[effectBattler].volatiles.wrapped)
         {
             gBattlescriptCurrInstr = battleScript;
         }
         else
         {
-            SetWrapTurns(gEffectBattler, GetBattlerHoldEffect(battlerAtk));
-            gBattleMons[gEffectBattler].volatiles.wrapped = TRUE;
-            gBattleMons[gEffectBattler].volatiles.wrappedMove = gCurrentMove;
-            gBattleMons[gEffectBattler].volatiles.wrappedBy = battlerAtk;
+            SetWrapTurns(effectBattler, GetBattlerHoldEffect(battlerAtk));
+            gBattleMons[effectBattler].volatiles.wrapped = TRUE;
+            gBattleMons[effectBattler].volatiles.wrappedMove = gCurrentMove;
+            gBattleMons[effectBattler].volatiles.wrappedBy = battlerAtk;
             BattleScriptPush(battleScript);
             gBattlescriptCurrInstr = BattleScript_MoveEffectWrap;
         }
@@ -2742,8 +2742,8 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
         if (B_SKIP_RECHARGE == GEN_1 && !IsBattlerAlive(gBattlerTarget))  // Skip recharge if gen 1 and foe is KO'd
             break;
 
-        gBattleMons[gEffectBattler].volatiles.rechargeTimer = 2;
-        gLockedMoves[gEffectBattler] = gCurrentMove;
+        gBattleMons[effectBattler].volatiles.rechargeTimer = 2;
+        gLockedMoves[effectBattler] = gCurrentMove;
         gBattlescriptCurrInstr = battleScript;
         break;
     case MOVE_EFFECT_RAGE:
@@ -3431,7 +3431,7 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
         gBattlescriptCurrInstr = BattleScript_EffectEffectSporeSide;
         break;
     case MOVE_EFFECT_CONFUSE_PAY_DAY_SIDE:
-        if (gBattleTypeFlags & BATTLE_TYPE_TRAINER)
+        if (gBattleTypeFlags & BATTLE_TYPE_TRAINER && IsOnPlayerSide(battlerAtk))
         {
             u32 payday = gPaydayMoney;
             gPaydayMoney += (gBattleMons[battlerAtk].level * 100);
@@ -3457,10 +3457,10 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
         gBattlescriptCurrInstr = BattleScript_EffectMeanLookSide;
         break;
     case MOVE_EFFECT_CRIT_PLUS_SIDE:
-        if (gBattleMons[battlerAtk].volatiles.bonusCritStages < 3)
-            gBattleMons[battlerAtk].volatiles.bonusCritStages++;
-        if (gBattleMons[BATTLE_PARTNER(battlerAtk)].volatiles.bonusCritStages < 3)
-            gBattleMons[BATTLE_PARTNER(battlerAtk)].volatiles.bonusCritStages++;
+        if (gBattleMons[effectBattler].volatiles.bonusCritStages < 3)
+            gBattleMons[effectBattler].volatiles.bonusCritStages++;
+        if (gBattleMons[BATTLE_PARTNER(effectBattler)].volatiles.bonusCritStages < 3)
+            gBattleMons[BATTLE_PARTNER(effectBattler)].volatiles.bonusCritStages++;
         BattleScriptPush(battleScript);
         gBattlescriptCurrInstr = BattleScript_EffectRaiseCritAlliesAnim;
         break;
@@ -3482,13 +3482,13 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
     case MOVE_EFFECT_REMOVE_STATUS:
     {
         u32 argStatus = GetMoveEffectArg_Status(gCurrentMove);
-        if ((gBattleMons[gEffectBattler].status1 & argStatus)
-         && (NumAffectedSpreadMoveTargets() > 1 || !IsMoveEffectBlockedByTarget(abilities[gEffectBattler])))
+        if ((gBattleMons[effectBattler].status1 & argStatus)
+         && (NumAffectedSpreadMoveTargets() > 1 || !IsMoveEffectBlockedByTarget(abilities[effectBattler])))
         {
-            gBattleScripting.battler = gEffectBattler;
-            gBattleMons[gEffectBattler].status1 &= ~(argStatus);
-            BtlController_EmitSetMonData(gEffectBattler, 0, REQUEST_STATUS_BATTLE, 0, 4, &gBattleMons[gEffectBattler].status1);
-            MarkBattlerForControllerExec(gEffectBattler);
+            gBattleScripting.battler = effectBattler;
+            gBattleMons[effectBattler].status1 &= ~(argStatus);
+            BtlController_EmitSetMonData(effectBattler, 0, REQUEST_STATUS_BATTLE, 0, 4, &gBattleMons[effectBattler].status1);
+            MarkBattlerForControllerExec(effectBattler);
             BattleScriptPush(battleScript);
 
             switch (argStatus)
@@ -3497,7 +3497,7 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
                 gBattlescriptCurrInstr = BattleScript_TargetPRLZHeal;
                 break;
             case STATUS1_SLEEP:
-                TryDeactivateSleepClause(GetBattlerSide(gEffectBattler), gBattlerPartyIndexes[effectBattler]);
+                TryDeactivateSleepClause(GetBattlerSide(effectBattler), gBattlerPartyIndexes[effectBattler]);
                 gBattlescriptCurrInstr = BattleScript_TargetWokeUp;
                 break;
             case STATUS1_BURN:
