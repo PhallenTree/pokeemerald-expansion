@@ -7908,7 +7908,7 @@ BattleScript_EffectConfuseSide::
 BattleScript_ConfuseSideLoop:
 	jumpifabsent BS_TARGET, BattleScript_ConfuseSideIncrement
 	trysetconfusion BattleScript_ConfuseSideIncrement
-	volatileanimation BS_EFFECT_BATTLER, VOLATILE_CONFUSION
+	volatileanimation BS_TARGET, VOLATILE_CONFUSION
 BattleScript_ConfuseSidePrintMessage:
 	printstring STRINGID_PKMNWASCONFUSED
 	waitmessage B_WAIT_TIME_LONG
@@ -7931,7 +7931,7 @@ BattleScript_EffectInfatuateSide::
 BattleScript_InfatuateSideLoop:
 	jumpifabsent BS_TARGET, BattleScript_InfatuateSideIncrement
 	trysetinfatuation BattleScript_InfatuateSideIncrement
-	volatileanimation BS_EFFECT_BATTLER, VOLATILE_INFATUATION
+	volatileanimation BS_TARGET, VOLATILE_INFATUATION
 BattleScript_InfatuateSidePrintMessage:
 	printstring STRINGID_PKMNFELLINLOVE
 	waitmessage B_WAIT_TIME_LONG
