@@ -14985,9 +14985,6 @@ void BS_UndoDynamax(void)
 
 void BS_EndTurnEvents(void)
 {
-    
-    s32 i;
-
     gBattleStruct->speedTieBreaks = RandomUniform(RNG_SPEED_TIE, 0, Factorial(MAX_BATTLERS_COUNT) - 1);
 
     TurnValuesCleanUp(TRUE);
@@ -15007,7 +15004,7 @@ void BS_EndTurnEvents(void)
     gBattleScripting.animTargetsHit = 0;
     gBattleScripting.moveendState = 0;
 
-    for (i = 0; i < 5; i++)
+    for (u32 i = 0; i < 5; i++)
         gBattleCommunication[i] = 0;
 
     if (gBattleOutcome != 0)
@@ -15036,7 +15033,7 @@ void BS_EndTurnEvents(void)
             gBattleStruct->battlerState[battler].stompingTantrumTimer--;
     }
 
-    for (i = 0; i < NUM_BATTLE_SIDES; i++)
+    for (u32 i = 0; i < NUM_BATTLE_SIDES; i++)
     {
         if (gSideTimers[i].retaliateTimer > 0)
             gSideTimers[i].retaliateTimer--;

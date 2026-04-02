@@ -105,7 +105,6 @@ static void SpriteCB_AnimFaintOpponent(struct Sprite *sprite);
 static void SpriteCB_BlinkVisible(struct Sprite *sprite);
 static void SpriteCB_Idle(struct Sprite *sprite);
 static void SpriteCB_BattleSpriteSlideLeft(struct Sprite *sprite);
-static void TurnValuesCleanUp(bool8 var0);
 static void SpriteCB_BounceEffect(struct Sprite *sprite);
 static void BattleStartClearSetData(void);
 static void DoBattleIntro(void);
@@ -4999,7 +4998,7 @@ static void SetActionsAndBattlersTurnOrder(void)
     gBattleStruct->quickClawBattlerId = 0;
 }
 
-static void TurnValuesCleanUp(bool8 var0)
+void TurnValuesCleanUp(bool8 var0)
 {
     for (enum BattlerId i = 0; i < gBattlersCount; i++)
     {

@@ -93,6 +93,7 @@ void SwitchInClearSetData(enum BattlerId battler, struct Volatiles *volatilesCop
 void FaintClearSetData(enum BattlerId battler);
 void BattleTurnPassed(void);
 void SetNextTurnActions(void);
+void TurnValuesCleanUp(bool8 var0);
 u8 IsRunningFromBattleImpossible(enum BattlerId battler);
 void SwitchTwoBattlersInParty(enum BattlerId battler, enum BattlerId battler2);
 void SwitchPartyOrder(enum BattlerId battler);
