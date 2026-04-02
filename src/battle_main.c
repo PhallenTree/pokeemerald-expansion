@@ -3922,74 +3922,15 @@ static void HandleEndTurn_ContinueBattle(void)
 
 void BattleTurnPassed(void)
 {
-    s32 i;
+    BattleScriptExecute(BattleScript_EndTurnEvents);
+}
 
-    gBattleStruct->speedTieBreaks = RandomUniform(RNG_SPEED_TIE, 0, Factorial(MAX_BATTLERS_COUNT) - 1);
-
-    TurnValuesCleanUp(TRUE);
-
-    if (gBattleOutcome == 0 && DoEndTurnEffects())
-        return;
-    if (BattleArenaTurnEnd())
-        return;
-    if (HandleFaintedMonActions())
-        return;
-
-    gBattleStruct->eventState.faintedAction = 0;
-
-    TurnValuesCleanUp(FALSE);
-    gHitMarker &= ~HITMARKER_PLAYER_FAINTED;
-    gBattleScripting.animTurn = 0;
-    gBattleScripting.animTargetsHit = 0;
-    gBattleScripting.moveendState = 0;
-
-    for (i = 0; i < 5; i++)
-        gBattleCommunication[i] = 0;
-
-    if (gBattleOutcome != 0)
-    {
-        gCurrentActionFuncId = B_ACTION_FINISHED;
-        gBattleMainFunc = RunTurnActionsFunctions;
-        return;
-    }
-
-    if (gBattleResults.battleTurnCounter < 0xFF)
-    {
-        gBattleResults.battleTurnCounter++;
-        gBattleStruct->eventState.arenaTurn++;
-    }
-
-    for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
-    {
-        gChosenActionByBattler[battler] = B_ACTION_NONE;
-        gChosenMoveByBattler[battler] = MOVE_NONE;
-        gBattleStruct->monToSwitchIntoId[battler] = PARTY_SIZE;
-        gBattleMons[battler].volatiles.electrified = FALSE;
-        gBattleMons[battler].volatiles.flinched = FALSE;
-        gBattleMons[battler].volatiles.powder = FALSE;
-
-        if (gBattleStruct->battlerState[battler].stompingTantrumTimer > 0)
-            gBattleStruct->battlerState[battler].stompingTantrumTimer--;
-    }
-
-    for (i = 0; i < NUM_BATTLE_SIDES; i++)
-    {
-        if (gSideTimers[i].retaliateTimer > 0)
-            gSideTimers[i].retaliateTimer--;
-    }    
-
-    gFieldStatuses &= ~STATUS_FIELD_ION_DELUGE;
-
-    BattlePutTextOnWindow(gText_EmptyString3, B_WIN_MSG);
-    AssignUsableGimmicks();
-    SetShellSideArmCategory();
-    SetAiLogicDataForTurn(gAiLogicData); // get assumed abilities, hold effects, etc of all battlers
-    gBattleMainFunc = HandleTurnActionSelectionState;
-
-    if (gBattleTypeFlags & BATTLE_TYPE_PALACE)
-        BattleScriptExecute(BattleScript_PalacePrintFlavorText);
-    else if (gBattleTypeFlags & BATTLE_TYPE_ARENA && gBattleStruct->eventState.arenaTurn == 0)
-        BattleScriptExecute(BattleScript_ArenaTurnBeginning);
+void SetNextTurnActions(void)
+{
+    if (gBattleResources->battleCallbackStack->size != 0) // Change callback to next turn's action selection
+        gBattleResources->battleCallbackStack->function[gBattleResources->battleCallbackStack->size - 1] = HandleTurnActionSelectionState;
+    else
+        gBattleMainFunc = HandleTurnActionSelectionState;
 }
 
 u8 IsRunningFromBattleImpossible(enum BattlerId battler)
