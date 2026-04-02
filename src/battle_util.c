@@ -5260,7 +5260,42 @@ bool32 CanBeSlept(enum BattlerId battlerAtk, enum BattlerId battlerDef, enum Abi
             battlerDef,
             ABILITY_NONE, // attacker ability does not matter
             abilityDef,
-            MOVE_EFFECT_SLEEP, // also covers yawn
+            MOVE_EFFECT_SLEEP,
+            CHECK_TRIGGER))
+        effect = TRUE;
+
+    gBattleStruct->sleepClauseNotBlocked = FALSE;
+    return effect;
+}
+
+bool32 CanBeYawned(enum BattlerId battlerAtk, enum BattlerId battlerDef, enum Ability abilityDef)
+{
+    if (CanSetNonVolatileStatus(
+            battlerAtk,
+            battlerDef,
+            ABILITY_NONE, // attacker ability does not matter
+            abilityDef,
+            MOVE_EFFECT_YAWN,
+            CHECK_TRIGGER))
+        return TRUE;
+    return FALSE;
+}
+
+bool32 CanBeYawnSlept(enum BattlerId battlerDef, enum Ability abilityDef, enum SleepClauseBlock isBlockedBySleepClause)
+{
+    if (IsSleepClauseActiveForSide(GetBattlerSide(battlerDef)) && isBlockedBySleepClause != NOT_BLOCKED_BY_SLEEP_CLAUSE)
+        return FALSE;
+
+    if (isBlockedBySleepClause == NOT_BLOCKED_BY_SLEEP_CLAUSE)
+        gBattleStruct->sleepClauseNotBlocked = TRUE;
+
+    bool32 effect = FALSE;
+    if (CanSetNonVolatileStatus(
+            battlerDef, // attacker does not matter
+            battlerDef,
+            ABILITY_NONE, // attacker ability does not matter
+            abilityDef,
+            MOVE_EFFECT_SLEEP,
             CHECK_TRIGGER))
         effect = TRUE;
 
@@ -5416,16 +5451,18 @@ bool32 CanSetNonVolatileStatus(enum BattlerId battlerAtk, enum BattlerId battler
             battleScript = BattleScript_AbilityProtectsDoesntAffect;
         }
         break;
+    case MOVE_EFFECT_YAWN:
     case MOVE_EFFECT_SLEEP:
         if (gBattleMons[battlerDef].status1 & STATUS1_SLEEP)
         {
             battleScript = BattleScript_AlreadyAsleep;
         }
-        else if (UproarWakeUpCheck(battlerDef))
+        // TODO: Yawn Gen 3-4 only (use Uproar config)
+        else if (UproarWakeUpCheck(battlerDef) && effect == MOVE_EFFECT_SLEEP && gCurrentMove != MOVE_NONE) // Yawn sleep ignores this
         {
             battleScript = BattleScript_CantMakeAsleep;
         }
-        else if (!gBattleStruct->sleepClauseNotBlocked && CanSleepDueToSleepClause(battlerAtk, battlerDef, option))
+        else if (effect == MOVE_EFFECT_SLEEP && !gBattleStruct->sleepClauseNotBlocked && CanSleepDueToSleepClause(battlerAtk, battlerDef, option))
         {
             battleScript = BattleScript_SleepClauseBlocked;
         }
@@ -5476,7 +5513,7 @@ bool32 CanSetNonVolatileStatus(enum BattlerId battlerAtk, enum BattlerId battler
         abilityAffected = TRUE;
         battleScript = BattleScript_AbilityProtectsDoesntAffect;
     }
-    else if (IsMistyTerrainAffected(battlerDef, abilityDef, GetBattlerHoldEffect(battlerDef), gFieldStatuses))
+    else if (IsMistyTerrainAffected(battlerDef, abilityDef, GetBattlerHoldEffect(battlerDef), gFieldStatuses) && effect != MOVE_EFFECT_YAWN)
     {
         battleScript = BattleScript_MistyTerrainPrevents;
     }
@@ -5490,14 +5527,14 @@ bool32 CanSetNonVolatileStatus(enum BattlerId battlerAtk, enum BattlerId battler
         abilityAffected = TRUE;
         battleScript = BattleScript_AbilityProtectsDoesntAffect;
     }
-    else if ((sideBattler = IsFlowerVeilProtected(battlerDef)))
+    else if (gCurrentMove != MOVE_NONE && (sideBattler = IsFlowerVeilProtected(battlerDef))) // Yawn sleep ignores this
     {
         abilityAffected = TRUE;
         battlerDef = sideBattler - 1;
         abilityDef = ABILITY_FLOWER_VEIL;
         battleScript = BattleScript_FlowerVeilProtects;
     }
-    else if (IsSafeguardProtected(battlerAtk, battlerDef, abilityAtk))
+    else if (gCurrentMove != MOVE_NONE && IsSafeguardProtected(battlerAtk, battlerDef, abilityAtk)) // Yawn sleep ignores this
     {
         battleScript = BattleScript_SafeguardProtected;
     }

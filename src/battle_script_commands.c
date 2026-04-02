@@ -3415,7 +3415,7 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
             }
         }
         break;
-    case MOVE_EFFECT_YAWN_FOE:
+    case MOVE_EFFECT_YAWN:
         if (gBattleMons[gBattlerTarget].volatiles.yawn == 0
             && CanBeSlept(gBattlerTarget, gBattlerTarget, abilities[gBattlerTarget], BLOCKED_BY_SLEEP_CLAUSE)
             && RandomPercentage(RNG_G_MAX_SNOOZE, 50))
@@ -8063,25 +8063,20 @@ static void Cmd_twoturnmoveschargestringandanimation(void)
 static void Cmd_trynonvolatilestatus(void)
 {
     CMD_ARGS();
-    bool32 canInflictStatus = TRUE;
 
-    if (!CanSetNonVolatileStatus(
-            gBattlerAttacker,
-            gBattlerTarget,
-            GetBattlerAbility(gBattlerAttacker),
-            GetBattlerAbility(gBattlerTarget),
-            GetMoveNonVolatileStatus(gCurrentMove),
-            RUN_SCRIPT))
-        canInflictStatus = FALSE;
-
-    if (canInflictStatus && DoesSubstituteBlockMove(gBattlerAttacker, gBattlerTarget, gCurrentMove))
+    if (CanSetNonVolatileStatus(
+        gBattlerAttacker,
+        gBattlerTarget,
+        GetBattlerAbility(gBattlerAttacker),
+        GetBattlerAbility(gBattlerTarget),
+        GetMoveNonVolatileStatus(gCurrentMove),
+        RUN_SCRIPT))
     {
-        canInflictStatus = FALSE;
-        gBattlescriptCurrInstr = BattleScript_ButItFailed;
+        if (DoesSubstituteBlockMove(gBattlerAttacker, gBattlerTarget, gCurrentMove))
+            gBattlescriptCurrInstr = BattleScript_ButItFailed;
+        else
+            gBattlescriptCurrInstr = cmd->nextInstr;
     }
-
-    if (canInflictStatus)
-        gBattlescriptCurrInstr = cmd->nextInstr;
 }
 
 static void Cmd_initmultihitstring(void)
@@ -9947,12 +9942,6 @@ static void Cmd_setyawn(void)
         // When Yawn is used while Electric Terrain is set and drowsiness is set from Yawn being used against target in the previous turn:
         // "But it failed" will display first.
         gBattlescriptCurrInstr = BattleScript_ElectricTerrainPrevents;
-    }
-    else if (IsMistyTerrainAffected(gBattlerTarget, ability, holdEffect, gFieldStatuses))
-    {
-        // When Yawn is used while Misty Terrain is set and drowsiness is set from Yawn being used against target in the previous turn:
-        // "But it failed" will display first.
-        gBattlescriptCurrInstr = BattleScript_MistyTerrainPrevents;
     }
     else
     {

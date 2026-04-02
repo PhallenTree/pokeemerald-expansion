@@ -866,11 +866,7 @@ static bool32 HandleEndTurnYawn(enum BattlerId battler)
     {
         gBattleMons[battler].volatiles.yawn--;
         if (!gBattleMons[battler].volatiles.yawn
-         && !(gBattleMons[battler].status1 & STATUS1_ANY)
-         && ability != ABILITY_VITAL_SPIRIT
-         && ability != ABILITY_INSOMNIA
-         && !UproarWakeUpCheck(battler)
-         && !IsLeafGuardProtected(battler, ability))
+         && CanBeYawnSlept(battler, ability, BLOCKED_BY_SLEEP_CLAUSE))
         {
             gEffectBattler = gBattlerTarget = battler;
             enum HoldEffect holdEffect = GetBattlerHoldEffect(battler);

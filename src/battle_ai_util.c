@@ -3198,7 +3198,7 @@ static inline bool32 IsMoveSleepClauseTrigger(enum Move move)
         {
         // Skip MOVE_EFFECT_SLEEP as moves with a secondary chance of applying sleep are allowed by Smogon's rules (ie. Relic Song)
         case MOVE_EFFECT_EFFECT_SPORE_SIDE:
-        case MOVE_EFFECT_YAWN_FOE:
+        case MOVE_EFFECT_YAWN:
             return TRUE;
         default:
             break;
