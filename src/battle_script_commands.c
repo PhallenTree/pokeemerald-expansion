@@ -14985,70 +14985,15 @@ void BS_UndoDynamax(void)
 
 void BS_EndTurnEvents(void)
 {
-    gBattleStruct->speedTieBreaks = RandomUniform(RNG_SPEED_TIE, 0, Factorial(MAX_BATTLERS_COUNT) - 1);
+    NATIVE_ARGS();
 
-    TurnValuesCleanUp(TRUE);
-
-    if (gBattleOutcome == 0 && DoEndTurnEffects())
+    if (EndTurnEvents())
         return;
-    if (BattleArenaTurnEnd())
-        return;
-    if (HandleFaintedMonActions())
-        return;
-
-    gBattleStruct->eventState.faintedAction = 0;
-
-    TurnValuesCleanUp(FALSE);
-    gHitMarker &= ~HITMARKER_PLAYER_FAINTED;
-    gBattleScripting.animTurn = 0;
-    gBattleScripting.animTargetsHit = 0;
-    gBattleScripting.moveendState = 0;
-
-    for (u32 i = 0; i < 5; i++)
-        gBattleCommunication[i] = 0;
-
-    if (gBattleOutcome != 0)
-    {
-        gCurrentActionFuncId = B_ACTION_FINISHED;
-        gBattleMainFunc = RunTurnActionsFunctions;
-        return;
-    }
-
-    if (gBattleResults.battleTurnCounter < 0xFF)
-    {
-        gBattleResults.battleTurnCounter++;
-        gBattleStruct->eventState.arenaTurn++;
-    }
-
-    for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
-    {
-        gChosenActionByBattler[battler] = B_ACTION_NONE;
-        gChosenMoveByBattler[battler] = MOVE_NONE;
-        gBattleStruct->monToSwitchIntoId[battler] = PARTY_SIZE;
-        gBattleMons[battler].volatiles.electrified = FALSE;
-        gBattleMons[battler].volatiles.flinched = FALSE;
-        gBattleMons[battler].volatiles.powder = FALSE;
-
-        if (gBattleStruct->battlerState[battler].stompingTantrumTimer > 0)
-            gBattleStruct->battlerState[battler].stompingTantrumTimer--;
-    }
-
-    for (u32 i = 0; i < NUM_BATTLE_SIDES; i++)
-    {
-        if (gSideTimers[i].retaliateTimer > 0)
-            gSideTimers[i].retaliateTimer--;
-    }    
-
-    gFieldStatuses &= ~STATUS_FIELD_ION_DELUGE;
-
-    BattlePutTextOnWindow(gText_EmptyString3, B_WIN_MSG);
-    AssignUsableGimmicks();
-    SetShellSideArmCategory();
-    SetAiLogicDataForTurn(gAiLogicData); // get assumed abilities, hold effects, etc of all battlers
-    SetNextTurnActions();
 
     if (gBattleTypeFlags & BATTLE_TYPE_PALACE)
         BattleScriptExecute(BattleScript_PalacePrintFlavorText);
     else if (gBattleTypeFlags & BATTLE_TYPE_ARENA && gBattleStruct->eventState.arenaTurn == 0)
         BattleScriptExecute(BattleScript_ArenaTurnBeginning);
+    else
+        gBattlescriptCurrInstr = cmd->nextInstr;
 }
