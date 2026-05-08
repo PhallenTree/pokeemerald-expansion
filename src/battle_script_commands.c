@@ -1317,6 +1317,7 @@ static void Cmd_typecalc(void)
 
 static void Cmd_multihitresultmessage(void)
 {
+    // To be removed
     CMD_ARGS();
 
     if (gBattleControllerExecFlags)
@@ -1931,6 +1932,7 @@ static inline bool32 ShouldRelyOnTwoFoesMessage(u32 moveResult)
 
 static void Cmd_resultmessage(void)
 {
+    // To be removed
     CMD_ARGS();
 
     enum StringID stringId = 0;
@@ -2075,7 +2077,10 @@ static void Cmd_resultmessage(void)
         }
     }
     if (stringId)
+    {
         PrepareStringBattle(stringId, gBattlerAttacker);
+        gBattleStruct->battlerState[gBattlerTarget].resultMessagePrinted = TRUE;
+    }
     else
         gBattleCommunication[MSG_DISPLAY] = 0;
 

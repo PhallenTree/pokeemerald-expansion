@@ -119,6 +119,7 @@ static bool32 CheckSpecificMoveCondition(struct BattleCalcValues *cv, struct Sta
             if (!st->onlyChecking)
             {
                 st->script = BattleScript_ItDoesntAffectScrTarget;
+                gBattleStruct->battlerState[cv->battlerDef].resultMessagePrinted = TRUE;
                 gBattleScripting.battler = cv->battlerDef;
             }
             return TRUE;
@@ -130,6 +131,7 @@ static bool32 CheckSpecificMoveCondition(struct BattleCalcValues *cv, struct Sta
             if (!st->onlyChecking)
             {
                 st->script = BattleScript_ItDoesntAffectScrTarget;
+                gBattleStruct->battlerState[cv->battlerDef].resultMessagePrinted = TRUE;
                 gBattleScripting.battler = cv->battlerDef;
             }
             return TRUE;
@@ -151,6 +153,7 @@ static bool32 CheckSpecificMoveCondition(struct BattleCalcValues *cv, struct Sta
                 st->moveScript = BattleScript_OwnTempoPreventsRet;
                 gBattlerAbility = cv->battlerDef;
                 gLastUsedAbility = ABILITY_OWN_TEMPO;
+                gBattleStruct->battlerState[cv->battlerDef].resultMessagePrinted = TRUE;
                 RecordAbilityBattle(cv->battlerDef, ABILITY_OWN_TEMPO);
             }
         }

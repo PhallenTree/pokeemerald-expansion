@@ -1970,6 +1970,7 @@ static enum CancelerResult CancelerTargetFailure(struct BattleCalcValues *cv)
             gBattleScripting.battler = cv->battlerDef;
             gBattleStruct->pledgeMove = FALSE;
             CancelMultiTurnMoves(cv->battlerAtk);
+            gBattleStruct->battlerState[cv->battlerDef].resultMessagePrinted = TRUE;
             return CANCELER_RESULT_RUN_SCRIPT;
         }
     }
