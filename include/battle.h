@@ -710,19 +710,17 @@ struct BattleStruct
     u8 numHazards[NUM_BATTLE_SIDES];
     u8 hazardsCounter:4; // Counter for applying hazard on switch in
     enum SubmoveState submoveAnnouncement:2;
-    u8 tryDestinyBond:1;
-    u8 tryGrudge:1;
+    u8 attackAnimPlayed:1;
+    u8 preAttackEffectHappened:1;
     u32 incrementEchoedVoice:1;
     u32 echoedVoiceCounter:3;
-    u32 attackAnimPlayed:1;
-    u32 preAttackEffectHappened:1;
     u32 magicCoatPending:6;
     u32 magicBouncePending:6;
     u32 bouncedMoveIsUsed:1;
     u32 dancerSavedAttacker:3;
     u32 dancerSavedTarget:3;
     u32 statChangeBattler:3;
-    u32 padding:4;
+    u32 padding:6;
     u8 statChangeMoveAnim:1;
     u8 tidyUpActivates:1;
     u8 positiveAnimPlayed:1;
