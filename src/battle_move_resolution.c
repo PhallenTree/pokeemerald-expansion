@@ -2289,7 +2289,7 @@ static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
             gBattleStruct->eventState.moveEndBlock++;
             break;
         case SUBSTITUTE_BLOCK_ITEM_EFFECT_TARGET:
-            if (ItemBattleEffects(cv->battlerDef, cv->battlerAtk, cv->holdEffects[battlerDef], IsOnTargetHitActivation))
+            if (ItemBattleEffects(cv->battlerDef, cv->battlerAtk, cv->holdEffects[cv->battlerDef], IsOnTargetHitActivation))
                 result = MOVEEND_RESULT_RUN_SCRIPT;
             gBattleStruct->eventState.moveEndBlock++;
             break;
