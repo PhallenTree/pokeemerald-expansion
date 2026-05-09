@@ -1675,6 +1675,11 @@ BattleScript_MultiHitPrintStrings::
 	waitmessage B_WAIT_TIME_LONG
 	return
 
+BattleScript_PrintEffectivenessMessage::
+	resultmessage
+	waitmessage B_WAIT_TIME_LONG
+	return
+
 BattleScript_EffectConversion::
 	attackcanceler
 	tryconversiontypechange BattleScript_ButItFailed
@@ -5181,6 +5186,11 @@ BattleScript_IgnoresAndHitsItself::
 	printstring STRINGID_PKMNWONTOBEY
 	waitmessage B_WAIT_TIME_LONG
 	goto BattleScript_DoSelfConfusionDmg
+
+BattleScript_SubstituteTookDamage::
+	printstring STRINGID_SUBSTITUTEDAMAGED
+	waitmessage B_WAIT_TIME_MED
+	return
 
 BattleScript_SubstituteFade::
 	playanimation BS_SCRIPTING, B_ANIM_SUBSTITUTE_FADE

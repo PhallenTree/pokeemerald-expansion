@@ -1642,12 +1642,6 @@ static void Cmd_healthbarupdate(void)
         if (IsDoubleSpreadMove())
         {
             DoublesHPBarReduction();
-            if (DoesSubstituteBlockMove(gBattlerAttacker, battler, gCurrentMove))
-                PrepareStringBattle(STRINGID_SUBSTITUTEDAMAGED, battler);
-        }
-        else if (DoesSubstituteBlockMove(gBattlerAttacker, battler, gCurrentMove))
-        {
-            PrepareStringBattle(STRINGID_SUBSTITUTEDAMAGED, battler);
         }
         else if (!IsBattlerUnaffectedByMove(battler)
               && !DoesDisguiseBlockMove(battler, gCurrentMove)
@@ -1717,17 +1711,8 @@ static void MoveDamageDataHpUpdate(enum BattlerId battler, u32 scriptBattler, co
             gBattleStruct->moveDamage[battler] = gBattleMons[battler].volatiles.substituteHP;
             gBattleMons[battler].volatiles.substituteHP = 0;
         }
-        // check substitute fading
-        if (gBattleMons[battler].volatiles.substituteHP == 0)
-        {
-            gBattlescriptCurrInstr = nextInstr;
-            gBattleScripting.battler = battler;
-            BattleScriptCall(BattleScript_SubstituteFade);
-        }
-        else
-        {
-            gBattlescriptCurrInstr = nextInstr;
-        }
+        
+        gBattlescriptCurrInstr = nextInstr;
         return;
     }
     else if (DoesDisguiseBlockMove(battler, gCurrentMove) || DoesIceFaceBlockMove(battler, gCurrentMove))
@@ -1940,6 +1925,12 @@ static void Cmd_resultmessage(void)
 
     if (gBattleControllerExecFlags)
         return;
+
+    if (gBattleStruct->battlerState[gBattlerTarget].resultMessagePrinted)
+    {
+        gBattlescriptCurrInstr = cmd->nextInstr;
+        return;
+    }
 
     if (*moveResultFlags & MOVE_RESULT_MISSED && !(*moveResultFlags & MOVE_RESULT_DOESNT_AFFECT_FOE))
     {

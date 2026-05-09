@@ -217,7 +217,7 @@ static enum ItemEffect TryAirBalloon(enum BattlerId battler, ActivationTiming ti
 
     if (timing == IsOnTargetHitActivation)
     {
-        if (IsBattlerTurnDamaged(battler, EXCLUDING_SUBSTITUTES))
+        if (IsBattlerTurnDamaged(battler, INCLUDING_SUBSTITUTES))
         {
             BattleScriptCall(BattleScript_AirBalloonMsgPop);
             effect = ITEM_EFFECT_OTHER;
