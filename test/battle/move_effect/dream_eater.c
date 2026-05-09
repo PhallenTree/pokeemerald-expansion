@@ -110,6 +110,7 @@ SINGLE_BATTLE_TEST("Dream Eater works if the target is behind a Substitute (Gen 
         ANIMATION(ANIM_TYPE_MOVE, MOVE_DREAM_EATER, opponent);
         HP_BAR(player, captureDamage: &damage);
         HP_BAR(opponent, captureDamage: &healed);
+        NOT MESSAGE("The opposing Wobbuffet fainted!");
     } THEN {
         EXPECT_MUL_EQ(damage, Q_4_12(-1.0/2.0), healed);
     }
