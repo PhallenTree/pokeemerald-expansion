@@ -3176,6 +3176,7 @@ static enum MoveEndResult MoveEndMultihitMoveBlock(struct BattleCalcValues *cv)
                 gBattleScripting.moveendState = 0;
                 gBattleStruct->eventState.moveEndBlock = 0;
                 gSpecialStatuses[cv->battlerAtk].multiHitOn = TRUE;
+                gBattleStruct->battlerState[cv->battlerDef].resultMessagePrinted = FALSE;
                 gBattleStruct->preAttackEffectHappened = FALSE;
                 BattleScriptPush(GetMoveBattleScript(cv->move));
                 gBattlescriptCurrInstr = BattleScript_FlushMessageBox;
