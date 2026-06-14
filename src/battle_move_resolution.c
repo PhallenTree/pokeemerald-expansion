@@ -3118,7 +3118,7 @@ static enum MoveEndResult MoveEndFaintBlock(struct BattleCalcValues *cv)
         if (result != MOVEEND_RESULT_CONTINUE)
             break;
 
-    } while (gBattleStruct->eventState.moveEndBlock < FAINT_BLOCK_COUNT);
+    }
 
     if (result == MOVEEND_RESULT_CONTINUE)
     {
