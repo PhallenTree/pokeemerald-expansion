@@ -1644,6 +1644,7 @@ static void Cmd_healthbarupdate(void)
             DoublesHPBarReduction();
         }
         else if (!IsBattlerUnaffectedByMove(battler)
+              && !DoesSubstituteBlockMove(gBattlerAttacker, battler, gCurrentMove)
               && !DoesDisguiseBlockMove(battler, gCurrentMove)
               && !DoesIceFaceBlockMove(battler, gCurrentMove))
         {

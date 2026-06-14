@@ -2768,6 +2768,7 @@ static enum MoveEndResult MoveEndFaintBlock(struct BattleCalcValues *cv)
              || (gAbsentBattlerFlags & 1u << cv->battlerDef)
              || gBattleStruct->battlerState[cv->battlerDef].notOnField)
             {
+                gBattleStruct->eventState.moveEndBlock = 0;
                 gBattleScripting.moveendState++;
                 return MOVEEND_RESULT_CONTINUE;
             }
