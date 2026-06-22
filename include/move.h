@@ -810,7 +810,7 @@ static inline const struct AdditionalEffect *GetMoveAdditionalEffectById(enum Mo
     return &gMovesInfo[SanitizeMoveId(moveId)].additionalEffects[effect];
 }
 
-static inline enum MoveEffect *GetMoveSelectionMoveEffects(enum Move move)
+static inline const enum MoveEffect *GetMoveSelectionMoveEffects(enum Move move)
 {
     return gMovesInfo[SanitizeMoveId(move)].selectionMoveEffects;
 }

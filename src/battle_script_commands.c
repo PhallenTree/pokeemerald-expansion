@@ -2449,9 +2449,20 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
         break;
     case MOVE_EFFECT_ONE_FROM_MANY:
     {
-        enum MoveEffect sOneFromManyEffects[MAX_SELECTION_MOVE_EFFECTS + 1] = GetMoveSelectionMoveEffects(gCurrentMove);
+        enum MoveEffect sOneFromManyEffects[MAX_SELECTION_MOVE_EFFECTS] = GetMoveSelectionMoveEffects(gCurrentMove);
+        u32 validEffectCount = 0;
 
-        u32 chosenMoveEffect = RandomUniform(RNG_TRI_ATTACK, 0, ARRAY_COUNT(sOneFromManyEffects) - 1);
+        while (sOneFromManyEffects[validEffectCount] != MOVE_EFFECT_NONE)
+        {
+            validEffectCount++;
+        }
+
+        assertf(validEffectCount != 0, "Missing or empty selectionMoveEffects array for move %S", gMovesInfo[gCurrentMove].name)
+        {
+            return;
+        }
+
+        u32 chosenMoveEffect = RandomUniform(RNG_TRI_ATTACK, 0, validEffectCount - 1);
         if (sOneFromManyEffects[chosenMoveEffect] == MOVE_EFFECT_BURN)
             gBattleStruct->triAttackBurn = TRUE;
 
