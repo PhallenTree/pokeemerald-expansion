@@ -2449,7 +2449,7 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
         break;
     case MOVE_EFFECT_ONE_FROM_MANY:
     {
-        const enum MoveEffect *sOneFromManyEffects = GetMoveSelectionMoveEffects(gCurrentMove);
+        static const enum MoveEffect *sOneFromManyEffects = GetMoveSelectionMoveEffects(gCurrentMove);
         u32 validEffectCount = 0;
 
         while (sOneFromManyEffects[validEffectCount] != MOVE_EFFECT_NONE)
