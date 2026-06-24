@@ -2719,6 +2719,12 @@ static enum MoveEndResult MoveEndMoveHeavyRecoil(struct BattleCalcValues *cv)
     return result;
 }
 
+static inline bool32 ShouldPrintTwoFoesMessage(enum BattlerId battlerDef, u32 moveResult)
+{
+    return gBattleStruct->moveResultFlags[BATTLE_PARTNER(battlerDef)] & moveResult
+        && !(gBattleStruct->moveResultFlags[BATTLE_PARTNER(battlerDef)] & MOVE_RESULT_AVOIDED_ATTACK);
+}
+
 static enum MoveEndResult MoveEndEffectivenessMessage(struct BattleCalcValues *cv)
 {
     u32 stringId = 0;
@@ -2735,7 +2741,7 @@ static enum MoveEndResult MoveEndEffectivenessMessage(struct BattleCalcValues *c
         case MOVE_RESULT_SUPER_EFFECTIVE:
             if (IsDoubleSpreadMove())
             {
-                if (ShouldPrintTwoFoesMessage(MOVE_RESULT_SUPER_EFFECTIVE))
+                if (ShouldPrintTwoFoesMessage(battler, MOVE_RESULT_SUPER_EFFECTIVE))
                     stringId = STRINGID_SUPEREFFECTIVETWOFOES;
                 else
                     stringId = STRINGID_SUPEREFFECTIVE;
@@ -2761,7 +2767,7 @@ static enum MoveEndResult MoveEndEffectivenessMessage(struct BattleCalcValues *c
         case MOVE_RESULT_NOT_VERY_EFFECTIVE:
             if (IsDoubleSpreadMove())
             {
-                if (ShouldPrintTwoFoesMessage(MOVE_RESULT_NOT_VERY_EFFECTIVE))
+                if (ShouldPrintTwoFoesMessage(battler, MOVE_RESULT_NOT_VERY_EFFECTIVE))
                     stringId = STRINGID_NOTVERYEFFECTIVETWOFOES;
                 else
                     stringId = STRINGID_NOTVERYEFFECTIVE; // Needs a string
@@ -2787,19 +2793,19 @@ static enum MoveEndResult MoveEndEffectivenessMessage(struct BattleCalcValues *c
                 *moveResultFlags &= ~MOVE_RESULT_SUPER_EFFECTIVE;
                 *moveResultFlags &= ~MOVE_RESULT_NOT_VERY_EFFECTIVE;
                 BattleScriptCall(BattleScript_OneHitKOMsg);
-                return;
+                return MOVEEND_RESULT_RUN_SCRIPT;
             }
             else if (*moveResultFlags & MOVE_RESULT_STURDIED)
             {
                 *moveResultFlags &= ~(MOVE_RESULT_STURDIED | MOVE_RESULT_FOE_ENDURED | MOVE_RESULT_FOE_HUNG_ON);
                 BattleScriptCall(BattleScript_SturdiedMsg);
-                return;
+                return MOVEEND_RESULT_RUN_SCRIPT;
             }
             else if (*moveResultFlags & MOVE_RESULT_FOE_ENDURED)
             {
                 *moveResultFlags &= ~(MOVE_RESULT_FOE_ENDURED | MOVE_RESULT_FOE_HUNG_ON);
                 BattleScriptCall(BattleScript_EnduredMsg);
-                return;
+                return MOVEEND_RESULT_RUN_SCRIPT;
             }
             else if (*moveResultFlags & MOVE_RESULT_FOE_HUNG_ON)
             {
@@ -2807,13 +2813,13 @@ static enum MoveEndResult MoveEndEffectivenessMessage(struct BattleCalcValues *c
                 gPotentialItemEffectBattler = battler;
                 *moveResultFlags &= ~(MOVE_RESULT_FOE_ENDURED | MOVE_RESULT_FOE_HUNG_ON);
                 BattleScriptCall(BattleScript_HangedOnMsg);
-                return;
+                return MOVEEND_RESULT_RUN_SCRIPT;
             }
             else if (B_AFFECTION_MECHANICS == TRUE && (*moveResultFlags & MOVE_RESULT_FOE_ENDURED_AFFECTION))
             {
                 *moveResultFlags &= ~MOVE_RESULT_FOE_ENDURED_AFFECTION;
                 BattleScriptCall(BattleScript_AffectionBasedEndurance);
-                return;
+                return MOVEEND_RESULT_RUN_SCRIPT;
             }
         }
     }
@@ -3650,7 +3656,6 @@ static enum MoveEndResult MoveEndMultihitMoveBlock(struct BattleCalcValues *cv)
                 gBattleStruct->eventState.moveEndBlock = 0;
                 gSpecialStatuses[cv->battlerAtk].multiHitOn = TRUE;
                 gBattleStruct->battlerState[cv->battlerDef].resultMessagePrinted = FALSE;
-                gBattleStruct->preAttackEffectHappened = FALSE;
                 BattleScriptPush(GetMoveBattleScript(cv->move));
                 gBattlescriptCurrInstr = BattleScript_FlushMessageBox;
                 return MOVEEND_RESULT_BREAK;
