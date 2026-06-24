@@ -2598,7 +2598,6 @@ static enum MoveEndResult MoveEndMoveHeavyRecoil(struct BattleCalcValues *cv)
     {
     case EFFECT_MAX_HP_50_RECOIL:
         if (IsBattlerAlive(cv->battlerAtk)
-         && !gBattleStruct->unableToUseMove
          && (gBattleStruct->doneDoublesSpreadHit || !IsDoubleSpreadMove())
          && !gSpecialStatuses[cv->battlerAtk].mindBlownRecoil
          && !IsAbilityAndRecord(cv->battlerAtk, cv->abilities[cv->battlerAtk], ABILITY_MAGIC_GUARD))
@@ -2621,6 +2620,102 @@ static enum MoveEndResult MoveEndMoveHeavyRecoil(struct BattleCalcValues *cv)
 
 static enum MoveEndResult MoveEndEffectivenessMessage(struct BattleCalcValues *cv)
 {
+    u32 stringId = 0;
+
+    for (enum BattlerId battler = cv->battlerDef; battler < gBattlersCount; battler = GetPartnerBattler(battler))
+    {
+        if (!IsBattlerAlly(cv->battlerDef, battler)
+         || ShouldSkipFailureCheckOnBattler(cv->battlerAtk, battler, TRUE)
+         || gBattleStruct->battlerState[battler].resultMessagePrinted)
+            continue;
+
+        switch (gBattleStruct->moveResultFlags[battler])
+        {
+        case MOVE_RESULT_SUPER_EFFECTIVE:
+            if (IsDoubleSpreadMove())
+            {
+                if (ShouldPrintTwoFoesMessage(MOVE_RESULT_SUPER_EFFECTIVE))
+                    stringId = STRINGID_SUPEREFFECTIVETWOFOES;
+                else
+                    stringId = STRINGID_SUPEREFFECTIVE;
+            }
+            else if (!gMultiHitCounter)
+            {
+                stringId = STRINGID_SUPEREFFECTIVE;
+            }
+            else
+            {
+                break;
+            }
+
+            gBattleStruct->battlerState[battler].resultMessagePrinted = TRUE;
+            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler, cv->battlerAtk);
+
+            if (stringId == STRINGID_SUPEREFFECTIVETWOFOES)
+            {
+                gBattleStruct->battlerState[BATTLE_PARTNER(battler)].resultMessagePrinted = TRUE;
+                TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(BATTLE_PARTNER(battler), cv->battlerAtk);
+            }
+            break;
+        case MOVE_RESULT_NOT_VERY_EFFECTIVE:
+            if (IsDoubleSpreadMove())
+            {
+                if (ShouldPrintTwoFoesMessage(MOVE_RESULT_NOT_VERY_EFFECTIVE))
+                    stringId = STRINGID_NOTVERYEFFECTIVETWOFOES;
+                else
+                    stringId = STRINGID_NOTVERYEFFECTIVE; // Needs a string
+            }
+            else if (!gMultiHitCounter)
+            {
+                stringId = STRINGID_NOTVERYEFFECTIVE;
+            }
+            else
+            {
+                break;
+            }
+
+            gBattleStruct->battlerState[battler].resultMessagePrinted = TRUE;
+
+            if (stringId == STRINGID_NOTVERYEFFECTIVETWOFOES)
+                gBattleStruct->battlerState[BATTLE_PARTNER(battler)].resultMessagePrinted = TRUE;
+            break;
+        default:
+            if (*moveResultFlags & MOVE_RESULT_ONE_HIT_KO)
+            {
+                *moveResultFlags &= ~MOVE_RESULT_ONE_HIT_KO;
+                *moveResultFlags &= ~MOVE_RESULT_SUPER_EFFECTIVE;
+                *moveResultFlags &= ~MOVE_RESULT_NOT_VERY_EFFECTIVE;
+                BattleScriptCall(BattleScript_OneHitKOMsg);
+                return;
+            }
+            else if (*moveResultFlags & MOVE_RESULT_STURDIED)
+            {
+                *moveResultFlags &= ~(MOVE_RESULT_STURDIED | MOVE_RESULT_FOE_ENDURED | MOVE_RESULT_FOE_HUNG_ON);
+                BattleScriptCall(BattleScript_SturdiedMsg);
+                return;
+            }
+            else if (*moveResultFlags & MOVE_RESULT_FOE_ENDURED)
+            {
+                *moveResultFlags &= ~(MOVE_RESULT_FOE_ENDURED | MOVE_RESULT_FOE_HUNG_ON);
+                BattleScriptCall(BattleScript_EnduredMsg);
+                return;
+            }
+            else if (*moveResultFlags & MOVE_RESULT_FOE_HUNG_ON)
+            {
+                gLastUsedItem = gBattleMons[battler].item;
+                gPotentialItemEffectBattler = battler;
+                *moveResultFlags &= ~(MOVE_RESULT_FOE_ENDURED | MOVE_RESULT_FOE_HUNG_ON);
+                BattleScriptCall(BattleScript_HangedOnMsg);
+                return;
+            }
+            else if (B_AFFECTION_MECHANICS == TRUE && (*moveResultFlags & MOVE_RESULT_FOE_ENDURED_AFFECTION))
+            {
+                *moveResultFlags &= ~MOVE_RESULT_FOE_ENDURED_AFFECTION;
+                BattleScriptCall(BattleScript_AffectionBasedEndurance);
+                return;
+            }
+        }
+    }
     // TODO
     gBattleScripting.moveendState++;
     return MOVEEND_RESULT_CONTINUE;
