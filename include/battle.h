@@ -112,21 +112,21 @@ struct StatStages
 // Cleared at the start of HandleAction_ActionFinished
 struct SpecialStatus
 {
-    u8 changedStatsBattlerId:3; // Battler that was responsible for the latest stat change. Can be self.
     u8 neutralizingGasRemoved:1;
     u8 berryReduced:1;
     u8 mindBlownRecoil:1;
     u8 updateStallMons:1;
     u8 poisonPuppeteer:1;
-    // End of byte
-    u8 statLowered:1;
+    u8 attackerInParty:1; // Fututre Sight / Doom Desire
     u8 abilityRedirected:1;
     u8 restoredBattlerSprite: 1;
+    // End of byte
     u8 faintedHasReplacement:1;
     u8 afterYou:1;
     u8 damagedByAttack:1;
     u8 dancerUsedMove:1;
     u8 criticalHit:1;
+    u8 padding:3;
     // End of byte
     u8 gemParam:7;
     u8 gemBoost:1;
@@ -542,7 +542,8 @@ struct PartyState
     enum Species changedSpecies:11; // For forms when multiple mons can change into the same Pokémon.
     u32 sentOut:1;
     u32 isKnockedOff:1;
-    u32 padding:8;
+    u32 freezeTurns:2;
+    u32 padding:6;
     enum Item usedHeldItem;
 };
 
@@ -575,6 +576,7 @@ struct BattleStruct
     struct FutureSight futureSight[MAX_BATTLERS_COUNT];
     struct Wish wish[MAX_BATTLERS_COUNT];
     u16 moveTarget[MAX_BATTLERS_COUNT];
+    u8 faintCounter[MAX_BATTLE_TRAINERS]; // Supreme Overload / Last Respects
     u32 expShareExpValue;
     u32 expValue;
     u8 weatherDuration;
@@ -702,7 +704,7 @@ struct BattleStruct
     u16 innardsOutHpLost[MAX_BATTLERS_COUNT];
     u32 moveResultFlags[MAX_BATTLERS_COUNT];
     u8 doneDoublesSpreadHit:1;
-    u8 calculatedDamageDone:1;
+    u8 unused4:1;
     u8 calculatedSpreadMoveAccuracy:1;
     u8 printedStrongWindsWeakenedAttack:1;
     u8 numSpreadTargets:3;
@@ -716,15 +718,14 @@ struct BattleStruct
     enum VictoryCatch victoryCatchState:2;
     u32 incrementEchoedVoice:1;
     u32 echoedVoiceCounter:3;
+    u32 attackAnimPlayed:1;
     u32 magicCoatPending:6;
     u32 magicBouncePending:6;
     u32 bouncedMoveIsUsed:1;
     u32 dancerSavedAttacker:3;
     u32 dancerSavedTarget:3;
     u32 statChangeBattler:3;
-    u32 attackAnimPlayed:1;
-    u32 preAttackEffectHappened:1;
-    u32 padding5:4;
+    u32 padding5:5;
     u8 statChangeMoveAnim:1;
     u8 tidyUpActivates:1;
     u8 positiveAnimPlayed:1;

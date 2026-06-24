@@ -17,6 +17,7 @@ enum CancelerResult
     CANCELER_RESULT_RUN_SCRIPT_AND_INCREMENT, // Runs script. Increments state
     CANCELER_RESULT_RUN_SCRIPT, // Runs script. Does not increment state
     CANCELER_RESULT_FAILURE, // Move failed, jump to script that handles the failure
+    CANCELER_RESULT_END, // prevents going into canceler again
 };
 
 enum CancelerState
@@ -67,9 +68,10 @@ enum CancelerState
     CANCELER_NO_TARGET,
     CANCELER_TOOK_ATTACK,
     CANCELER_TARGET_FAILURE,
-    CANCELER_NOT_FULLY_PROTECTED,
     CANCELER_MULTIHIT_MOVES,
     CANCELER_ACCURACY_CHECK,
+    CANCELER_PRE_ATTACK_MOVE_EFFECT,
+    CANCELER_DAMAGE_CALC,
     CANCELER_END,
 };
 
@@ -129,6 +131,7 @@ enum MoveEndState
     MOVEEND_EFFECTIVENESS_MESSAGE, // Multi-target and single-target
     MOVEEND_CRIT_PROTECT_MESSAGE, // Crit message, then target couldn't protect itself for each target
     MOVEEND_ENDURE_DAMAGE_MESSAGE, // Endure, False Swipe/Hold Back, Sturdy, Focus Sash/Focus Band, Friendship, in that order
+    MOVEEND_PROTECT_BYPASS_EFFECTS,
     MOVEEND_PROTECT_LIKE_EFFECT,
     MOVEEND_QUEUE_DANCER,
     MOVEEND_ADDITIONAL_EFFECTS,
@@ -200,6 +203,14 @@ enum StatChangeResolution
     STAT_CHANGE_BEFORE_CHANGE,
     STAT_CHANGE_TRY_CHANGE,
     STAT_CHANGE_COUNT,
+};
+
+enum ProtectBypass
+{
+    PROTECT_BYPASS_NONE,
+    PROTECT_BYPASS_MOVE_IGNORES,
+    PROTECT_BYPASS_ABILITY_IGNORES,
+    PROTECT_BYPASS_OTHER,
 };
 
 #endif // GUARD_CONSTANTS_BATTLE_MOVE_RESOLUTION_H
