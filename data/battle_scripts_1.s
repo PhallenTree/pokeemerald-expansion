@@ -1660,6 +1660,26 @@ BattleScript_PrintEffectivenessMessage::
 	waitmessage B_WAIT_TIME_LONG
 	return
 
+BattleScript_PrintExtremelyEffectiveMessage::
+	printfromtable gExtremelyEffectiveStringIds
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_PrintSuperEffectiveMessage::
+	printfromtable gSuperEffectiveStringIds
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_PrintNotVeryEffectiveMessage::
+	printfromtable gNotVeryEffectiveStringIds
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_PrintMostlyIneffectiveMessage::
+	printfromtable gMostlyIneffectiveStringIds
+	waitmessage B_WAIT_TIME_LONG
+	return
+
 BattleScript_BattlerAvoidedMultiHit::
 	pause B_WAIT_TIME_LONG
 	copyarray gBattleTextBuff1, sMULTIHIT_STRING, 6
