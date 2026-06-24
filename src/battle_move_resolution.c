@@ -2719,13 +2719,50 @@ static enum MoveEndResult MoveEndMoveHeavyRecoil(struct BattleCalcValues *cv)
     return result;
 }
 
+static bool32 ShouldPrintEffectivenessMessage(enum BattlerId battler1, enum BattlerId battler2, u32 moveResultFlag)
+{
+    gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_NO_TARGET;
+
+    if (gBattleStruct->moveResultFlags[battler1] & moveResultFlag)
+    {
+        if (IsDoubleSpreadMove())
+        {
+            if (battler2 != battler1 && gBattleStruct->moveResultFlags[battler2] & moveResultFlag)
+                gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_TWO_TARGETS;
+            else
+                gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_OF_TWO_TARGETS;
+        }
+        else if (!gMultiHitCounter)
+        {
+            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
+        }
+    }
+    else if (gBattleStruct->moveResultFlags[battler2] & moveResultFlag)
+    {
+        battler1 = battler2;
+        if (IsDoubleSpreadMove())
+            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_OF_TWO_TARGETS;
+        else if (!gMultiHitCounter)
+            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
+    }
+    
+    if (gBattleCommunication[MULTISTRING_CHOOSER] != B_MSG_NO_TARGET)
+    {
+        gBattleStruct->battlerState[battler1].resultMessagePrinted = TRUE;
+
+        if (gBattleCommunication[MULTISTRING_CHOOSER] == B_MSG_TWO_TARGETS)
+            gBattleStruct->battlerState[battler2].resultMessagePrinted = TRUE;
+
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static enum MoveEndResult MoveEndEffectivenessMessage(struct BattleCalcValues *cv)
 {
     enum BattlerId battler1 = cv->battlerDef;
     enum BattlerId battler2 = GetPartnerBattler(cv->battlerDef);
     bool32 anyValidBattler = FALSE;
-
-    gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_NO_TARGET;
 
     if (ShouldSkipFailureCheckOnBattler(cv->battlerAtk, battler1, TRUE)
      || gBattleStruct->battlerState[battler1].resultMessagePrinted)
@@ -2740,149 +2777,43 @@ static enum MoveEndResult MoveEndEffectivenessMessage(struct BattleCalcValues *c
         anyValidBattler = TRUE;
 
     if (!anyValidBattler) // No battlers on this side were affected
+    {
+        gBattleScripting.moveendState++;
         return MOVEEND_RESULT_CONTINUE;
+    }
 
     // Extremely effective for either battler -> super effective for either battler -> not very effective -> mostly ineffective
-    if (gBattleStruct->moveResultFlags[battler1] & MOVE_RESULT_EXTREMELY_EFFECTIVE)
+    if (ShouldPrintEffectivenessMessage(battler1, battler2, MOVE_RESULT_EXTREMELY_EFFECTIVE))
     {
-        if (IsDoubleSpreadMove())
-        {
-            if (battler2 != battler1 && gBattleStruct->moveResultFlags[battler2] & MOVE_RESULT_EXTREMELY_EFFECTIVE)
-                gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_TWO_TARGETS;
-            else
-                gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_OF_TWO_TARGETS;
-        }
-        else if (!gMultiHitCounter)
-        {
-            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
-        }
-    }
-    else if (gBattleStruct->moveResultFlags[battler2] & MOVE_RESULT_EXTREMELY_EFFECTIVE)
-    {
-        if (IsDoubleSpreadMove())
-            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_OF_TWO_TARGETS;
-        else if (!gMultiHitCounter)
-            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
-    }
-    
-    if (gBattleCommunication[MULTISTRING_CHOOSER] != B_MSG_NO_TARGET)
-    {
-        gBattleStruct->battlerState[battler1].resultMessagePrinted = TRUE;
-        TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler1, cv->battlerAtk);
-
-        if (gBattleCommunication[MULTISTRING_CHOOSER] == B_MSG_TWO_TARGETS)
-        {
-            gBattleStruct->battlerState[battler2].resultMessagePrinted = TRUE;
+        if (gBattleStruct->battlerState[battler1].resultMessagePrinted)
+            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler1, cv->battlerAtk);
+        if (battler2 != battler1 && gBattleStruct->battlerState[battler2].resultMessagePrinted)
             TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler2, cv->battlerAtk);
-        }
 
         BattleScriptCall(BattleScript_PrintExtremelyEffectiveMessage);
         return MOVEEND_RESULT_RUN_SCRIPT;
     }
-
-    if (gBattleStruct->moveResultFlags[battler1] & MOVE_RESULT_SUPER_EFFECTIVE)
+    else if (ShouldPrintEffectivenessMessage(battler1, battler2, MOVE_RESULT_SUPER_EFFECTIVE))
     {
-        if (IsDoubleSpreadMove())
-        {
-            if (battler2 != battler1 && gBattleStruct->moveResultFlags[battler2] & MOVE_RESULT_SUPER_EFFECTIVE)
-                gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_TWO_TARGETS;
-            else
-                gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_OF_TWO_TARGETS;
-        }
-        else if (!gMultiHitCounter)
-        {
-            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
-        }
-    }
-    else if (gBattleStruct->moveResultFlags[battler2] & MOVE_RESULT_SUPER_EFFECTIVE)
-    {
-        if (IsDoubleSpreadMove())
-            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_OF_TWO_TARGETS;
-        else if (!gMultiHitCounter)
-            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
-    }
-    
-    if (gBattleCommunication[MULTISTRING_CHOOSER] != B_MSG_NO_TARGET)
-    {
-        gBattleStruct->battlerState[battler1].resultMessagePrinted = TRUE;
-        TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler1, cv->battlerAtk);
-
-        if (gBattleCommunication[MULTISTRING_CHOOSER] == B_MSG_TWO_TARGETS)
-        {
-            gBattleStruct->battlerState[battler2].resultMessagePrinted = TRUE;
+        if (gBattleStruct->battlerState[battler1].resultMessagePrinted)
+            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler1, cv->battlerAtk);
+        if (battler2 != battler1 && gBattleStruct->battlerState[battler2].resultMessagePrinted)
             TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler2, cv->battlerAtk);
-        }
 
         BattleScriptCall(BattleScript_PrintSuperEffectiveMessage);
         return MOVEEND_RESULT_RUN_SCRIPT;
     }
-    
-    if (gBattleStruct->moveResultFlags[battler1] & MOVE_RESULT_NOT_VERY_EFFECTIVE)
+    else if (ShouldPrintEffectivenessMessage(battler1, battler2, MOVE_RESULT_NOT_VERY_EFFECTIVE))
     {
-        if (IsDoubleSpreadMove())
-        {
-            if (battler2 != battler1 && gBattleStruct->moveResultFlags[battler2] & MOVE_RESULT_NOT_VERY_EFFECTIVE)
-                gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_TWO_TARGETS;
-            else
-                gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_OF_TWO_TARGETS;
-        }
-        else if (!gMultiHitCounter)
-        {
-            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
-        }
-    }   
-    else if (gBattleStruct->moveResultFlags[battler2] & MOVE_RESULT_NOT_VERY_EFFECTIVE)
-    {
-        if (IsDoubleSpreadMove())
-            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_OF_TWO_TARGETS;
-        else if (!gMultiHitCounter)
-            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
-    }
-
-    if (gBattleCommunication[MULTISTRING_CHOOSER] != B_MSG_NO_TARGET)
-    {
-        gBattleStruct->battlerState[battler1].resultMessagePrinted = TRUE;
-
-        if (gBattleCommunication[MULTISTRING_CHOOSER] == B_MSG_TWO_TARGETS)
-            gBattleStruct->battlerState[battler2].resultMessagePrinted = TRUE;
-
         BattleScriptCall(BattleScript_PrintNotVeryEffectiveMessage);
         return MOVEEND_RESULT_RUN_SCRIPT;
     }
-
-    if (gBattleStruct->moveResultFlags[battler1] & MOVE_RESULT_MOSTLY_INEFFECTIVE)
+    else if (ShouldPrintEffectivenessMessage(battler1, battler2, MOVE_RESULT_MOSTLY_INEFFECTIVE))
     {
-        if (IsDoubleSpreadMove())
-        {
-            if (battler2 != battler1 && gBattleStruct->moveResultFlags[battler2] & MOVE_RESULT_MOSTLY_INEFFECTIVE)
-                gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_TWO_TARGETS;
-            else
-                gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_OF_TWO_TARGETS;
-        }
-        else if (!gMultiHitCounter)
-        {
-            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
-        }
-    }   
-    else if (gBattleStruct->moveResultFlags[battler2] & MOVE_RESULT_MOSTLY_INEFFECTIVE)
-    {
-        if (IsDoubleSpreadMove())
-            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_OF_TWO_TARGETS;
-        else if (!gMultiHitCounter)
-            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
-    }
-
-    if (gBattleCommunication[MULTISTRING_CHOOSER] != B_MSG_NO_TARGET)
-    {
-        gBattleStruct->battlerState[battler1].resultMessagePrinted = TRUE;
-
-        if (gBattleCommunication[MULTISTRING_CHOOSER] == B_MSG_TWO_TARGETS)
-            gBattleStruct->battlerState[battler2].resultMessagePrinted = TRUE;
-
         BattleScriptCall(BattleScript_PrintMostlyIneffectiveMessage);
         return MOVEEND_RESULT_RUN_SCRIPT;
     }
-    // TODO
+
     gBattleScripting.moveendState++;
     return MOVEEND_RESULT_CONTINUE;
 }
