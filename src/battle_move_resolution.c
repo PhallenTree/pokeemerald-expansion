@@ -2596,6 +2596,7 @@ static enum MoveEndResult MoveEndSetValues(struct BattleCalcValues *cv)
 static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
+    bool32 battlerDefDamaged = IsBattlerTurnDamaged(cv->battlerDef, INCLUDING_SUBSTITUTES);
 
     if (!DoesSubstituteBlockMove(cv->battlerAtk, cv->battlerDef, cv->move))
     {
@@ -2609,7 +2610,7 @@ static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
         switch (gBattleStruct->eventState.moveEndBlock)
         {
         case SUBSTITUTE_BLOCK_DAMAGED_MESSAGE:
-            if (IsBattlerTurnDamaged(cv->battlerDef, INCLUDING_SUBSTITUTES))
+            if (battlerDefDamaged)
             {
                 gBattleScripting.battler = cv->battlerDef;
                 BattleScriptCall(BattleScript_SubstituteTookDamage);
@@ -2618,14 +2619,39 @@ static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
             gBattleStruct->eventState.moveEndBlock++;
             break;
         case SUBSTITUTE_BLOCK_EFFECTIVENESS_MESSAGE:
-            if (IsBattlerTurnDamaged(cv->battlerDef, INCLUDING_SUBSTITUTES))
+            if (battlerDefDamaged)
             {
-                BattleScriptCall(BattleScript_PrintEffectivenessMessage);
-                result = MOVEEND_RESULT_RUN_SCRIPT;
+                u32 moveResultFlags = gBattleStruct->moveResultFlags[cv->battlerDef];
+
+                if (moveResultFlags & MOVE_RESULT_EXTREMELY_EFFECTIVE)
+                    BattleScriptCall(BattleScript_PrintExtremelyEffectiveMessage);
+                else if (moveResultFlags & MOVE_RESULT_SUPER_EFFECTIVE)
+                    BattleScriptCall(BattleScript_PrintSuperEffectiveMessage);
+                else if (moveResultFlags & MOVE_RESULT_NOT_VERY_EFFECTIVE)
+                    BattleScriptCall(BattleScript_PrintNotVeryEffectiveMessage);
+                else if (moveResultFlags & MOVE_RESULT_MOSTLY_INEFFECTIVE)
+                    BattleScriptCall(BattleScript_PrintMostlyIneffectiveMessage);
+                else
+                    moveResultFlags = 0;
+
+                if (moveResultFlags != 0)
+                {
+                    gBattleStruct->battlerState[cv->battlerDef].resultMessagePrinted = TRUE;
+                    gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
+                    result = MOVEEND_RESULT_RUN_SCRIPT;
+                }
             }
             gBattleStruct->eventState.moveEndBlock++;
             break;
         case SUBSTITUTE_BLOCK_CRIT_MESSAGE:
+            if (battlerDefDamaged && gSpecialStatuses[cv->battlerDef].criticalHit)
+            {
+                BattleScriptCall(BattleScript_CriticalHitMessage);
+                result = MOVEEND_RESULT_RUN_SCRIPT;
+                TryInitializeTrainerSlideEnemyLandsFirstCriticalHit(cv->battlerDef);
+                TryInitializeTrainerSlidePlayerLandsFirstCriticalHit(cv->battlerDef);
+                gBattleStruct->battlerState[cv->battlerDef].critMessagePrinted = TRUE;
+            }
             gBattleStruct->eventState.moveEndBlock++;
             break;
         case SUBSTITUTE_BLOCK_BYPASS_PROTECT_MESSAGE:
@@ -2640,7 +2666,7 @@ static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
             }
             gBattleStruct->eventState.moveEndBlock++;
             break;
-        case SUBSTITUTE_BLOCK_ADDITIONAL_EFFECTS:
+        case SUBSTITUTE_BLOCK_ADDITIONAL_EFFECTS: // Those that activate even if Substitute is active
             gBattleStruct->eventState.moveEndBlock++;
             break;
         case SUBSTITUTE_BLOCK_ITEM_EFFECT_TARGET:
@@ -2818,11 +2844,126 @@ static enum MoveEndResult MoveEndEffectivenessMessage(struct BattleCalcValues *c
     return MOVEEND_RESULT_CONTINUE;
 }
 
+static bool32 GetProtectBypassMethod(enum BattlerId battlerDef, enum Ability abilityAtk)
+{
+    if (MoveIgnoresProtect(gCurrentMove))
+        return PROTECT_BYPASS_MOVE_IGNORES;
+    if (GetProtectType(gProtectStructs[battlerDef].protected) == PROTECT_TYPE_SINGLE
+        && gProtectStructs[battlerDef].protected != PROTECT_MAX_GUARD
+        && (abilityAtk == ABILITY_UNSEEN_FIST || abilityAtk == ABILITY_PIERCING_DRILL))
+        return PROTECT_BYPASS_ABILITY_IGNORES;
+    if (!IsZMove(gCurrentMove) && !IsMaxMove(gCurrentMove))
+        return PROTECT_BYPASS_NONE;
+    if (GetProtectType(gProtectStructs[battlerDef].protected) == PROTECT_TYPE_SINGLE
+        && gProtectStructs[battlerDef].protected != PROTECT_MAX_GUARD)
+        return PROTECT_BYPASS_OTHER;
+    return PROTECT_BYPASS_MOVE_IGNORES;
+}
+
 static enum MoveEndResult MoveEndCritProtectMessage(struct BattleCalcValues *cv)
 {
-    // TODO
+    enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
+    enum Ability abilityAtk = cv->abilities[cv->battlerAtk];
+    enum BattlerId battler1 = cv->battlerDef;
+    enum BattlerId battler2 = GetPartnerBattler(battler1);
+    bool32 anyValidBattler = FALSE;
+
+    if (!IsBattlerTurnDamaged(battler1, EXCLUDING_SUBSTITUTES))
+        battler1 = battler2;
+    else
+        anyValidBattler = TRUE;
+
+    if (!IsBattlerTurnDamaged(battler2, EXCLUDING_SUBSTITUTES))
+        battler2 = battler1;
+    else
+        anyValidBattler = TRUE;
+
+    if (!anyValidBattler)
+    {
+        gBattleScripting.moveendState++;
+        return result;
+    }
+
+    if (!gBattleStruct->battlerState[battler1].critMessagePrinted && gSpecialStatuses[battler1].criticalHit)
+    {
+        if (IsDoubleSpreadMove())
+            BattleScriptCall(BattleScript_CriticalHitMessageMultiTarget);
+        else
+            BattleScriptCall(BattleScript_CriticalHitMessage);
+
+        gBattleStruct->battlerState[battler1].critMessagePrinted = TRUE;
+        gBattleScripting.battler = battler1;
+        result = MOVEEND_RESULT_RUN_SCRIPT;
+        return result;
+    }
+
+    if (!gBattleStruct->battlerState[battler1].protectMessagePrinted)
+    {
+        switch (GetProtectBypassMethod(battler1, abilityAtk))
+        {
+        case PROTECT_BYPASS_ABILITY_IGNORES:
+            BattleScriptCall(BattleScript_UnseenFist);
+            gBattleScripting.battler = battler1;
+            result = MOVEEND_RESULT_RUN_SCRIPT;
+            gBattleStruct->battlerState[battler1].protectMessagePrinted = TRUE;
+            return result;
+            break;
+        case PROTECT_BYPASS_OTHER:
+            BattleScriptCall(BattleScript_CouldntFullyProtect);
+            gBattleScripting.battler = battler1;
+            result = MOVEEND_RESULT_RUN_SCRIPT;
+            gBattleStruct->battlerState[battler1].protectMessagePrinted = TRUE;
+            return result;
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (!gBattleStruct->battlerState[battler2].critMessagePrinted && gSpecialStatuses[battler2].criticalHit)
+    {
+        if (IsDoubleSpreadMove())
+            BattleScriptCall(BattleScript_CriticalHitMessageMultiTarget);
+        else
+            BattleScriptCall(BattleScript_CriticalHitMessage);
+
+        gBattleStruct->battlerState[battler2].critMessagePrinted = TRUE;
+        gBattleScripting.battler = battler2;
+        result = MOVEEND_RESULT_RUN_SCRIPT;
+        return result;
+    }
+
+    if (!gBattleStruct->battlerState[battler2].protectMessagePrinted)
+    {
+        switch (GetProtectBypassMethod(battler2, abilityAtk))
+        {
+        case PROTECT_BYPASS_ABILITY_IGNORES:
+            BattleScriptCall(BattleScript_UnseenFist);
+            gBattleScripting.battler = battler2;
+            result = MOVEEND_RESULT_RUN_SCRIPT;
+            gBattleStruct->battlerState[battler2].protectMessagePrinted = TRUE;
+            return result;
+            break;
+        case PROTECT_BYPASS_OTHER:
+            BattleScriptCall(BattleScript_CouldntFullyProtect);
+            gBattleScripting.battler = battler2;
+            result = MOVEEND_RESULT_RUN_SCRIPT;
+            gBattleStruct->battlerState[battler2].protectMessagePrinted = TRUE;
+            return result;
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (result != MOVEEND_RESULT_CONTINUE)
+    {
+        gBattleStruct->battlerState[battler2].protectMessagePrinted = TRUE;
+        return result;
+    }
+
     gBattleScripting.moveendState++;
-    return MOVEEND_RESULT_CONTINUE;
+    return result;
 }
 
 static enum MoveEndResult MoveEndEndureDamageMessage(struct BattleCalcValues *cv)
@@ -2864,46 +3005,6 @@ static enum MoveEndResult MoveEndEndureDamageMessage(struct BattleCalcValues *cv
     // TODO
     gBattleScripting.moveendState++;
     return MOVEEND_RESULT_CONTINUE;
-}
-
-static bool32 GetProtectBypassMethod(enum BattlerId battlerDef, enum Ability abilityAtk)
-{
-    if (MoveIgnoresProtect(gCurrentMove))
-        return PROTECT_BYPASS_MOVE_IGNORES;
-    if (GetProtectType(gProtectStructs[battlerDef].protected) == PROTECT_TYPE_SINGLE
-        && gProtectStructs[battlerDef].protected != PROTECT_MAX_GUARD
-        && (abilityAtk == ABILITY_UNSEEN_FIST || abilityAtk == ABILITY_PIERCING_DRILL))
-        return PROTECT_BYPASS_ABILITY_IGNORES;
-    if (!IsZMove(gCurrentMove) && !IsMaxMove(gCurrentMove))
-        return PROTECT_BYPASS_NONE;
-    if (GetProtectType(gProtectStructs[battlerDef].protected) == PROTECT_TYPE_SINGLE
-        && gProtectStructs[battlerDef].protected != PROTECT_MAX_GUARD)
-        return PROTECT_BYPASS_OTHER;
-    return PROTECT_BYPASS_MOVE_IGNORES;
-}
-
-static enum MoveEndResult MoveEndProtectBypassEffects(struct BattleCalcValues *cv)
-{
-    enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
-    enum Ability abilityAtk = cv->abilities[cv->battlerAtk];
-    enum ProtectBypass protectBypassMethod = GetProtectBypassMethod(cv->battlerDef, abilityAtk);
-
-    switch (protectBypassMethod)
-    {
-        case PROTECT_BYPASS_ABILITY_IGNORES:
-            BattleScriptCall(BattleScript_UnseenFist);
-            result = MOVEEND_RESULT_RUN_SCRIPT;
-            break;
-        case PROTECT_BYPASS_OTHER:
-            BattleScriptCall(BattleScript_CouldntFullyProtect);
-            result = MOVEEND_RESULT_RUN_SCRIPT;
-            break;
-        default:
-            break;
-    }
-
-    gBattleScripting.moveendState++;
-    return result;
 }
 
 static enum MoveEndResult MoveEndProtectLikeEffect(struct BattleCalcValues *cv)
@@ -4841,7 +4942,6 @@ static enum MoveEndResult (*const sMoveEndHandlers[])(struct BattleCalcValues *c
     [MOVEEND_EFFECTIVENESS_MESSAGE] = MoveEndEffectivenessMessage,
     [MOVEEND_CRIT_PROTECT_MESSAGE] = MoveEndCritProtectMessage,
     [MOVEEND_ENDURE_DAMAGE_MESSAGE] = MoveEndEndureDamageMessage,
-    [MOVEEND_PROTECT_BYPASS_EFFECTS] = MoveEndProtectBypassEffects,
     [MOVEEND_PROTECT_LIKE_EFFECT] = MoveEndProtectLikeEffect,
     [MOVEEND_QUEUE_DANCER] = MoveEndQueueDancer,
     [MOVEEND_ADDITIONAL_EFFECTS] = MoveEndAdditionalEffects,

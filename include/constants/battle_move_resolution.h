@@ -131,7 +131,6 @@ enum MoveEndState
     MOVEEND_EFFECTIVENESS_MESSAGE, // Multi-target and single-target
     MOVEEND_CRIT_PROTECT_MESSAGE, // Crit message, then target couldn't protect itself for each target
     MOVEEND_ENDURE_DAMAGE_MESSAGE, // Endure, False Swipe/Hold Back, Sturdy, Focus Sash/Focus Band, Friendship, in that order
-    MOVEEND_PROTECT_BYPASS_EFFECTS,
     MOVEEND_PROTECT_LIKE_EFFECT,
     MOVEEND_QUEUE_DANCER,
     MOVEEND_ADDITIONAL_EFFECTS,

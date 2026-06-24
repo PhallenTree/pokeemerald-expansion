@@ -410,6 +410,8 @@ extern const u8 BattleScript_PrintExtremelyEffectiveMessage[];
 extern const u8 BattleScript_PrintSuperEffectiveMessage[];
 extern const u8 BattleScript_PrintNotVeryEffectiveMessage[];
 extern const u8 BattleScript_PrintMostlyIneffectiveMessage[];
+extern const u8 BattleScript_CriticalHitMessage[];
+extern const u8 BattleScript_CriticalHitMessageMultiTarget[];
 extern const u8 BattleScript_BattlerAvoidedMultiHit[];
 extern const u8 BattleScript_RemoveFireType[];
 extern const u8 BattleScript_AbilityStatChange[];

@@ -1680,6 +1680,16 @@ BattleScript_PrintMostlyIneffectiveMessage::
 	waitmessage B_WAIT_TIME_LONG
 	return
 
+BattleScript_CriticalHitMessage::
+	printstring STRINGID_CRITICALHIT
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_CriticalHitMessageMultiTarget::
+	printstring STRINGID_CRITICALHITONDEF
+	waitmessage B_WAIT_TIME_LONG
+	return
+
 BattleScript_BattlerAvoidedMultiHit::
 	pause B_WAIT_TIME_LONG
 	copyarray gBattleTextBuff1, sMULTIHIT_STRING, 6
