@@ -2619,7 +2619,7 @@ static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
             gBattleStruct->eventState.moveEndBlock++;
             break;
         case SUBSTITUTE_BLOCK_EFFECTIVENESS_MESSAGE:
-            if (battlerDefDamaged)
+            if (battlerDefDamaged && !gBattleStruct->battlerState[cv->battlerDef].resultMessagePrinted)
             {
                 u32 moveResultFlags = gBattleStruct->moveResultFlags[cv->battlerDef];
 
@@ -2644,7 +2644,9 @@ static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
             gBattleStruct->eventState.moveEndBlock++;
             break;
         case SUBSTITUTE_BLOCK_CRIT_MESSAGE:
-            if (battlerDefDamaged && gSpecialStatuses[cv->battlerDef].criticalHit)
+            if (battlerDefDamaged
+             && gSpecialStatuses[cv->battlerDef].criticalHit
+             && !gBattleStruct->battlerState[cv->battlerDef].critMessagePrinted)
             {
                 BattleScriptCall(BattleScript_CriticalHitMessage);
                 result = MOVEEND_RESULT_RUN_SCRIPT;
@@ -3781,6 +3783,8 @@ static enum MoveEndResult MoveEndMultihitMoveBlock(struct BattleCalcValues *cv)
                 gBattleStruct->eventState.moveEndBlock = 0;
                 gSpecialStatuses[cv->battlerAtk].multiHitOn = TRUE;
                 gBattleStruct->battlerState[cv->battlerDef].resultMessagePrinted = FALSE;
+                gBattleStruct->battlerState[cv->battlerDef].critMessagePrinted = FALSE;
+                gBattleStruct->battlerState[cv->battlerDef].protectMessagePrinted = FALSE;
                 BattleScriptPush(GetMoveBattleScript(cv->move));
                 gBattlescriptCurrInstr = BattleScript_FlushMessageBox;
                 return MOVEEND_RESULT_BREAK;
