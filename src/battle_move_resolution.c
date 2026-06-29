@@ -2733,7 +2733,7 @@ static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
                 result = MOVEEND_RESULT_RUN_SCRIPT;
                 TryInitializeTrainerSlideEnemyLandsFirstCriticalHit(cv->battlerDef);
                 TryInitializeTrainerSlidePlayerLandsFirstCriticalHit(cv->battlerDef);
-                gBattleScripting.battler = battlerDef;
+                gBattleScripting.battler = cv->battlerDef;
                 gBattleStruct->battlerState[cv->battlerDef].critMessagePrinted = TRUE;
             }
             gBattleStruct->eventState.moveEndBlock++;
