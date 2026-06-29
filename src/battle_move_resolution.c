@@ -2733,6 +2733,7 @@ static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
                 result = MOVEEND_RESULT_RUN_SCRIPT;
                 TryInitializeTrainerSlideEnemyLandsFirstCriticalHit(cv->battlerDef);
                 TryInitializeTrainerSlidePlayerLandsFirstCriticalHit(cv->battlerDef);
+                gBattleScripting.battler = battlerDef;
                 gBattleStruct->battlerState[cv->battlerDef].critMessagePrinted = TRUE;
             }
             gBattleStruct->eventState.moveEndBlock++;
@@ -2969,7 +2970,7 @@ static enum MoveEndResult MoveEndCritProtectMessage(struct BattleCalcValues *cv)
 
     if (!gBattleStruct->battlerState[battler1].critMessagePrinted && gSpecialStatuses[battler1].criticalHit)
     {
-        if (IsDoubleSpreadMove())
+        if (IsSpreadMove())
             BattleScriptCall(BattleScript_CriticalHitMessageMultiTarget);
         else
             BattleScriptCall(BattleScript_CriticalHitMessage);
@@ -3005,7 +3006,7 @@ static enum MoveEndResult MoveEndCritProtectMessage(struct BattleCalcValues *cv)
 
     if (!gBattleStruct->battlerState[battler2].critMessagePrinted && gSpecialStatuses[battler2].criticalHit)
     {
-        if (IsDoubleSpreadMove())
+        if (IsSpreadMove())
             BattleScriptCall(BattleScript_CriticalHitMessageMultiTarget);
         else
             BattleScriptCall(BattleScript_CriticalHitMessage);
