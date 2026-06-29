@@ -2873,13 +2873,13 @@ static enum MoveEndResult MoveEndEffectivenessMessage(struct BattleCalcValues *c
     enum BattlerId battler2 = GetPartnerBattler(cv->battlerDef);
     bool32 anyValidBattler = FALSE;
 
-    if (ShouldSkipFailureCheckOnBattler(cv->battlerAtk, battler1, TRUE)
+    if (ShouldSkipFailureCheckOnBattler(cv->battlerAtk, battler1)
      || gBattleStruct->battlerState[battler1].resultMessagePrinted)
         battler1 = battler2;
     else
         anyValidBattler = TRUE;
     
-    if (ShouldSkipFailureCheckOnBattler(cv->battlerAtk, battler2, TRUE)
+    if (ShouldSkipFailureCheckOnBattler(cv->battlerAtk, battler2)
      || gBattleStruct->battlerState[battler2].resultMessagePrinted)
         battler2 = battler1;
     else
