@@ -85,6 +85,7 @@ enum CancelerState
     CANCELER_END,
 };
 
+// cases for MOVEEND_FAINT_BLOCK
 enum FaintBlockStates
 {
     FAINT_BLOCK_FINAL_GAMBIT,
@@ -105,18 +106,49 @@ enum MoveEndResult
     MOVEEND_RESULT_BREAK,
 };
 
+enum SubstituteBlockStates
+{
+    SUBSTITUTE_BLOCK_DAMAGED_MESSAGE,
+    SUBSTITUTE_BLOCK_EFFECTIVENESS_MESSAGE,
+    SUBSTITUTE_BLOCK_CRIT_MESSAGE,
+    SUBSTITUTE_BLOCK_BYPASS_PROTECT_MESSAGE,
+    SUBSTITUTE_BLOCK_SUBSTITUTE_DISAPPEARS,
+    SUBSTITUTE_BLOCK_ADDITIONAL_EFFECTS,
+    SUBSTITUTE_BLOCK_ITEM_EFFECT_TARGET,
+    SUBSTITUTE_BLOCK_PROTECT_LIKE_EFFECT,
+    SUBSTITUTE_BLOCK_DYNAMAX_MOVE_EFFECTS,
+    SUBSTITUTE_BLOCK_COUNT,
+};
+
+enum MultihitBlockStates
+{
+    MULTIHIT_BLOCK_HP_THRESHOLD_ITEMS,
+    MULTIHIT_BLOCK_DECREMENT_HIT,
+    MULTIHIT_BLOCK_SMART_REDIRECTION,
+    MULTIHIT_BLOCK_INTERRUPT_EXECUTION,
+    MULTIHIT_BLOCK_EFFECTIVENESS_MESSAGE,
+    MULTIHIT_BLOCK_NEXT_HIT,
+    MULTIHIT_BLOCK_PRINT_NUM_OF_HITS,
+    MULTIHIT_BLOCK_COUNT,
+};
+
 // cases for Cmd_moveend - Order matters!
 enum MoveEndState
 {
     MOVEEND_SET_VALUES,
-    MOVEEND_PROTECT_BYPASS_EFFECTS,
+    MOVEEND_SUBSTITUTE_BLOCK,
+    MOVEEND_MOVE_HEAVY_RECOIL, // Explosion, Steel Beam and similar moves
+    MOVEEND_EFFECTIVENESS_MESSAGE, // Multi-target and single-target
+    MOVEEND_CRIT_PROTECT_MESSAGE, // Crit message, then target couldn't protect itself for each target
+    MOVEEND_ENDURE_DAMAGE_MESSAGE, // Endure, False Swipe/Hold Back, Sturdy, Focus Sash/Focus Band, Friendship, in that order
     MOVEEND_PROTECT_LIKE_EFFECT,
+    MOVEEND_QUEUE_DANCER,
+    MOVEEND_ADDITIONAL_EFFECTS,
     MOVEEND_ABSORB,
     MOVEEND_RAGE,
     MOVEEND_ABILITIES,
     MOVEEND_FORM_CHANGE_ON_HIT, // Disguise / Gulp Missile
     MOVEEND_ABILITIES_ATTACKER,
-    MOVEEND_QUEUE_DANCER,
     MOVEEND_STATUS_IMMUNITY_ABILITIES, // TODO: Do berries come before????
     MOVEEND_ATTACKER_INVISIBLE,
     MOVEEND_ATTACKER_VISIBLE,
@@ -124,14 +156,12 @@ enum MoveEndState
     MOVEEND_ITEM_EFFECTS_TARGET,
     MOVEEND_ITEM_EFFECTS_ATTACKER_1,
     MOVEEND_SYMBIOSIS,
-    MOVEEND_SUBSTITUTE,
     MOVEEND_FAINT_BLOCK,
     MOVEEND_UPDATE_LAST_MOVES,
     MOVEEND_MIRROR_MOVE,
     MOVEEND_NEXT_TARGET, // Everything up until here is handled for each strike of a spread move
     MOVEEND_BOUNCED_MOVE,
-    MOVEEND_HP_THRESHOLD_ITEMS_TARGET, // Activation only during a multi hit move / ability (Parental Bond)
-    MOVEEND_MULTIHIT_MOVE,
+    MOVEEND_MULTIHIT_MOVE_BLOCK, // HP threshold items, effectiveness message, end move
     MOVEEND_DEFROST,
     MOVEEND_MOVE_BLOCK_RECOIL, // Recoil effects should still happen even if Sheer Force applies
     MOVEEND_SHEER_FORCE, // If move is Sheer Force affected, jump to effects that are not suppressed

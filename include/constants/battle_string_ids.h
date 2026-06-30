@@ -730,6 +730,15 @@ enum StringID
 // They are assigned to the MULTISTRING_CHOOSER byte of gBattleCommunication
 // and read when e.g. the command printfromtable is used.
 
+// gExtremelyEffectiveStringIds, gSuperEffectiveStringIds, gNotVeryEffectiveStringIds and gMostlyIneffectiveStringIds
+enum EffectivenessTargetStringID
+{
+    B_MSG_NO_TARGET,
+    B_MSG_ONE_TARGET,
+    B_MSG_ONE_OF_TWO_TARGETS,
+    B_MSG_TWO_TARGETS,
+};
+
 // gStatUpStringIds and gStatDownStringIds
 enum StatChangedStringID
 {

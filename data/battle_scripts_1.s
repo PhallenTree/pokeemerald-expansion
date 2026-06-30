@@ -1657,6 +1657,41 @@ BattleScript_MultiHitPrintStrings::
 	waitmessage B_WAIT_TIME_LONG
 	return
 
+BattleScript_PrintEffectivenessMessage::
+	resultmessage
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_PrintExtremelyEffectiveMessage::
+	printfromtable gExtremelyEffectiveStringIds
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_PrintSuperEffectiveMessage::
+	printfromtable gSuperEffectiveStringIds
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_PrintNotVeryEffectiveMessage::
+	printfromtable gNotVeryEffectiveStringIds
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_PrintMostlyIneffectiveMessage::
+	printfromtable gMostlyIneffectiveStringIds
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_CriticalHitMessage::
+	printstring STRINGID_CRITICALHIT
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_CriticalHitMessageMultiTarget::
+	printstring STRINGID_CRITICALHITONDEF
+	waitmessage B_WAIT_TIME_LONG
+	return
+
 BattleScript_BattlerAvoidedMultiHit::
 	pause B_WAIT_TIME_LONG
 	copyarray gBattleTextBuff1, sMULTIHIT_STRING, 6
@@ -5209,6 +5244,11 @@ BattleScript_IgnoresAndHitsItself::
 	printstring STRINGID_PKMNWONTOBEY
 	waitmessage B_WAIT_TIME_LONG
 	goto BattleScript_DoSelfConfusionDmg
+
+BattleScript_SubstituteTookDamage::
+	printstring STRINGID_SUBSTITUTEDAMAGED
+	waitmessage B_WAIT_TIME_MED
+	return
 
 BattleScript_SubstituteFade::
 	playanimation BS_SCRIPTING, B_ANIM_SUBSTITUTE_FADE

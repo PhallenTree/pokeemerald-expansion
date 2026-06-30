@@ -298,7 +298,7 @@ const u8 *const gBattleStringsTable[STRINGID_COUNT] =
     [STRINGID_PKMNTRANSFORMEDINTO]                  = COMPOUND_STRING("{B_ATK_NAME_WITH_PREFIX} transformed into {B_BUFF1}!"),
     [STRINGID_PKMNMADESUBSTITUTE]                   = COMPOUND_STRING("{B_ATK_NAME_WITH_PREFIX} put in a substitute!"),
     [STRINGID_PKMNHASSUBSTITUTE]                    = COMPOUND_STRING("{B_ATK_NAME_WITH_PREFIX} already has a substitute!"),
-    [STRINGID_SUBSTITUTEDAMAGED]                    = COMPOUND_STRING("The substitute took damage for {B_DEF_NAME_WITH_PREFIX2}!\p"),
+    [STRINGID_SUBSTITUTEDAMAGED]                    = COMPOUND_STRING("The substitute took damage for {B_SCR_NAME_WITH_PREFIX2}!\p"),
     [STRINGID_PKMNSUBSTITUTEFADED]                  = COMPOUND_STRING("{B_SCR_NAME_WITH_PREFIX}'s substitute faded!\p"),
     [STRINGID_PKMNMUSTRECHARGE]                     = COMPOUND_STRING("{B_ATK_NAME_WITH_PREFIX} must recharge!"),
     [STRINGID_PKMNRAGEBUILDING]                     = COMPOUND_STRING("{B_DEF_NAME_WITH_PREFIX}'s rage is building!"),
@@ -766,7 +766,7 @@ const u8 *const gBattleStringsTable[STRINGID_COUNT] =
     [STRINGID_TOXICSPIKESDISAPPEAREDFROMTEAM]       = COMPOUND_STRING("The toxic spikes disappeared from the ground around {B_ATK_TEAM2} side!"),
     [STRINGID_STICKYWEBDISAPPEAREDFROMTEAM]         = COMPOUND_STRING("The sticky web has disappeared from the ground on {B_ATK_TEAM2} side!"),
     [STRINGID_STEALTHROCKDISAPPEAREDFROMTEAM]       = COMPOUND_STRING("The pointed stones disappeared from {B_ATK_TEAM2} side!"),
-    [STRINGID_COULDNTFULLYPROTECT]                  = COMPOUND_STRING("{B_DEF_NAME_WITH_PREFIX} couldn't fully protect itself and got hurt!"),
+    [STRINGID_COULDNTFULLYPROTECT]                  = COMPOUND_STRING("{B_SCR_NAME_WITH_PREFIX} couldn't fully protect itself and got hurt!"),
     [STRINGID_STOCKPILEDEFFECTWOREOFF]              = COMPOUND_STRING("{B_ATK_NAME_WITH_PREFIX}'s stockpiled effect wore off!"),
     [STRINGID_PKMNREVIVEDREADYTOFIGHT]              = COMPOUND_STRING("{B_BUFF1} was revived and is ready to fight again!"),
     [STRINGID_ITEMRESTOREDSPECIESHEALTH]            = COMPOUND_STRING("{B_BUFF1} had its HP restored."),
@@ -897,7 +897,7 @@ const u8 *const gBattleStringsTable[STRINGID_COUNT] =
     [STRINGID_EXTREMELYEFFECTIVEONDEF]              = COMPOUND_STRING("It's extremely effective on {B_DEF_NAME_WITH_PREFIX2}!"),
     [STRINGID_EXTREMELYEFFECTIVETWOFOES]            = COMPOUND_STRING("It's extremely effective on {B_DEF_NAME_WITH_PREFIX2} and {B_DEF_PARTNER_NAME}!"),
     [STRINGID_MOSTLYINEFFECTIVETWOFOES]             = COMPOUND_STRING("It's mostly ineffective on {B_DEF_NAME_WITH_PREFIX2} and {B_DEF_PARTNER_NAME}."),
-    [STRINGID_CRITICALHITONDEF]                     = COMPOUND_STRING("A critical hit on {B_DEF_NAME_WITH_PREFIX2}!"),
+    [STRINGID_CRITICALHITONDEF]                     = COMPOUND_STRING("A critical hit on {B_SCR_NAME_WITH_PREFIX2}!"),
     [STRINGID_S]                                    = COMPOUND_STRING("s"),
     [STRINGID_LOSTSOMEOFITSHP]                      = COMPOUND_STRING("{B_ATK_NAME_WITH_PREFIX} lost some of its HP!"),
     [STRINGID_BELCHCANTUSE]                         = COMPOUND_STRING("{B_ATK_NAME_WITH_PREFIX} hasn't eaten any held Berries, so it can't possibly belch!\p"),
@@ -906,6 +906,38 @@ const u8 *const gBattleStringsTable[STRINGID_COUNT] =
 const u16 gTrainerUsedItemStringIds[] =
 {
     STRINGID_PLAYERUSEDITEM, STRINGID_TRAINER1USEDITEM
+};
+
+const u16 gExtremelyEffectiveStringIds[] =
+{
+    [B_MSG_NO_TARGET]           = STRINGID_EXTREMELYEFFECTIVE, // placeholder, shouldn't be used
+    [B_MSG_ONE_TARGET]          = STRINGID_EXTREMELYEFFECTIVE,
+    [B_MSG_ONE_OF_TWO_TARGETS]  = STRINGID_EXTREMELYEFFECTIVEONDEF,
+    [B_MSG_TWO_TARGETS]         = STRINGID_EXTREMELYEFFECTIVETWOFOES,
+};
+
+const u16 gSuperEffectiveStringIds[] =
+{
+    [B_MSG_NO_TARGET]           = STRINGID_SUPEREFFECTIVE, // placeholder, shouldn't be used
+    [B_MSG_ONE_TARGET]          = STRINGID_SUPEREFFECTIVE,
+    [B_MSG_ONE_OF_TWO_TARGETS]  = STRINGID_SUPEREFFECTIVEONDEF,
+    [B_MSG_TWO_TARGETS]         = STRINGID_SUPEREFFECTIVETWOFOES,
+};
+
+const u16 gNotVeryEffectiveStringIds[] =
+{
+    [B_MSG_NO_TARGET]           = STRINGID_NOTVERYEFFECTIVE, // placeholder, shouldn't be used
+    [B_MSG_ONE_TARGET]          = STRINGID_NOTVERYEFFECTIVE,
+    [B_MSG_ONE_OF_TWO_TARGETS]  = STRINGID_NOTVERYEFFECTIVEONDEF,
+    [B_MSG_TWO_TARGETS]         = STRINGID_NOTVERYEFFECTIVETWOFOES,
+};
+
+const u16 gMostlyIneffectiveStringIds[] =
+{
+    [B_MSG_NO_TARGET]           = STRINGID_MOSTLYINEFFECTIVE, // placeholder, shouldn't be used
+    [B_MSG_ONE_TARGET]          = STRINGID_MOSTLYINEFFECTIVE,
+    [B_MSG_ONE_OF_TWO_TARGETS]  = STRINGID_MOSTLYINEFFECTIVEONDEF,
+    [B_MSG_TWO_TARGETS]         = STRINGID_MOSTLYINEFFECTIVETWOFOES,
 };
 
 const u16 gZEffectStringIds[] =
