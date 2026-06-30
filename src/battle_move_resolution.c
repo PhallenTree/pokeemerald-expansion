@@ -2970,7 +2970,7 @@ static enum MoveEndResult MoveEndCritProtectMessage(struct BattleCalcValues *cv)
 
     if (!gBattleStruct->battlerState[battler1].critMessagePrinted && gSpecialStatuses[battler1].criticalHit)
     {
-        if (IsSpreadMove(GetBattlerMoveTargetType(cv->battlerAtk, cv->move)))
+        if (IsDoubleSpreadMove())
             BattleScriptCall(BattleScript_CriticalHitMessageMultiTarget);
         else
             BattleScriptCall(BattleScript_CriticalHitMessage);
@@ -3006,7 +3006,7 @@ static enum MoveEndResult MoveEndCritProtectMessage(struct BattleCalcValues *cv)
 
     if (!gBattleStruct->battlerState[battler2].critMessagePrinted && gSpecialStatuses[battler2].criticalHit)
     {
-        if (IsSpreadMove(GetBattlerMoveTargetType(cv->battlerAtk, cv->move)))
+        if (IsDoubleSpreadMove())
             BattleScriptCall(BattleScript_CriticalHitMessageMultiTarget);
         else
             BattleScriptCall(BattleScript_CriticalHitMessage);
