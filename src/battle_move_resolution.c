@@ -3691,7 +3691,7 @@ static enum MoveEndResult MoveEndAdditionalEffects(struct BattleCalcValues *cv)
             // Various checks for if this move effect can be applied this turn
             if (CanApplyAdditionalEffect(cv->battlerAtk, effectBattler, additionalEffect)
              && ShouldApplyAfterHitEffects(cv->battlerAtk, effectBattler)
-             && (effectBattler == cv->battlerAtk) == additionalEffect.self)
+             && (effectBattler == cv->battlerAtk) == additionalEffect->self)
             {
                 percentChance = CalcSecondaryEffectChance(cv->battlerAtk, cv->abilities[cv->battlerAtk], additionalEffect);
 
@@ -5476,7 +5476,7 @@ static enum MoveEndResult MoveEndClearBits(struct BattleCalcValues *cv)
     {
         gBattleStruct->battlerState[cv->battlerAtk].targetsDone[i] = FALSE;
         gBattleStruct->battlerState[i].originalBattlerPartyId = PARTY_SIZE;
-        gBattleStruct->battlerState[i].toxicChainActivates = FALSE;~
+        gBattleStruct->battlerState[i].toxicChainActivates = FALSE;
         gBattleMons[i].volatiles.tryEjectPack = FALSE;
 
         if (gBattleStruct->battlerState[i].commanderSpecies != SPECIES_NONE && !IsBattlerAlive(i))
