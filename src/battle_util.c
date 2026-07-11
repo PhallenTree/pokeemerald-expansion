@@ -4337,9 +4337,9 @@ u32 AbilityBattleEffects(enum AbilityEffect caseID, enum BattlerId battler, enum
             }
             break;
         case ABILITY_TOXIC_CHAIN:
-            if (gBattleStruct->toxicChainPriority)
+            if (gBattleStruct->battlerState[gBattlerTarget].toxicChainActivates)
             {
-                gBattleStruct->toxicChainPriority = FALSE;
+                gBattleStruct->battlerState[gBattlerTarget].toxicChainActivates = FALSE;
                 if (!IsMoveEffectBlockedByTarget(GetBattlerAbility(gBattlerTarget)))
                 {
                     gEffectBattler = gBattlerTarget;

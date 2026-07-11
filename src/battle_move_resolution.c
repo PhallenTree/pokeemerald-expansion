@@ -3624,9 +3624,109 @@ static enum MoveEndResult MoveEndQueueDancer(struct BattleCalcValues *cv)
     return MOVEEND_RESULT_CONTINUE;
 }
 
+static bool32 ShouldApplyAfterHitEffects(enum BattlerId battlerAtk, enum BattlerId effectBattler)
+{
+    if (gBattleStruct->unableToUseMove)
+        return FALSE;
+
+    if (battlerAtk == effectBattler)
+        return IsAnyTargetAffected();
+
+    return !IsBattlerUnaffectedByMove(effectBattler);
+}
+
+static bool32 CanApplyAdditionalEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, const struct AdditionalEffect *additionalEffect)
+{
+    if (additionalEffect->preAttackEffect)
+        return FALSE;
+
+    if (additionalEffect->pledgeCombo && gBattleStruct->pledgeState != PLEDGE_COMBO_ATTACK)
+        return FALSE;
+
+    // If Toxic Chain will activate it blocks all other non volatile effects
+    if (gBattleStruct->battlerState[effectBattler].toxicChainActivates && additionalEffect->moveEffect <= MOVE_EFFECT_FROSTBITE)
+        return FALSE;
+
+    // Certain move effects only apply if the target raised stats this turn (e.g. Burning Jealousy)
+    if (additionalEffect->onlyIfTargetRaisedStats && !gProtectStructs[effectBattler].statRaised)
+        return FALSE;
+
+    // Certain additional effects only apply on a two-turn move's charge turn
+    if (additionalEffect->onChargeTurnOnly != gProtectStructs[battlerAtk].chargingTurn)
+        return FALSE;
+
+    return TRUE;
+}
+
+static void SetToxicChainPriority(struct BattleCalcValues *cv)
+{
+    if (gBattleStruct->toxicChainPriority)
+        return;
+
+    for (enum BattlerId effectBattler = 0; effectBattler < gBattlersCount; effectBattler++)
+    {
+        if (cv->abilities[cv->battlerAtk] == ABILITY_TOXIC_CHAIN
+         && IsBattlerAlive(effectBattler)
+         && CanBePoisoned(cv->battlerAtk, effectBattler, cv->abilities[cv->battlerAtk], cv->abilities[effectBattler])
+         && IsBattlerTurnDamaged(effectBattler, EXCLUDING_SUBSTITUTES)
+         && RandomWeighted(RNG_TOXIC_CHAIN, 7, 3))
+            gBattleStruct->battlerState[effectBattler].toxicChainActivates = TRUE;
+    }
+    gBattleStruct->toxicChainPriority = TRUE;
+}
+
 static enum MoveEndResult MoveEndAdditionalEffects(struct BattleCalcValues *cv)
 {
-    // TODO
+    u32 numAdditionalEffects = GetMoveAdditionalEffectCount(cv->move);
+
+    SetToxicChainPriority(cv);
+
+    while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
+    {
+        enum BattlerId effectBattler = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
+
+        if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter)
+        {
+            u32 percentChance;
+            const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
+
+            // Various checks for if this move effect can be applied this turn
+            if (CanApplyAdditionalEffect(cv->battlerAtk, effectBattler, additionalEffect)
+             && ShouldApplyAfterHitEffects(cv->battlerAtk, effectBattler)
+             && (effectBattler == cv->battlerAtk) == additionalEffect.self)
+            {
+                percentChance = CalcSecondaryEffectChance(cv->battlerAtk, cv->abilities[cv->battlerAtk], additionalEffect);
+
+                // Activate effect if it's primary (chance == 0) or if RNGesus says so
+                if ((percentChance == 0) || RandomPercentage(RNG_SECONDARY_EFFECT + gBattleStruct->additionalEffectsCounter, percentChance))
+                {
+                    gBattleCommunication[MULTISTRING_CHOOSER] = *((u8 *) &additionalEffect->multistring);
+
+                    enum SetMoveEffectFlags flags = NO_FLAGS;
+                    if (percentChance == 0)       flags |= EFFECT_PRIMARY;
+                    if (percentChance >= 100)     flags |= EFFECT_CERTAIN;
+                    if (additionalEffect->onSide) flags |= EFFECT_ON_SIDE;
+
+                    SetMoveEffect(
+                        cv->battlerAtk,
+                        effectBattler,
+                        additionalEffect->moveEffect,
+                        gBattlescriptCurrInstr,
+                        flags
+                    );
+                }
+            }
+
+            gBattleStruct->additionalEffectsCounter++;
+            return MOVEEND_RESULT_RUN_SCRIPT; // try to run effect script if possible
+        }
+        gBattleStruct->eventState.moveEndBattler++;
+        gBattleStruct->additionalEffectsCounter = 0;
+    }
+
+    gBattleStruct->eventState.moveEndBattler = 0;
+    gBattleStruct->additionalEffectsCounter = 0;
+    gBattleScripting.moveEffect = 0;
     gBattleScripting.moveendState++;
     return MOVEEND_RESULT_CONTINUE;
 }
@@ -5378,6 +5478,7 @@ static enum MoveEndResult MoveEndClearBits(struct BattleCalcValues *cv)
     {
         gBattleStruct->battlerState[cv->battlerAtk].targetsDone[i] = FALSE;
         gBattleStruct->battlerState[i].originalBattlerPartyId = PARTY_SIZE;
+        gBattleStruct->battlerState[i].toxicChainActivates = FALSE;~
         gBattleMons[i].volatiles.tryEjectPack = FALSE;
 
         if (gBattleStruct->battlerState[i].commanderSpecies != SPECIES_NONE && !IsBattlerAlive(i))
