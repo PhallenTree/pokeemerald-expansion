@@ -3209,7 +3209,6 @@ static enum MoveEndResult MoveEndMoveHeavyRecoil(struct BattleCalcValues *cv)
     }
 
     if (IsExplosionMove(cv->move)
-     && (gBattleStruct->doneDoublesSpreadHit || !IsDoubleSpreadMove())
      && !IsBattlerAlive(cv->battlerAtk)
      && !gBattleStruct->battlerState[cv->battlerAtk].notOnField)
     {
@@ -3225,7 +3224,6 @@ static enum MoveEndResult MoveEndMoveHeavyRecoil(struct BattleCalcValues *cv)
     {
     case EFFECT_MAX_HP_50_RECOIL:
         if (IsBattlerAlive(cv->battlerAtk)
-         && (gBattleStruct->doneDoublesSpreadHit || !IsDoubleSpreadMove())
          && !gSpecialStatuses[cv->battlerAtk].mindBlownRecoil
          && !IsAbilityAndRecord(cv->battlerAtk, cv->abilities[cv->battlerAtk], ABILITY_MAGIC_GUARD))
         {
