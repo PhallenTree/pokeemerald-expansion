@@ -775,7 +775,7 @@ static bool32 IsMirrorArmorReflected(struct BattleCalcValues *cv, struct StatCha
             if (IsBattlerAlly(cv->battlerAtk, cv->battlerDef))
                 gBattleStruct->ignoreDefiant = TRUE;
 
-            gBattleStruct->allowPartingShot = TRUE;
+            gBattleStruct->moveResultFlags[cv->battlerDef] |= MOVE_RESULT_MIRROR_ARMOR_PENDING;
         }
 
         for (u32 i = 0; i < st->statStageAmount; i++)

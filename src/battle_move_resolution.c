@@ -3920,12 +3920,9 @@ static bool32 CanPartingShotTrigger(enum BattlerId battlerAtk)
     if (GetConfig(B_PARTING_SHOT_SWITCH) < GEN_7 && CanBattlerSwitch(battlerAtk))
         return TRUE;
 
-    if (gBattleStruct->allowPartingShot)
-        return TRUE;
-
     for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
     {
-        if (gBattleStruct->moveResultFlags[battler] & MOVE_RESULT_STAT_CHANGED)
+        if (gBattleStruct->moveResultFlags[battler] & (MOVE_RESULT_STAT_CHANGED | MOVE_RESULT_MIRROR_ARMOR_PENDING))
             return TRUE;
     }
 
@@ -3965,7 +3962,6 @@ static enum MoveEndResult MoveEndHitEscape(struct BattleCalcValues *cv)
         break;
     }
 
-    gBattleStruct->allowPartingShot = FALSE;
     gBattleScripting.moveendState++;
     return result;
 }
