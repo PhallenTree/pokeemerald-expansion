@@ -266,7 +266,7 @@ BattleScript_EffectShedTail::
 	printstring STRINGID_SHEDITSTAIL
 	waitmessage B_WAIT_TIME_LONG
 	moveendto MOVEEND_ATTACKER_VISIBLE
-	moveendfrom MOVEEND_TARGET_VISIBLE
+	moveendfrom MOVEEND_TARGET_VISIBLE_ALLIED_SIDE
 	call BattleScript_MoveSwitchOpenPartyScreenReturnWithNoAnim
 	switchinanim BS_ATTACKER, FALSE, TRUE
 	waitstate
@@ -1408,7 +1408,12 @@ BattleScript_GravityLoopDrop:
 	printstring STRINGID_GRAVITYGROUNDING
 	waitmessage B_WAIT_TIME_LONG
 BattleScript_GravityLoopEnd:
-	moveendcase MOVEEND_TARGET_VISIBLE
+	jumpiftargetally BattleScript_GravityLoopEndAlly
+	moveendcase MOVEEND_TARGET_VISIBLE_OPPOSING_SIDE
+	goto BattleScript_GravityNextTarget
+BattleScript_GravityLoopEndAlly:
+	moveendcase MOVEEND_TARGET_VISIBLE_ALLIED_SIDE
+BattleScript_GravityNextTarget:
 	jumpifnexttargetvalid BattleScript_GravityLoop
 	restoretarget
 	return
@@ -3115,7 +3120,6 @@ BattleScript_DoSwitchOut::
 	switchineffects BS_ATTACKER
 	switchinevents
 	moveendcase MOVEEND_STATUS_IMMUNITY_ABILITIES
-	moveendcase MOVEEND_MIRROR_MOVE
 	end
 
 BattleScript_Pausex20::

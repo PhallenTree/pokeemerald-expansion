@@ -3899,7 +3899,7 @@ static enum MoveEndResult MoveEndAttackerVisible(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
 
-    if (IsBattlerUnaffectedByMove(cv->battlerDef)
+    if (!IsAnyTargetAffected()
         || !IsSemiInvulnerable(cv->battlerAtk, CHECK_ALL)
         || (gBattleStruct->unableToUseMove && gBattleMons[cv->battlerAtk].volatiles.semiInvulnerable != STATE_SKY_DROP_TARGET))
     {
@@ -5581,8 +5581,8 @@ static enum MoveEndResult (*const sMoveEndHandlers[])(struct BattleCalcValues *c
     [MOVEEND_FORM_CHANGE_ON_HIT_ALLIED_SIDE] = MoveEndFormChangeOnHit,
     [MOVEEND_ABILITIES_ATTACKER] = MoveEndAbilitiesAttacker,
     [MOVEEND_STATUS_IMMUNITY_ABILITIES_ALLIED_SIDE] = MoveEndStatusImmunityAbilities,
-    [MOVEEND_ATTACKER_INVISIBLE_ALLIED_SIDE] = MoveEndAttackerInvisible,
-    [MOVEEND_ATTACKER_VISIBLE_ALLIED_SIDE] = MoveEndAttackerVisible,
+    [MOVEEND_ATTACKER_INVISIBLE] = MoveEndAttackerInvisible,
+    [MOVEEND_ATTACKER_VISIBLE] = MoveEndAttackerVisible,
     [MOVEEND_TARGET_VISIBLE_ALLIED_SIDE] = MoveEndTargetVisible,
     [MOVEEND_ITEM_EFFECTS_TARGET_ALLIED_SIDE] = MoveEndItemEffectsTarget,
     [MOVEEND_ITEM_EFFECTS_ATTACKER_1_ALLIED_SIDE] = MoveEndItemEffectsAttacker1,
