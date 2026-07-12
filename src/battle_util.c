@@ -10872,7 +10872,7 @@ void TryUpdateEvolutionTracker(enum EvolutionConditions evolutionCondition, u32 
                     continue;
 
                 struct Pokemon *monAtk = GetBattlerMon(gBattlerAttacker);
-                struct Pokemon *monDef = GetBattlerMon(gBattlerTarget);
+                struct Pokemon *monFainted = GetBattlerMon(gBattlerFainted);
                 // We only have 10 bits to use
                 u16 val = min(1023, GetMonData(monAtk, MON_DATA_EVOLUTION_TRACKER) + upAmount);
                 // Reset progress if you faint for the recoil method.
@@ -10888,8 +10888,9 @@ void TryUpdateEvolutionTracker(enum EvolutionConditions evolutionCondition, u32 
                     SetMonData(monAtk, MON_DATA_EVOLUTION_TRACKER, &val);
                     break;
                 case IF_DEFEAT_X_WITH_ITEMS:
-                    if (GetMonData(monDef, MON_DATA_SPECIES) == evolutions[i].params[j].arg1
-                     && GetMonData(monDef, MON_DATA_HELD_ITEM) == evolutions[i].params[j].arg2)
+                    if (gBattlerAttacker != gBattlerFainted
+                     && GetMonData(monFainted, MON_DATA_SPECIES) == evolutions[i].params[j].arg1
+                     && GetMonData(monFainted, MON_DATA_HELD_ITEM) == evolutions[i].params[j].arg2)
                         SetMonData(monAtk, MON_DATA_EVOLUTION_TRACKER, &val);
                     break;
                 default:
