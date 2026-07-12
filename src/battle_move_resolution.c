@@ -3803,8 +3803,9 @@ static enum MoveEndResult MoveEndAbilitiesTarget(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
 
-    for (enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler); gBattleStruct->eventState.moveEndBattler < gBattlersCount; battlerDef++)
+    while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
+        enum BattlerId battlerDef = GetTargetBySlot(cv->battler, gBattleStruct->eventState.moveEndBattler);
         gBattleStruct->eventState.moveEndBattler++;
 
         if (!IsBattlerAlly(battlerDef, cv->battlerDef))
@@ -3816,6 +3817,7 @@ static enum MoveEndResult MoveEndAbilitiesTarget(struct BattleCalcValues *cv)
     }
 
     gBattleScripting.moveendState++;
+    gBattleStruct->eventState.moveEndBattler = 0;
     return result;
 }
 
@@ -3823,8 +3825,9 @@ static enum MoveEndResult MoveEndFormChangeOnHit(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
 
-    for (enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler); gBattleStruct->eventState.moveEndBattler < gBattlersCount; battlerDef++)
+    while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
+        enum BattlerId battlerDef = GetTargetBySlot(cv->battler, gBattleStruct->eventState.moveEndBattler);
         gBattleStruct->eventState.moveEndBattler++;
 
         if (!IsBattlerAlly(battlerDef, cv->battlerDef))
@@ -3835,6 +3838,7 @@ static enum MoveEndResult MoveEndFormChangeOnHit(struct BattleCalcValues *cv)
     }
 
     gBattleScripting.moveendState++;
+    gBattleStruct->eventState.moveEndBattler = 0;
     return result;
 }
 
@@ -3842,8 +3846,9 @@ static enum MoveEndResult MoveEndAbilitiesAttacker(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
 
-    for (enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler); gBattleStruct->eventState.moveEndBattler < gBattlersCount; battlerDef++)
+    while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
+        enum BattlerId battlerDef = GetTargetBySlot(cv->battler, gBattleStruct->eventState.moveEndBattler);
         gBattleStruct->eventState.moveEndBattler++;
 
         if (battlerDef == cv->battlerAtk)
@@ -3863,8 +3868,9 @@ static enum MoveEndResult MoveEndStatusImmunityAbilities(struct BattleCalcValues
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
 
-    for (enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler); gBattleStruct->eventState.moveEndBattler < gBattlersCount; battlerDef++)
+    while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
+        enum BattlerId battlerDef = GetTargetBySlot(cv->battler, gBattleStruct->eventState.moveEndBattler);
         gBattleStruct->eventState.moveEndBattler++;
 
         if (!IsBattlerAlly(battlerDef, cv->battlerDef))
