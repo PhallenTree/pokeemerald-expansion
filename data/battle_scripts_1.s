@@ -3119,7 +3119,8 @@ BattleScript_DoSwitchOut::
 	waitstate
 	switchineffects BS_ATTACKER
 	switchinevents
-	moveendcase MOVEEND_STATUS_IMMUNITY_ABILITIES
+	moveendcase MOVEEND_STATUS_IMMUNITY_ABILITIES_ALLIED_SIDE
+	moveendcase MOVEEND_STATUS_IMMUNITY_ABILITIES_OPPOSING_SIDE
 	end
 
 BattleScript_Pausex20::
