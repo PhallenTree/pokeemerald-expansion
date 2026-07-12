@@ -3423,7 +3423,7 @@ BattleScript_MistProtected::
 	return
 
 BattleScript_RageIsBuilding::
-	trybattlerstatchange BS_TARGET, STAT_CHANGE_NO_FLAGS
+	trybattlerstatchange BS_SCRIPTING, STAT_CHANGE_NO_FLAGS
 	printstring STRINGID_PKMNRAGEBUILDING
 	waitmessage B_WAIT_TIME_LONG
 BattleScript_RageIsBuildingEnd:
