@@ -1147,6 +1147,7 @@ static void Cmd_typecalc(void)
 
 static void Cmd_multihitresultmessage(void)
 {
+    // To be removed
     CMD_ARGS();
 
     if (gBattleControllerExecFlags)
@@ -1373,6 +1374,7 @@ static inline bool32 ShouldRelyOnTwoFoesMessage(u32 moveResult)
 
 static void Cmd_resultmessage(void)
 {
+    // To be removed
     CMD_ARGS();
 
     enum StringID stringId = 0;
@@ -1380,6 +1382,12 @@ static void Cmd_resultmessage(void)
 
     if (gBattleControllerExecFlags)
         return;
+
+    if (gBattleStruct->battlerState[gBattlerTarget].resultMessagePrinted)
+    {
+        gBattlescriptCurrInstr = cmd->nextInstr;
+        return;
+    }
 
     if (*moveResultFlags & MOVE_RESULT_MISSED && !(*moveResultFlags & MOVE_RESULT_DOESNT_AFFECT_FOE))
     {
@@ -1526,7 +1534,10 @@ static void Cmd_resultmessage(void)
         }
     }
     if (stringId)
+    {
         PrepareStringBattle(stringId, gBattlerAttacker);
+        gBattleStruct->battlerState[gBattlerTarget].resultMessagePrinted = TRUE;
+    }
     else
         gBattleCommunication[MSG_DISPLAY] = 0;
 
@@ -2969,93 +2980,51 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
     gBattleScripting.moveEffect = MOVE_EFFECT_NONE;
 }
 
-static bool32 CanApplyAdditionalEffect(const struct AdditionalEffect *additionalEffect)
-{
-    if (additionalEffect->preAttackEffect)
-        return FALSE;
-
-    if (additionalEffect->pledgeCombo && gBattleStruct->pledgeState != PLEDGE_COMBO_ATTACK)
-        return FALSE;
-
-    // If Toxic Chain will activate it blocks all other non volatile effects
-    if (gBattleStruct->toxicChainPriority && additionalEffect->moveEffect <= MOVE_EFFECT_FROSTBITE)
-        return FALSE;
-
-    if (additionalEffect->self
-     && NumAffectedSpreadMoveTargets() > 1
-     && GetNextTarget(GetBattlerMoveTargetType(gBattlerAttacker, gCurrentMove), TRUE) != MAX_BATTLERS_COUNT)
-        return FALSE;
-
-    // Certain move effects only apply if the target raised stats this turn (e.g. Burning Jealousy)
-    if (additionalEffect->onlyIfTargetRaisedStats && !gProtectStructs[gBattlerTarget].statRaised)
-        return FALSE;
-
-    // Certain additional effects only apply on a two-turn move's charge turn
-    if (additionalEffect->onChargeTurnOnly != gProtectStructs[gBattlerAttacker].chargingTurn)
-        return FALSE;
-
-    return TRUE;
-}
-
-static void SetToxicChainPriority(void)
-{
-    if (gBattleStruct->toxicChainPriority)
-        return;
-
-    enum Ability abilityAtk = GetBattlerAbility(gBattlerAttacker);
-    if (abilityAtk == ABILITY_TOXIC_CHAIN
-     && IsBattlerAlive(gBattlerTarget)
-     && CanBePoisoned(gBattlerAttacker, gBattlerTarget, abilityAtk, GetBattlerAbility(gBattlerTarget))
-     && IsBattlerTurnDamaged(gBattlerTarget, EXCLUDING_SUBSTITUTES)
-     && RandomWeighted(RNG_TOXIC_CHAIN, 7, 3))
-        gBattleStruct->toxicChainPriority = TRUE;
-}
-
 static void Cmd_setadditionaleffects(void)
 {
     CMD_ARGS();
 
-    if (!IsBattlerUnaffectedByMove(gBattlerTarget))
-    {
-        u32 numAdditionalEffects = GetMoveAdditionalEffectCount(gCurrentMove);
-        SetToxicChainPriority();
-        if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter)
-        {
-            u32 percentChance;
-            const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
+    // if (!IsBattlerUnaffectedByMove(gBattlerTarget))
+    // {
+    //     u32 numAdditionalEffects = GetMoveAdditionalEffectCount(gCurrentMove);
+    //     SetToxicChainPriority();
+    //     if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter)
+    //     {
+    //         u32 percentChance;
+    //         const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
 
-            // Various checks for if this move effect can be applied this turn
-            if (CanApplyAdditionalEffect(additionalEffect))
-            {
-                percentChance = CalcSecondaryEffectChance(gBattlerAttacker, GetBattlerAbility(gBattlerAttacker), additionalEffect);
+    //         // Various checks for if this move effect can be applied this turn
+    //         if (CanApplyAdditionalEffect(additionalEffect))
+    //         {
+    //             percentChance = CalcSecondaryEffectChance(gBattlerAttacker, GetBattlerAbility(gBattlerAttacker), additionalEffect);
 
-                // Activate effect if it's primary (chance == 0) or if RNGesus says so
-                if ((percentChance == 0) || RandomPercentage(RNG_SECONDARY_EFFECT + gBattleStruct->additionalEffectsCounter, percentChance))
-                {
-                    gBattleCommunication[MULTISTRING_CHOOSER] = *((u8 *) &additionalEffect->multistring);
+    //             // Activate effect if it's primary (chance == 0) or if RNGesus says so
+    //             if ((percentChance == 0) || RandomPercentage(RNG_SECONDARY_EFFECT + gBattleStruct->additionalEffectsCounter, percentChance))
+    //             {
+    //                 gBattleCommunication[MULTISTRING_CHOOSER] = *((u8 *) &additionalEffect->multistring);
 
-                    enum SetMoveEffectFlags flags = NO_FLAGS;
-                    if (percentChance == 0)       flags |= EFFECT_PRIMARY;
-                    if (percentChance >= 100)     flags |= EFFECT_CERTAIN;
-                    if (additionalEffect->onSide) flags |= EFFECT_ON_SIDE;
+    //                 enum SetMoveEffectFlags flags = NO_FLAGS;
+    //                 if (percentChance == 0)       flags |= EFFECT_PRIMARY;
+    //                 if (percentChance >= 100)     flags |= EFFECT_CERTAIN;
+    //                 if (additionalEffect->onSide) flags |= EFFECT_ON_SIDE;
 
-                    SetMoveEffect(
-                        gBattlerAttacker,
-                        additionalEffect->self ? gBattlerAttacker : gBattlerTarget,
-                        additionalEffect->moveEffect,
-                        gBattlescriptCurrInstr,
-                        flags
-                    );
-                }
-            }
+    //                 SetMoveEffect(
+    //                     gBattlerAttacker,
+    //                     additionalEffect->self ? gBattlerAttacker : gBattlerTarget,
+    //                     additionalEffect->moveEffect,
+    //                     gBattlescriptCurrInstr,
+    //                     flags
+    //                 );
+    //             }
+    //         }
 
-            gBattleStruct->additionalEffectsCounter++;
-            return;
-        }
-    }
+    //         gBattleStruct->additionalEffectsCounter++;
+    //         return;
+    //     }
+    // }
 
-    gBattleStruct->additionalEffectsCounter = 0;
-    gBattleScripting.moveEffect = 0;
+    // gBattleStruct->additionalEffectsCounter = 0;
+    // gBattleScripting.moveEffect = 0;
     gBattlescriptCurrInstr = cmd->nextInstr;
 }
 
