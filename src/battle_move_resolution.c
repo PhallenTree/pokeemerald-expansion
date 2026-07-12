@@ -3103,7 +3103,7 @@ static enum MoveEndResult MoveEndQueueDancerToxicChain(struct BattleCalcValues *
     }
 
     if (!IsDanceMove(cv->move)
-     || !IsAnyTargetAffectedByMove()
+     || !IsAnyTargetAffected()
      || gBattleStruct->unableToUseMove
      || gSpecialStatuses[cv->battlerAtk].dancerUsedMove
      || gBattleStruct->snatchedMoveIsUsed
@@ -3870,7 +3870,7 @@ static enum MoveEndResult MoveEndStatusImmunityAbilities(struct BattleCalcValues
         if (!IsBattlerAlly(battlerDef, cv->battlerDef))
             continue;
 
-        if (AbilityBattleEffects(ABILITYEFFECT_IMMUNITY, battler, 0, 0, TRUE))
+        if (AbilityBattleEffects(ABILITYEFFECT_IMMUNITY, battlerDef, 0, 0, TRUE))
             return MOVEEND_RESULT_RUN_SCRIPT;
     }
 
@@ -4248,6 +4248,14 @@ static enum MoveEndResult MoveEndNextTarget(struct BattleCalcValues *cv)
     }
 
     RecordLastUsedMoveBy(gBattlerAttacker, gCurrentMove);
+    gBattleScripting.moveendState++;
+    return MOVEEND_RESULT_CONTINUE;
+}
+
+static enum MoveEndResult MoveEndSetValuesForOpposingSide(struct BattleCalcValues *cv)
+{
+    //TO DO
+
     gBattleScripting.moveendState++;
     return MOVEEND_RESULT_CONTINUE;
 }
