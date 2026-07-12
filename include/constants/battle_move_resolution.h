@@ -99,20 +99,6 @@ enum CancelerState
     CANCELER_END,
 };
 
-// cases for MOVEEND_FAINT_BLOCK
-enum FaintBlockStates
-{
-    FAINT_BLOCK_FINAL_GAMBIT,
-    FAINT_BLOCK_CHECK_TARGET_FAINTED, // Exits if target is not fainted
-    FAINT_BLOCK_VICTORY_CATCH,
-    FAINT_BLOCK_END_NEUTRALIZING_GAS,
-    FAINT_BLOCK_DO_GRUDGE,
-    // Destiny Bond is tested and called first, but Faint Target's script plays first
-    FAINT_BLOCK_TRY_DESTINY_BOND,
-    FAINT_BLOCK_FAINT_TARGET,
-    FAINT_BLOCK_COUNT,
-};
-
 enum MoveEndResult
 {
     MOVEEND_RESULT_CONTINUE,
@@ -120,6 +106,7 @@ enum MoveEndResult
     MOVEEND_RESULT_BREAK,
 };
 
+// cases for MOVEEND_SUBSTITUTE_BLOCK
 enum SubstituteBlockStates
 {
     SUBSTITUTE_BLOCK_DAMAGED_MESSAGE,
@@ -134,6 +121,21 @@ enum SubstituteBlockStates
     SUBSTITUTE_BLOCK_COUNT,
 };
 
+// cases for MOVEEND_FAINT_BLOCK
+enum FaintBlockStates
+{
+    FAINT_BLOCK_FINAL_GAMBIT,
+    FAINT_BLOCK_CHECK_TARGET_FAINTED, // Exits if target is not fainted
+    FAINT_BLOCK_VICTORY_CATCH,
+    FAINT_BLOCK_END_NEUTRALIZING_GAS,
+    FAINT_BLOCK_DO_GRUDGE,
+    // Destiny Bond is tested and called first, but Faint Target's script plays first
+    FAINT_BLOCK_TRY_DESTINY_BOND,
+    FAINT_BLOCK_FAINT_TARGET,
+    FAINT_BLOCK_COUNT,
+};
+
+// cases for MOVEEND_MULTIHIT_BLOCK
 enum MultihitBlockStates
 {
     MULTIHIT_BLOCK_HP_THRESHOLD_ITEMS,
@@ -187,7 +189,7 @@ enum MoveEndState
     MOVEEND_STATUS_IMMUNITY_ABILITIES_OPPOSING_SIDE, // TODO: Do berries come before????
     MOVEEND_TARGET_VISIBLE_OPPOSING_SIDE,
     MOVEEND_ITEM_EFFECTS_TARGET_OPPOSING_SIDE,
-    MOVEEND_ITEM_EFFECTS_ATTACKER_1_OPPOSING_SIDE, // AAAAAAAAAAAA
+    MOVEEND_ITEM_EFFECTS_ATTACKER_1_OPPOSING_SIDE, // Is this a real possible activation?
     MOVEEND_SYMBIOSIS_OPPOSING_SIDE,
     MOVEEND_FAINT_BLOCK_OPPOSING_SIDE,
     MOVEEND_UPDATE_LAST_MOVES_OPPOSING_SIDE,

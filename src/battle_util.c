@@ -4319,8 +4319,8 @@ u32 AbilityBattleEffects(enum AbilityEffect caseID, enum BattlerId battler, enum
             break;
         }
         break;
-    case ABILITYEFFECT_MOVE_END_ATTACKER: // Same as above, but for attacker
-        switch (gLastUsedAbility)
+    case ABILITYEFFECT_MOVE_END_ATTACKER: // Same as above, but for attacker. battler should be the target instead of the attacker.
+        switch (gLastUsedAbility) // Should always reset battler to gBattlerAttacker to have correct gBattlerAbility at the end
         {
         case ABILITY_POISON_TOUCH:
             if (IsBattlerAlive(battler)
@@ -4331,7 +4331,7 @@ u32 AbilityBattleEffects(enum AbilityEffect caseID, enum BattlerId battler, enum
              && RandomPercentage(RNG_POISON_TOUCH, 30))
             {
                 gEffectBattler = battler;
-                gBattleScripting.battler = gBattlerAttacker;
+                gBattleScripting.battler = battler = gBattlerAttacker;
                 gBattleScripting.moveEffect = MOVE_EFFECT_POISON;
                 PREPARE_ABILITY_BUFFER(gBattleTextBuff1, gLastUsedAbility);
                 BattleScriptCall(BattleScript_AbilityStatusEffect);
@@ -4345,7 +4345,7 @@ u32 AbilityBattleEffects(enum AbilityEffect caseID, enum BattlerId battler, enum
                 if (!IsMoveEffectBlockedByTarget(GetBattlerAbility(battler)))
                 {
                     gEffectBattler = battler;
-                    gBattleScripting.battler = gBattlerAttacker;
+                    gBattleScripting.battler = battler = gBattlerAttacker;
                     gBattleScripting.moveEffect = MOVE_EFFECT_TOXIC;
                     PREPARE_ABILITY_BUFFER(gBattleTextBuff1, gLastUsedAbility);
                     BattleScriptCall(BattleScript_AbilityStatusEffect);
@@ -4371,8 +4371,8 @@ u32 AbilityBattleEffects(enum AbilityEffect caseID, enum BattlerId battler, enum
                 gSpecialStatuses[battler].poisonPuppeteer = FALSE;
                 if (CanBeConfused(gBattlerAttacker, battler))
                 {
-                    gBattleScripting.battler = gBattlerAttacker;
                     gEffectBattler = battler;
+                    gBattleScripting.battler = battler = gBattlerAttacker;
                     gBattleScripting.moveEffect = MOVE_EFFECT_CONFUSION;
                     PREPARE_ABILITY_BUFFER(gBattleTextBuff1, gLastUsedAbility);
                     BattleScriptCall(BattleScript_AbilityStatusEffect);

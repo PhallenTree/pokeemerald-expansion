@@ -3083,7 +3083,7 @@ enum CancelerResult DoAttackCanceler(void)
 
 static enum MoveEndResult MoveEndSetValues(struct BattleCalcValues *cv)
 {
-    gBattleScripting.savedDmg += gBattleStruct->moveDamage[cv->battlerDef];
+    gBattleScripting.savedDmg += gBattleStruct->moveDamage[gBattlerTarget]; // Probably will remove savedDmg
     gBattleStruct->eventState.moveEndBattler = 0;
     gBattleStruct->eventState.moveEndBlock = 0;
     gBattleScripting.moveendState++;
