@@ -891,7 +891,6 @@ BattleScript_MoveEffectFlameBurst::
 	waitmessage B_WAIT_TIME_LONG
 	healthbarupdate BS_EFFECT_BATTLER
 	datahpupdate BS_EFFECT_BATTLER
-	tryfaintmon BS_EFFECT_BATTLER
 	return
 
 BattleScript_EffectPowerTrick::
@@ -967,7 +966,6 @@ BattleScript_FinalGambit::
 	setatkhptozero
 	healthbarupdate BS_ATTACKER
 	datahpupdate BS_ATTACKER
-	tryfaintmon BS_ATTACKER
 	return
 
 BattleScript_TryHitSwitchTarget::
@@ -1583,7 +1581,6 @@ BattleScript_EffectAbsorb::
 	datahpupdate BS_ATTACKER
 	printfromtable gAbsorbDrainStringIds
 	waitmessage B_WAIT_TIME_LONG
-	tryfaintmon BS_ATTACKER
 BattleScript_EffectAbsorbRet:
 	return
 
@@ -1599,7 +1596,6 @@ BattleScript_FaintAttackerForExplosion::
 BattleScript_MaxHp50Recoil::
 	healthbarupdate BS_ATTACKER
 	datahpupdate BS_ATTACKER
-	tryfaintmon BS_ATTACKER
 	return
 
 BattleScript_StatUp::
@@ -1779,7 +1775,6 @@ BattleScript_RecoilIfMiss::
 	jumpifability BS_ATTACKER, ABILITY_MAGIC_GUARD, BattleScript_RecoilEnd
 	healthbarupdate BS_ATTACKER
 	datahpupdate BS_ATTACKER
-	tryfaintmon BS_ATTACKER
 BattleScript_RecoilEnd:
 	return
 
@@ -2151,7 +2146,6 @@ BattleScript_EffectCurse::
 	datahpupdate BS_ATTACKER
 	printstring STRINGID_PKMNLAIDCURSE
 	waitmessage B_WAIT_TIME_LONG
-	tryfaintmon BS_ATTACKER
 	goto BattleScript_MoveEnd
 
 BattleScript_CurseStatChange:
@@ -3536,7 +3530,6 @@ BattleScript_GulpMissileGorging::
 	jumpifability BS_ATTACKER, ABILITY_MAGIC_GUARD, BattleScript_GulpMissileNoDmgGorging
 	healthbarupdate BS_ATTACKER
 	datahpupdate BS_ATTACKER
-	tryfaintmon BS_ATTACKER
 	jumpiffainted BS_ATTACKER, TRUE, BattleScript_GulpMissileNoSecondEffectGorging
 BattleScript_GulpMissileNoDmgGorging:
 	seteffectprimary BS_TARGET, BS_ATTACKER, MOVE_EFFECT_PARALYSIS
@@ -3556,7 +3549,6 @@ BattleScript_GulpMissileGulping::
 	jumpifability BS_ATTACKER, ABILITY_MAGIC_GUARD, BattleScript_GulpMissileNoDmgGulping
 	healthbarupdate BS_ATTACKER
 	datahpupdate BS_ATTACKER
-	tryfaintmon BS_ATTACKER
 	jumpiffainted BS_ATTACKER, TRUE, BattleScript_GulpMissileNoSecondEffectGulping
 BattleScript_GulpMissileNoDmgGulping:
 	trystatchanges BS_TARGET, STAT_CHANGE_NO_FLAGS
@@ -4100,7 +4092,6 @@ BattleScript_AftermathDmg::
 	jumpifability BS_ATTACKER, ABILITY_MAGIC_GUARD, BattleScript_AftermathDmgRet
 	healthbarupdate BS_ATTACKER
 	datahpupdate BS_ATTACKER
-	tryfaintmon BS_ATTACKER
 BattleScript_AftermathDmgRet:
 	return
 
@@ -4258,7 +4249,6 @@ BattleScript_DoSelfConfusionDmg::
 	datahpupdate BS_ATTACKER
 	resultmessage
 	waitmessage B_WAIT_TIME_LONG
-	tryfaintmon BS_ATTACKER
 	goto BattleScript_MoveEnd
 BattleScript_MoveUsedIsConfusedRet::
 	return
@@ -4275,7 +4265,6 @@ BattleScript_MoveUsedPowder::
 	datahpupdate BS_ATTACKER
 	printstring STRINGID_POWDEREXPLODES
 	waitmessage B_WAIT_TIME_LONG
-	tryfaintmon BS_ATTACKER
 	goto BattleScript_MoveEnd
 
 BattleScript_MoveUsedIsConfusedNoMore::
@@ -4470,7 +4459,6 @@ BattleScript_MoveEffectRecoil::
 	datahpupdate BS_ATTACKER
 	printstring STRINGID_PKMNHITWITHRECOIL
 	waitmessage B_WAIT_TIME_LONG
-	tryfaintmon BS_ATTACKER
 	return
 
 BattleScript_ItemSteal::
@@ -5090,13 +5078,11 @@ BattleScript_HurtAttacker:
 	datahpupdate BS_ATTACKER
 	printfromtable gHurtByStringIds
 	waitmessage B_WAIT_TIME_LONG
-	tryfaintmon BS_ATTACKER
 	return
 
 BattleScript_HurtAttackerNoMsg:
 	healthbarupdate BS_ATTACKER
 	datahpupdate BS_ATTACKER
-	tryfaintmon BS_ATTACKER
 	return
 
 BattleScript_RoughSkinActivates::
@@ -5119,7 +5105,6 @@ BattleScript_SpikyShieldEffect::
 	datahpupdate BS_ATTACKER
 	printstring STRINGID_PKMNWASHURT
 	waitmessage B_WAIT_TIME_LONG
-	tryfaintmon BS_ATTACKER
 	setmoveresultflags MOVE_RESULT_MISSED
 BattleScript_SpikyShieldRet::
 	return
@@ -5417,7 +5402,6 @@ BattleScript_LifeOrbActivates::
 	datahpupdate BS_ATTACKER
 	printstring STRINGID_LOSTSOMEOFITSHP
 	waitmessage B_WAIT_TIME_LONG
-	tryfaintmon BS_ATTACKER
 	return
 
 BattleScript_ItemHealHP_Ret::
