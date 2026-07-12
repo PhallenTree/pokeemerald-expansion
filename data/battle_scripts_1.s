@@ -4102,7 +4102,7 @@ BattleScript_AftermathDmgRet:
 BattleScript_DampPreventsAftermath::
 	pause B_WAIT_TIME_SHORT
 	call BattleScript_AbilityPopUp
-	pause 40
+	pause B_WAIT_TIME_LONG
 	copybyte gBattlerAbility, sBATTLER
 	call BattleScript_AbilityPopUp
 	printstring STRINGID_ITDOESNTAFFECTSCR
@@ -5006,11 +5006,11 @@ BattleScript_CursedBodyActivates::
 
 BattleScript_MummyActivates::
 	setbyte sFIXED_ABILITY_POPUP, TRUE
-	call BattleScript_AbilityPopUpTarget
+	call BattleScript_AbilityPopUpScripting
 	copybyte gBattlerAbility, gBattlerAttacker
 	copyhword sABILITY_OVERWRITE, gLastUsedAbility
 	call BattleScript_AbilityPopUpOverwriteThenNormal
-	recordability BS_TARGET
+	recordability BS_SCRIPTING
 	recordability BS_ATTACKER
 	printstring STRINGID_ATTACKERACQUIREDABILITY
 	waitmessage B_WAIT_TIME_LONG
@@ -5022,23 +5022,21 @@ BattleScript_MummyActivates::
 
 BattleScript_WanderingSpiritActivates::
 	saveattacker
-	savetarget
-	copybyte gBattlerAbility, gBattlerTarget
+	copybyte gBattlerAbility, BS_SCRIPTING
 	sethword sABILITY_OVERWRITE, ABILITY_WANDERING_SPIRIT
 	call BattleScript_AbilityPopUpOverwriteThenNormal
 	copybyte gBattlerAbility, gBattlerAttacker
 	copyhword sABILITY_OVERWRITE, gLastUsedAbility
 	call BattleScript_AbilityPopUpOverwriteThenNormal
-	recordability BS_TARGET
+	recordability BS_SCRIPTING
 	recordability BS_ATTACKER
 	printstring STRINGID_SWAPPEDABILITIES
 	waitmessage B_WAIT_TIME_LONG
 	switchinabilities BS_ATTACKER
-	jumpiffainted BS_TARGET, TRUE, BattleScript_WanderingSpiritActivatesRet
-	switchinabilities BS_TARGET
+	jumpiffainted BS_SCRIPTING, TRUE, BattleScript_WanderingSpiritActivatesRet
+	switchinabilities BS_SCRIPTING
 BattleScript_WanderingSpiritActivatesRet:
 	restoreattacker
-	restoretarget
 	return
 
 BattleScript_SwitchInAbilityMsg::

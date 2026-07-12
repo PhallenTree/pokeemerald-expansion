@@ -3090,6 +3090,42 @@ static enum MoveEndResult MoveEndSetValues(struct BattleCalcValues *cv)
     return MOVEEND_RESULT_CONTINUE;
 }
 
+static enum MoveEndResult MoveEndQueueDancerToxicChain(struct BattleCalcValues *cv)
+{
+    for (enum BattlerId effectBattler = 0; effectBattler < gBattlersCount; effectBattler++)
+    {
+        if (cv->abilities[cv->battlerAtk] == ABILITY_TOXIC_CHAIN
+         && IsBattlerAlive(effectBattler)
+         && CanBePoisoned(cv->battlerAtk, effectBattler, cv->abilities[cv->battlerAtk], cv->abilities[effectBattler])
+         && IsBattlerTurnDamaged(effectBattler, EXCLUDING_SUBSTITUTES)
+         && RandomWeighted(RNG_TOXIC_CHAIN, 7, 3))
+            gBattleStruct->battlerState[effectBattler].toxicChainActivates = TRUE;
+    }
+
+    if (!IsDanceMove(cv->move)
+     || !IsAnyTargetAffectedByMove()
+     || gBattleStruct->unableToUseMove
+     || gSpecialStatuses[cv->battlerAtk].dancerUsedMove
+     || gBattleStruct->snatchedMoveIsUsed
+     || gBattleStruct->bouncedMoveIsUsed)
+    {
+        gBattleScripting.moveendState++;
+        return MOVEEND_RESULT_CONTINUE;
+    }
+
+    for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
+    {
+        if (battler == cv->battlerAtk)
+            continue;
+
+        if (cv->abilities[battler] == ABILITY_DANCER)
+            gBattleMons[battler].volatiles.activateDancer = TRUE;
+    }
+
+    gBattleScripting.moveendState++;
+    return MOVEEND_RESULT_CONTINUE;
+}
+
 static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
@@ -3596,32 +3632,6 @@ static enum MoveEndResult MoveEndProtectLikeEffect(struct BattleCalcValues *cv)
     return result;
 }
 
-static enum MoveEndResult MoveEndQueueDancer(struct BattleCalcValues *cv)
-{
-    if (!IsDanceMove(cv->move)
-     || IsBattlerUnaffectedByMove(cv->battlerDef)
-     || gBattleStruct->unableToUseMove
-     || gSpecialStatuses[cv->battlerAtk].dancerUsedMove
-     || gBattleStruct->snatchedMoveIsUsed
-     || gBattleStruct->bouncedMoveIsUsed)
-    {
-        gBattleScripting.moveendState++;
-        return MOVEEND_RESULT_CONTINUE;
-    }
-
-    for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
-    {
-        if (battler == cv->battlerAtk)
-            continue;
-
-        if (cv->abilities[battler] == ABILITY_DANCER)
-            gBattleMons[battler].volatiles.activateDancer = TRUE;
-    }
-
-    gBattleScripting.moveendState++;
-    return MOVEEND_RESULT_CONTINUE;
-}
-
 static bool32 ShouldApplyAfterHitEffects(enum BattlerId battlerAtk, enum BattlerId effectBattler)
 {
     if (gBattleStruct->unableToUseMove)
@@ -3656,34 +3666,15 @@ static bool32 CanApplyAdditionalEffect(enum BattlerId battlerAtk, enum BattlerId
     return TRUE;
 }
 
-static void SetToxicChainPriority(struct BattleCalcValues *cv)
-{
-    if (gBattleStruct->toxicChainPriority)
-        return;
-
-    for (enum BattlerId effectBattler = 0; effectBattler < gBattlersCount; effectBattler++)
-    {
-        if (cv->abilities[cv->battlerAtk] == ABILITY_TOXIC_CHAIN
-         && IsBattlerAlive(effectBattler)
-         && CanBePoisoned(cv->battlerAtk, effectBattler, cv->abilities[cv->battlerAtk], cv->abilities[effectBattler])
-         && IsBattlerTurnDamaged(effectBattler, EXCLUDING_SUBSTITUTES)
-         && RandomWeighted(RNG_TOXIC_CHAIN, 7, 3))
-            gBattleStruct->battlerState[effectBattler].toxicChainActivates = TRUE;
-    }
-    gBattleStruct->toxicChainPriority = TRUE;
-}
-
 static enum MoveEndResult MoveEndAdditionalEffects(struct BattleCalcValues *cv)
 {
     u32 numAdditionalEffects = GetMoveAdditionalEffectCount(cv->move);
-
-    SetToxicChainPriority(cv);
 
     while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
         enum BattlerId effectBattler = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
 
-        if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter)
+        if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter && IsBattlerAlly(effectBattler, cv->battlerDef))
         {
             u32 percentChance;
             const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
@@ -3808,15 +3799,21 @@ static enum MoveEndResult MoveEndRage(struct BattleCalcValues *cv)
     return result;
 }
 
-static enum MoveEndResult MoveEndAbilities(struct BattleCalcValues *cv)
+static enum MoveEndResult MoveEndAbilitiesTarget(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
-    enum Ability targetAbility = cv->abilities[cv->battlerDef];
 
-    if (AbilityBattleEffects(ABILITYEFFECT_MOVE_END, cv->battlerDef, targetAbility, 0, TRUE))
-        result = MOVEEND_RESULT_RUN_SCRIPT;
-    else if (TryClearIllusion(cv->battlerDef, targetAbility))
-        result = MOVEEND_RESULT_RUN_SCRIPT;
+    for (enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler); gBattleStruct->eventState.moveEndBattler < gBattlersCount; battlerDef++)
+    {
+        gBattleStruct->eventState.moveEndBattler++;
+
+        if (!IsBattlerAlly(battlerDef, cv->battlerDef))
+            continue;
+
+        if (AbilityBattleEffects(ABILITYEFFECT_MOVE_END, battlerDef, cv->abilities[battlerDef], 0, TRUE)
+         || TryClearIllusion(battlerDef, cv->abilities[battlerDef]))
+            return MOVEEND_RESULT_RUN_SCRIPT;
+    }
 
     gBattleScripting.moveendState++;
     return result;
@@ -3826,8 +3823,16 @@ static enum MoveEndResult MoveEndFormChangeOnHit(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
 
-    if (AbilityBattleEffects(ABILITYEFFECT_FORM_CHANGE_ON_HIT, cv->battlerDef, cv->abilities[cv->battlerDef], 0, TRUE))
-        result = MOVEEND_RESULT_RUN_SCRIPT;
+    for (enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler); gBattleStruct->eventState.moveEndBattler < gBattlersCount; battlerDef++)
+    {
+        gBattleStruct->eventState.moveEndBattler++;
+
+        if (!IsBattlerAlly(battlerDef, cv->battlerDef))
+            continue;
+
+        if (AbilityBattleEffects(ABILITYEFFECT_FORM_CHANGE_ON_HIT, battlerDef, cv->abilities[battlerDef], 0, TRUE))
+            return MOVEEND_RESULT_RUN_SCRIPT;
+    }
 
     gBattleScripting.moveendState++;
     return result;
@@ -3837,10 +3842,20 @@ static enum MoveEndResult MoveEndAbilitiesAttacker(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
 
-    if (AbilityBattleEffects(ABILITYEFFECT_MOVE_END_ATTACKER, cv->battlerAtk, 0, 0, TRUE))
-        result = MOVEEND_RESULT_RUN_SCRIPT;
+    for (enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler); gBattleStruct->eventState.moveEndBattler < gBattlersCount; battlerDef++)
+    {
+        gBattleStruct->eventState.moveEndBattler++;
+
+        if (battlerDef == cv->battlerAtk)
+            continue;
+
+        // Exclusively here the defender is passed instead of the ability user
+        if (AbilityBattleEffects(ABILITYEFFECT_MOVE_END_ATTACKER, battlerDef, cv->abilities[cv->battlerAtk], 0, TRUE))
+            return MOVEEND_RESULT_RUN_SCRIPT;
+    }
 
     gBattleScripting.moveendState++;
+    gBattleStruct->eventState.moveEndBattler = 0;
     return result;
 }
 
@@ -3848,14 +3863,19 @@ static enum MoveEndResult MoveEndStatusImmunityAbilities(struct BattleCalcValues
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
 
-    for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
+    for (enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler); gBattleStruct->eventState.moveEndBattler < gBattlersCount; battlerDef++)
     {
+        gBattleStruct->eventState.moveEndBattler++;
+
+        if (!IsBattlerAlly(battlerDef, cv->battlerDef))
+            continue;
+
         if (AbilityBattleEffects(ABILITYEFFECT_IMMUNITY, battler, 0, 0, TRUE))
-            result = MOVEEND_RESULT_RUN_SCRIPT;
+            return MOVEEND_RESULT_RUN_SCRIPT;
     }
 
-    if (result == MOVEEND_RESULT_CONTINUE)
-        gBattleScripting.moveendState++;
+    gBattleScripting.moveendState++;
+    gBattleStruct->eventState.moveEndBattler = 0;
     return result;
 }
 
@@ -4198,7 +4218,7 @@ static enum MoveEndResult MoveEndNextTarget(struct BattleCalcValues *cv)
             gBattleStruct->moveTarget[gBattlerAttacker] = gBattlerTarget = partner;
             gBattleScripting.moveendState = 0;
 
-            if (IsStatChangeMove(cv->move))
+            if (IsStatChangeMove(cv->move) || !IsBattleMoveStatus(cv->move))
                 return MOVEEND_RESULT_CONTINUE;
             else
                 BattleScriptPush(GetMoveBattleScript(cv->move));
@@ -5451,7 +5471,6 @@ static enum MoveEndResult MoveEndClearBits(struct BattleCalcValues *cv)
     gBattleStruct->triAttackBurn = FALSE;
     gBattleStruct->fickleBeamBoosted = FALSE;
     gBattleStruct->battlerState[cv->battlerAtk].usedMicleBerry = FALSE;
-    gBattleStruct->toxicChainPriority = FALSE;
     gBattleStruct->flungItem = FLUNG_ITEM_NONE;
     gBattleStruct->blunderPolicy = FALSE;
 
@@ -5540,29 +5559,48 @@ static enum MoveEndResult MoveEndPursuitNextAction(struct BattleCalcValues *cv)
 static enum MoveEndResult (*const sMoveEndHandlers[])(struct BattleCalcValues *cv) =
 {
     [MOVEEND_SET_VALUES] = MoveEndSetValues,
-    [MOVEEND_SUBSTITUTE_BLOCK] = MoveEndSubstituteBlock,
-    [MOVEEND_MOVE_HEAVY_RECOIL] = MoveEndMoveHeavyRecoil,
-    [MOVEEND_EFFECTIVENESS_MESSAGE] = MoveEndEffectivenessMessage,
-    [MOVEEND_CRIT_PROTECT_MESSAGE] = MoveEndCritProtectMessage,
-    [MOVEEND_ENDURE_DAMAGE_MESSAGE] = MoveEndEndureDamageMessage,
-    [MOVEEND_PROTECT_LIKE_EFFECT] = MoveEndProtectLikeEffect,
-    [MOVEEND_QUEUE_DANCER] = MoveEndQueueDancer,
-    [MOVEEND_ADDITIONAL_EFFECTS] = MoveEndAdditionalEffects,
-    [MOVEEND_ABSORB] = MoveEndAbsorb,
-    [MOVEEND_RAGE] = MoveEndRage,
-    [MOVEEND_ABILITIES] = MoveEndAbilities,
-    [MOVEEND_FORM_CHANGE_ON_HIT] = MoveEndFormChangeOnHit,
+    [MOVEEND_QUEUE_DANCER_TOXIC_CHAIN] = MoveEndQueueDancerToxicChain,
+    [MOVEEND_SUBSTITUTE_BLOCK_ALLIED_SIDE] = MoveEndSubstituteBlock,
+    [MOVEEND_MOVE_HEAVY_RECOIL_ALLIED_SIDE] = MoveEndMoveHeavyRecoil,
+    [MOVEEND_EFFECTIVENESS_MESSAGE_ALLIED_SIDE] = MoveEndEffectivenessMessage,
+    [MOVEEND_CRIT_PROTECT_MESSAGE_ALLIED_SIDE] = MoveEndCritProtectMessage,
+    [MOVEEND_ENDURE_DAMAGE_MESSAGE_ALLIED_SIDE] = MoveEndEndureDamageMessage,
+    [MOVEEND_PROTECT_LIKE_EFFECT_ALLIED_SIDE] = MoveEndProtectLikeEffect,
+    [MOVEEND_ADDITIONAL_EFFECTS_ALLIED_SIDE] = MoveEndAdditionalEffects,
+    [MOVEEND_ABSORB_ALLIED_SIDE] = MoveEndAbsorb,
+    [MOVEEND_RAGE_ALLIED_SIDE] = MoveEndRage,
+    [MOVEEND_ABILITIES_TARGET_ALLIED_SIDE] = MoveEndAbilitiesTarget,
+    [MOVEEND_FORM_CHANGE_ON_HIT_ALLIED_SIDE] = MoveEndFormChangeOnHit,
     [MOVEEND_ABILITIES_ATTACKER] = MoveEndAbilitiesAttacker,
-    [MOVEEND_STATUS_IMMUNITY_ABILITIES] = MoveEndStatusImmunityAbilities,
-    [MOVEEND_ATTACKER_INVISIBLE] = MoveEndAttackerInvisible,
-    [MOVEEND_ATTACKER_VISIBLE] = MoveEndAttackerVisible,
-    [MOVEEND_TARGET_VISIBLE] = MoveEndTargetVisible,
-    [MOVEEND_ITEM_EFFECTS_TARGET] = MoveEndItemEffectsTarget,
-    [MOVEEND_ITEM_EFFECTS_ATTACKER_1] = MoveEndItemEffectsAttacker1,
-    [MOVEEND_SYMBIOSIS] = MoveEndSymbiosis,
-    [MOVEEND_FAINT_BLOCK] = MoveEndFaintBlock,
-    [MOVEEND_UPDATE_LAST_MOVES] = MoveEndUpdateLastMoves,
-    [MOVEEND_MIRROR_MOVE] = MoveEndMirrorMove,
+    [MOVEEND_STATUS_IMMUNITY_ABILITIES_ALLIED_SIDE] = MoveEndStatusImmunityAbilities,
+    [MOVEEND_ATTACKER_INVISIBLE_ALLIED_SIDE] = MoveEndAttackerInvisible,
+    [MOVEEND_ATTACKER_VISIBLE_ALLIED_SIDE] = MoveEndAttackerVisible,
+    [MOVEEND_TARGET_VISIBLE_ALLIED_SIDE] = MoveEndTargetVisible,
+    [MOVEEND_ITEM_EFFECTS_TARGET_ALLIED_SIDE] = MoveEndItemEffectsTarget,
+    [MOVEEND_ITEM_EFFECTS_ATTACKER_1_ALLIED_SIDE] = MoveEndItemEffectsAttacker1,
+    [MOVEEND_SYMBIOSIS_ALLIED_SIDE] = MoveEndSymbiosis,
+    [MOVEEND_FAINT_BLOCK_ALLIED_SIDE] = MoveEndFaintBlock,
+    [MOVEEND_UPDATE_LAST_MOVES_ALLIED_SIDE] = MoveEndUpdateLastMoves,
+    [MOVEEND_MIRROR_MOVE_ALLIED_SIDE] = MoveEndMirrorMove,
+    [MOVEEND_SET_VALUES_FOR_OPPOSING_SIDE] = MoveEndSetValuesForOpposingSide,
+    [MOVEEND_SUBSTITUTE_BLOCK_OPPOSING_SIDE] = MoveEndSubstituteBlock,
+    [MOVEEND_EFFECTIVENESS_MESSAGE_OPPOSING_SIDE] = MoveEndEffectivenessMessage,
+    [MOVEEND_CRIT_PROTECT_MESSAGE_OPPOSING_SIDE] = MoveEndCritProtectMessage,
+    [MOVEEND_ENDURE_DAMAGE_MESSAGE_OPPOSING_SIDE] = MoveEndEndureDamageMessage,
+    [MOVEEND_PROTECT_LIKE_EFFECT_OPPOSING_SIDE] = MoveEndProtectLikeEffect,
+    [MOVEEND_ADDITIONAL_EFFECTS_OPPOSING_SIDE] = MoveEndAdditionalEffects,
+    [MOVEEND_ABSORB_OPPOSING_SIDE] = MoveEndAbsorb,
+    [MOVEEND_RAGE_OPPOSING_SIDE] = MoveEndRage,
+    [MOVEEND_ABILITIES_TARGET_OPPOSING_SIDE] = MoveEndAbilitiesTarget,
+    [MOVEEND_FORM_CHANGE_ON_HIT_OPPOSING_SIDE] = MoveEndFormChangeOnHit,
+    [MOVEEND_STATUS_IMMUNITY_ABILITIES_OPPOSING_SIDE] = MoveEndStatusImmunityAbilities,
+    [MOVEEND_TARGET_VISIBLE_OPPOSING_SIDE] = MoveEndTargetVisible,
+    [MOVEEND_ITEM_EFFECTS_TARGET_OPPOSING_SIDE] = MoveEndItemEffectsTarget,
+    [MOVEEND_ITEM_EFFECTS_ATTACKER_1_OPPOSING_SIDE] = MoveEndItemEffectsAttacker1,
+    [MOVEEND_SYMBIOSIS_OPPOSING_SIDE] = MoveEndSymbiosis,
+    [MOVEEND_FAINT_BLOCK_OPPOSING_SIDE] = MoveEndFaintBlock,
+    [MOVEEND_UPDATE_LAST_MOVES_OPPOSING_SIDE] = MoveEndUpdateLastMoves,
+    [MOVEEND_MIRROR_MOVE_OPPOSING_SIDE] = MoveEndMirrorMove,
     [MOVEEND_NEXT_TARGET] = MoveEndNextTarget,
     [MOVEEND_BOUNCED_MOVE] = MoveEndBouncedMove,
     [MOVEEND_MULTIHIT_MOVE_BLOCK] = MoveEndMultihitMoveBlock,
@@ -5609,6 +5647,14 @@ enum MoveEndResult DoMoveEnd(enum MoveEndState endMode, enum MoveEndState endSta
     {
         cv.abilities[battler] = GetBattlerAbility(battler);
         cv.holdEffects[battler] = GetBattlerHoldEffect(battler);
+    }
+
+    if (!IsBattleMoveStatus(cv.move))
+    {
+        if (gBattleScripting.moveendState < MOVEEND_SET_VALUES_FOR_OPPOSING_SIDE)
+            cv.battlerDef = BATTLE_PARTNER(cv.battlerAtk);
+        else
+            cv.battlerDef = LEFT_FOE(cv.battlerAtk);
     }
 
     do
