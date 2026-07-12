@@ -4285,8 +4285,7 @@ static enum MoveEndResult MoveEndNextTarget(struct BattleCalcValues *cv)
 
 static enum MoveEndResult MoveEndSetValuesForOpposingSide(struct BattleCalcValues *cv)
 {
-    //TO DO
-
+    cv->battlerDef = LEFT_FOE(cv->battlerAtk);
     gBattleScripting.moveendState++;
     return MOVEEND_RESULT_CONTINUE;
 }
