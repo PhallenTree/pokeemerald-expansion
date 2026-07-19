@@ -534,7 +534,8 @@ struct BattlerState
     u16 resultMessagePrinted:1;
     u16 critMessagePrinted:1;
     u16 protectMessagePrinted:1;
-    u16 padding:4;
+    u16 substituteBlocked:1;
+    u16 padding:3;
     // End of Word
 };
 

@@ -3149,110 +3149,109 @@ static enum MoveEndResult MoveEndQueueDancerToxicChain(struct BattleCalcValues *
 static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
-    bool32 battlerDefDamaged = IsBattlerTurnDamaged(cv->battlerDef, INCLUDING_SUBSTITUTES);
 
-    if (!DoesSubstituteBlockMove(cv->battlerAtk, cv->battlerDef, cv->move))
+    while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
-        gBattleStruct->eventState.moveEndBlock = 0;
-        gBattleScripting.moveendState++;
-        return result;
-    }
+        enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
 
-    while (gBattleStruct->eventState.moveEndBlock < SUBSTITUTE_BLOCK_COUNT)
-    {
-        switch (gBattleStruct->eventState.moveEndBlock)
+        if (!DoesSubstituteBlockMove(cv->battlerAtk, battlerDef, cv->move) || IsBattlerAlly(battlerDef, cv->battlerDef))
         {
-        case SUBSTITUTE_BLOCK_DAMAGED_MESSAGE:
-            if (battlerDefDamaged)
-            {
-                gBattleScripting.battler = cv->battlerDef;
-                BattleScriptCall(BattleScript_SubstituteTookDamage);
-                result = MOVEEND_RESULT_RUN_SCRIPT;
-            }
-            gBattleStruct->eventState.moveEndBlock++;
-            break;
-        case SUBSTITUTE_BLOCK_EFFECTIVENESS_MESSAGE:
-            if (battlerDefDamaged && !gBattleStruct->battlerState[cv->battlerDef].resultMessagePrinted)
-            {
-                u32 moveResultFlags = gBattleStruct->moveResultFlags[cv->battlerDef];
-
-                if (moveResultFlags & MOVE_RESULT_EXTREMELY_EFFECTIVE)
-                    BattleScriptCall(BattleScript_PrintExtremelyEffectiveMessage);
-                else if (moveResultFlags & MOVE_RESULT_SUPER_EFFECTIVE)
-                    BattleScriptCall(BattleScript_PrintSuperEffectiveMessage);
-                else if (moveResultFlags & MOVE_RESULT_NOT_VERY_EFFECTIVE)
-                    BattleScriptCall(BattleScript_PrintNotVeryEffectiveMessage);
-                else if (moveResultFlags & MOVE_RESULT_MOSTLY_INEFFECTIVE)
-                    BattleScriptCall(BattleScript_PrintMostlyIneffectiveMessage);
-                else
-                    moveResultFlags = 0;
-
-                if (moveResultFlags != 0)
-                {
-                    gBattleStruct->battlerState[cv->battlerDef].resultMessagePrinted = TRUE;
-                    gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
-                    result = MOVEEND_RESULT_RUN_SCRIPT;
-                }
-            }
-            gBattleStruct->eventState.moveEndBlock++;
-            break;
-        case SUBSTITUTE_BLOCK_CRIT_MESSAGE:
-            if (battlerDefDamaged
-             && gSpecialStatuses[cv->battlerDef].criticalHit
-             && !gBattleStruct->battlerState[cv->battlerDef].critMessagePrinted)
-            {
-                BattleScriptCall(BattleScript_CriticalHitMessage);
-                result = MOVEEND_RESULT_RUN_SCRIPT;
-                TryInitializeTrainerSlideEnemyLandsFirstCriticalHit(cv->battlerDef);
-                TryInitializeTrainerSlidePlayerLandsFirstCriticalHit(cv->battlerDef);
-                gBattleScripting.battler = cv->battlerDef;
-                gBattleStruct->battlerState[cv->battlerDef].critMessagePrinted = TRUE;
-            }
-            gBattleStruct->eventState.moveEndBlock++;
-            break;
-        case SUBSTITUTE_BLOCK_BYPASS_PROTECT_MESSAGE:
-            gBattleStruct->eventState.moveEndBlock++;
-            break;
-        case SUBSTITUTE_BLOCK_SUBSTITUTE_DISAPPEARS:
-            if (gBattleMons[cv->battlerDef].volatiles.substituteHP == 0)
-            {
-                gBattleScripting.battler = cv->battlerDef;
-                BattleScriptCall(BattleScript_SubstituteFade);
-                result = MOVEEND_RESULT_RUN_SCRIPT;
-            }
-            gBattleStruct->eventState.moveEndBlock++;
-            break;
-        case SUBSTITUTE_BLOCK_ADDITIONAL_EFFECTS: // Those that activate even if Substitute is active
-            gBattleStruct->eventState.moveEndBlock++;
-            break;
-        case SUBSTITUTE_BLOCK_ITEM_EFFECT_TARGET:
-            if (ItemBattleEffects(cv->battlerDef, cv->battlerAtk, cv->holdEffects[cv->battlerDef], IsOnTargetHitActivation))
-                result = MOVEEND_RESULT_RUN_SCRIPT;
-            gBattleStruct->eventState.moveEndBlock++;
-            break;
-        case SUBSTITUTE_BLOCK_PROTECT_LIKE_EFFECT:
-            gBattleStruct->eventState.moveEndBlock++;
-            break;
-        case SUBSTITUTE_BLOCK_DYNAMAX_MOVE_EFFECTS:
-            gBattleStruct->eventState.moveEndBlock++;
-            break;
-        case SUBSTITUTE_BLOCK_COUNT:
-            break;
+            gBattleStruct->eventState.moveEndBlock = 0;
+            gBattleStruct->eventState.moveEndBattler++;
+            continue;
         }
 
-        if (result != MOVEEND_RESULT_CONTINUE)
-            break;
+        while (gBattleStruct->eventState.moveEndBlock < SUBSTITUTE_BLOCK_COUNT)
+        {
+            switch (gBattleStruct->eventState.moveEndBlock)
+            {
+            case SUBSTITUTE_BLOCK_DAMAGED_MESSAGE:
+                if (IsBattlerTurnDamaged(battlerDef, INCLUDING_SUBSTITUTES))
+                {
+                    gBattleScripting.battler = battlerDef;
+                    BattleScriptCall(BattleScript_SubstituteTookDamage);
+                    result = MOVEEND_RESULT_RUN_SCRIPT;
+                }
+                break;
+            case SUBSTITUTE_BLOCK_EFFECTIVENESS_MESSAGE:
+                if (IsBattlerTurnDamaged(battlerDef, INCLUDING_SUBSTITUTES)
+                 && !gBattleStruct->battlerState[battlerDef].resultMessagePrinted)
+                {
+                    u32 moveResultFlags = gBattleStruct->moveResultFlags[battlerDef];
+
+                    if (moveResultFlags & MOVE_RESULT_EXTREMELY_EFFECTIVE)
+                        BattleScriptCall(BattleScript_PrintExtremelyEffectiveMessage);
+                    else if (moveResultFlags & MOVE_RESULT_SUPER_EFFECTIVE)
+                        BattleScriptCall(BattleScript_PrintSuperEffectiveMessage);
+                    else if (moveResultFlags & MOVE_RESULT_NOT_VERY_EFFECTIVE)
+                        BattleScriptCall(BattleScript_PrintNotVeryEffectiveMessage);
+                    else if (moveResultFlags & MOVE_RESULT_MOSTLY_INEFFECTIVE)
+                        BattleScriptCall(BattleScript_PrintMostlyIneffectiveMessage);
+                    else
+                        moveResultFlags = 0;
+
+                    if (moveResultFlags != 0)
+                    {
+                        gBattleStruct->battlerState[battlerDef].resultMessagePrinted = TRUE;
+                        gBattleScripting.battler = battlerDef;
+                        gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
+                        result = MOVEEND_RESULT_RUN_SCRIPT;
+                    }
+                }
+                break;
+            case SUBSTITUTE_BLOCK_CRIT_MESSAGE:
+                if (IsBattlerTurnDamaged(battlerDef, INCLUDING_SUBSTITUTES)
+                && gSpecialStatuses[battlerDef].criticalHit
+                && !gBattleStruct->battlerState[battlerDef].critMessagePrinted)
+                {
+                    BattleScriptCall(BattleScript_CriticalHitMessage);
+                    result = MOVEEND_RESULT_RUN_SCRIPT;
+                    TryInitializeTrainerSlideEnemyLandsFirstCriticalHit(battlerDef);
+                    TryInitializeTrainerSlidePlayerLandsFirstCriticalHit(battlerDef);
+                    gBattleScripting.battler = battlerDef;
+                    gBattleStruct->battlerState[battlerDef].critMessagePrinted = TRUE;
+                }
+                break;
+            case SUBSTITUTE_BLOCK_BYPASS_PROTECT_MESSAGE:
+                break;
+            case SUBSTITUTE_BLOCK_SUBSTITUTE_DISAPPEARS:
+                if (gBattleMons[battlerDef].volatiles.substituteHP == 0 && gBattleMons[battlerDef].volatiles.substitute)
+                {
+                    gBattleScripting.battler = battlerDef;
+                    BattleScriptCall(BattleScript_SubstituteFade);
+                    result = MOVEEND_RESULT_RUN_SCRIPT;
+                }
+                break;
+            case SUBSTITUTE_BLOCK_ADDITIONAL_EFFECTS: // Those that activate even if Substitute is active
+                break;
+            case SUBSTITUTE_BLOCK_ITEM_EFFECT_TARGET:
+                if (ItemBattleEffects(battlerDef, cv->battlerAtk, cv->holdEffects[battlerDef], IsOnTargetHitActivation))
+                    result = MOVEEND_RESULT_RUN_SCRIPT;
+                break;
+            case SUBSTITUTE_BLOCK_PROTECT_LIKE_EFFECT:
+                break;
+            case SUBSTITUTE_BLOCK_DYNAMAX_MOVE_EFFECTS:
+                break;
+            case SUBSTITUTE_BLOCK_COUNT:
+                break;
+            }
+
+            gBattleStruct->eventState.moveEndBlock++;
+
+            if (result != MOVEEND_RESULT_CONTINUE)
+                return result;
+        }
+        
+        if (gBattleMons[battlerDef].volatiles.substituteHP == 0)
+            gBattleMons[battlerDef].volatiles.substitute = FALSE;
+
+        gBattleStruct->battlerState[battlerDef].substituteBlocked = TRUE;
+        gBattleStruct->eventState.moveEndBattler++;
     }
 
-    if (result == MOVEEND_RESULT_CONTINUE)
-    {
-        if (gBattleMons[cv->battlerDef].volatiles.substituteHP == 0)
-            gBattleMons[cv->battlerDef].volatiles.substitute = FALSE;
-
-        gBattleStruct->eventState.moveEndBlock = 0;
-        gBattleScripting.moveendState++;
-    }
-
+    gBattleStruct->eventState.moveEndBlock = 0;
+    gBattleStruct->eventState.moveEndBattler = 0;
+    gBattleScripting.moveendState++;
     return result;
 }
 
@@ -3345,13 +3344,15 @@ static enum MoveEndResult MoveEndEffectivenessMessage(struct BattleCalcValues *c
     bool32 anyValidBattler = FALSE;
 
     if (ShouldSkipFailureCheckOnBattler(cv->battlerAtk, battler1)
-     || gBattleStruct->battlerState[battler1].resultMessagePrinted)
+     || gBattleStruct->battlerState[battler1].resultMessagePrinted
+     || gBattleStruct->battlerState[battler1].substituteBlocked)
         battler1 = battler2;
     else
         anyValidBattler = TRUE;
     
     if (ShouldSkipFailureCheckOnBattler(cv->battlerAtk, battler2)
-     || gBattleStruct->battlerState[battler2].resultMessagePrinted)
+     || gBattleStruct->battlerState[battler2].resultMessagePrinted
+     || gBattleStruct->battlerState[battler2].substituteBlocked)
         battler2 = battler1;
     else
         anyValidBattler = TRUE;
@@ -5625,6 +5626,7 @@ static enum MoveEndResult MoveEndClearBits(struct BattleCalcValues *cv)
         gBattleStruct->battlerState[cv->battlerAtk].targetsDone[i] = FALSE;
         gBattleStruct->battlerState[i].originalBattlerPartyId = PARTY_SIZE;
         gBattleStruct->battlerState[i].toxicChainActivates = FALSE;
+        gBattleStruct->battlerState[i].substituteBlocked = FALSE;
         gBattleMons[i].volatiles.tryEjectPack = FALSE;
 
         if (gBattleStruct->battlerState[i].commanderSpecies != SPECIES_NONE && !IsBattlerAlive(i))
