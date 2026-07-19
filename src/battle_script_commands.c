@@ -3061,6 +3061,8 @@ static void Cmd_setadditionaleffects(void)
 {
     CMD_ARGS();
 
+    // Only onChargingTurnOnly additional effects are handled here
+    // TODO: Refactor CancelerCharging to include this
     if (!IsBattlerUnaffectedByMove(gBattlerTarget))
     {
         struct BattleCalcValues cv = {0};
@@ -3073,14 +3075,19 @@ static void Cmd_setadditionaleffects(void)
         struct SetEffect se = {0};
 
         u32 numAdditionalEffects = GetMoveAdditionalEffectCount(gCurrentMove);
-        SetToxicChainPriority();
         if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter)
         {
             u32 percentChance;
             const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
+            enum BattlerId effectBattler = additionalEffect->self ? gBattlerAttacker : gBattlerTarget;
 
             // Various checks for if this move effect can be applied this turn
-            if (CanApplyAdditionalEffect(additionalEffect))
+            if (!additionalEffect->preAttackEffect
+             && !(additionalEffect->pledgeCombo && gBattleStruct->pledgeState != PLEDGE_COMBO_ATTACK)
+             && !(additionalEffect->onlyIfTargetRaisedStats && !gProtectStructs[effectBattler].statRaised)
+             && (effectBattler == gBattlerAttacker) == additionalEffect->self
+             && gProtectStructs[gBattlerAttacker].chargingTurn
+             && additionalEffect->onChargeTurnOnly)
             {
                 percentChance = CalcSecondaryEffectChance(gBattlerAttacker, cv.abilities[cv.battlerAtk], additionalEffect);
 
@@ -3090,7 +3097,7 @@ static void Cmd_setadditionaleffects(void)
                     se.additionalEffect = additionalEffect;
                     se.moveEffect = additionalEffect->moveEffect;
                     se.script = gBattlescriptCurrInstr;
-                    se.effectBattler = additionalEffect->self ? cv.battlerAtk : cv.battlerDef;
+                    se.effectBattler = effectBattler;
                     se.primary = percentChance == 0;
                     se.certain = percentChance >= 100;
                     se.onSide = additionalEffect->onSide; // TODO

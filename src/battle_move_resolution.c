@@ -3696,6 +3696,8 @@ static enum MoveEndResult MoveEndAdditionalEffects(struct BattleCalcValues *cv)
     {
         enum BattlerId effectBattler = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
 
+        struct SetEffect se = {0};
+
         if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter && IsBattlerAlly(effectBattler, cv->battlerDef))
         {
             u32 percentChance;
@@ -3711,20 +3713,15 @@ static enum MoveEndResult MoveEndAdditionalEffects(struct BattleCalcValues *cv)
                 // Activate effect if it's primary (chance == 0) or if RNGesus says so
                 if ((percentChance == 0) || RandomPercentage(RNG_SECONDARY_EFFECT + gBattleStruct->additionalEffectsCounter, percentChance))
                 {
-                    gBattleCommunication[MULTISTRING_CHOOSER] = *((u8 *) &additionalEffect->multistring);
-
-                    enum SetMoveEffectFlags flags = NO_FLAGS;
-                    if (percentChance == 0)       flags |= EFFECT_PRIMARY;
-                    if (percentChance >= 100)     flags |= EFFECT_CERTAIN;
-                    if (additionalEffect->onSide) flags |= EFFECT_ON_SIDE;
-
-                    SetMoveEffect(
-                        cv->battlerAtk,
-                        effectBattler,
-                        additionalEffect->moveEffect,
-                        gBattlescriptCurrInstr,
-                        flags
-                    );
+                    cv->battlerDef = effectBattler; // For SetMoveEffect, will be restored to previous value when moveend is run again
+                    se.additionalEffect = additionalEffect;
+                    se.moveEffect = additionalEffect->moveEffect;
+                    se.script = gBattlescriptCurrInstr;
+                    se.effectBattler = effectBattler;
+                    se.primary = percentChance == 0;
+                    se.certain = percentChance >= 100;
+                    se.onSide = additionalEffect->onSide; // TODO
+                    SetMoveEffect(cv, &se);
                 }
             }
 

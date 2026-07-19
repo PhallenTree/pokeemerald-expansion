@@ -1461,7 +1461,6 @@ BattleScript_EffectHit::
 	waitmessage B_WAIT_TIME_LONG
 	resultmessage
 	waitmessage B_WAIT_TIME_LONG
-	setadditionaleffects
 BattleScript_MoveEnd::
 	moveendall
 	end
@@ -3676,7 +3675,6 @@ BattleScript_DoFutureAttackResult:
 	resultmessage
 	waitmessage B_WAIT_TIME_LONG
 BattleScript_FutureAttackEnd::
-	setadditionaleffects
 	moveendall
 	checkteamslost BattleScript_FutureAttackClearResults
 BattleScript_FutureAttackClearResults:
