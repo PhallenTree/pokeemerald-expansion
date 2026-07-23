@@ -4279,16 +4279,27 @@ static enum MoveEndResult MoveEndUpdateLastMoves(struct BattleCalcValues *cv)
 
 static enum MoveEndResult MoveEndMirrorMove(struct BattleCalcValues *cv)
 {
-    if (!gBattleStruct->unableToUseMove
-     && cv->battlerAtk != cv->battlerDef
-     && IsBattlerAlive(cv->battlerAtk)
-     && IsBattlerAlive(cv->battlerDef)
-     && !IsMoveMirrorMoveBanned(GetOriginallyUsedMove(gChosenMove)))
+    while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
-        gBattleStruct->lastTakenMove[cv->battlerDef] = gChosenMove;
-        gBattleStruct->lastTakenMoveFrom[cv->battlerDef][cv->battlerAtk] = gChosenMove;
+        enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
+
+        gBattleStruct->eventState.moveEndBattler++;
+
+        if (ShouldSkipBattlerForMoveEnd(battlerDef, cv->battlerDef, cv->move))
+            continue;
+    
+        if (!gBattleStruct->unableToUseMove
+        && cv->battlerAtk != cv->battlerDef
+        && IsBattlerAlive(cv->battlerAtk)
+        && IsBattlerAlive(cv->battlerDef)
+        && !IsMoveMirrorMoveBanned(GetOriginallyUsedMove(gChosenMove)))
+        {
+            gBattleStruct->lastTakenMove[cv->battlerDef] = gChosenMove;
+            gBattleStruct->lastTakenMoveFrom[cv->battlerDef][cv->battlerAtk] = gChosenMove;
+        }
     }
 
+    gBattleStruct->eventState.moveEndBattler = 0;
     gBattleScripting.moveendState++;
     return MOVEEND_RESULT_CONTINUE;
 }
@@ -4349,7 +4360,7 @@ static enum MoveEndResult MoveEndNextTarget(struct BattleCalcValues *cv)
             gBattleStruct->moveTarget[gBattlerAttacker] = gBattlerTarget = nextTarget; // Fix for moxie spread moves
             gBattleScripting.moveendState = 0;
 
-            if (IsStatChangeMove(cv->move))
+            if (IsStatChangeMove(cv->move) || !IsBattleMoveStatus(cv->move))
                 return MOVEEND_RESULT_CONTINUE;
             else
                 BattleScriptPush(GetMoveBattleScript(cv->move));
