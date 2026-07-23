@@ -3836,9 +3836,9 @@ static enum MoveEndResult MoveEndBeakBlast(struct BattleCalcValues *cv)
         if (ShouldSkipBattlerForMoveEnd(battlerDef, cv->battlerDef, cv->move))
             continue;
 
-        if (IsBattlerUsingBeakBlast(cv->battlerDef)
-         && IsBattlerTurnDamaged(cv->battlerDef, EXCLUDING_SUBSTITUTES)
-         && IsMoveMakingContact(cv->battlerAtk, cv->battlerDef, cv->abilities[cv->battlerAtk], cv->holdEffects[cv->battlerAtk], cv->move)
+        if (IsBattlerUsingBeakBlast(battlerDef)
+         && IsBattlerTurnDamaged(battlerDef, EXCLUDING_SUBSTITUTES)
+         && IsMoveMakingContact(cv->battlerAtk, battlerDef, cv->abilities[cv->battlerAtk], cv->holdEffects[cv->battlerAtk], cv->move)
          && CanBeBurned(cv->battlerAtk, cv->battlerAtk, cv->abilities[cv->battlerAtk]))
         {
             gBattleMons[cv->battlerAtk].status1 = STATUS1_BURN;
@@ -4247,36 +4247,45 @@ static enum MoveEndResult MoveEndUpdateLastMoves(struct BattleCalcValues *cv)
             gLastUsedMoveType[cv->battlerAtk] = 0;
         }
 
-        if (IsBattlerAlive(cv->battlerDef))
-            gLastHitBy[cv->battlerDef] = cv->battlerAtk; // Used by switch AI only
-
-        if (!gBattleStruct->unableToUseMove
-         && !IsBattlerUnaffectedByMove(cv->battlerDef)
-         && IsBattlerAlive(cv->battlerDef))
+        while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
         {
-            if (gChosenMove == MOVE_UNAVAILABLE)
+            enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
+
+            gBattleStruct->eventState.moveEndBattler++;
+
+            if (ShouldSkipBattlerForMoveEnd(battlerDef, cv->battlerDef, cv->move) || !IsBattlerAlive(battlerDef))
+                continue;
+
+            gLastHitBy[battlerDef] = cv->battlerAtk; // Used by switch AI only
+
+            if (!gBattleStruct->unableToUseMove
+             && !IsBattlerUnaffectedByMove(battlerDef))
             {
-                gLastLandedMoves[cv->battlerDef] = gChosenMove;
+                if (gChosenMove == MOVE_UNAVAILABLE)
+                {
+                    gLastLandedMoves[battlerDef] = gChosenMove;
+                }
+                else
+                {
+                    gLastLandedMoves[battlerDef] = cv->move;
+                    gLastHitByType[battlerDef] = GetBattleMoveType(cv->move);
+                    if (!gSpecialStatuses[cv->battlerAtk].dancerUsedMove)
+                    {
+                        gLastUsedMove = cv->move;
+                        if (IsMaxMove(cv->move))
+                            gBattleStruct->dynamax.lastUsedBaseMove = gBattleStruct->dynamax.baseMoves[cv->battlerAtk];
+                    }
+                }
             }
             else
             {
-                gLastLandedMoves[cv->battlerDef] = cv->move;
-                gLastHitByType[cv->battlerDef] = GetBattleMoveType(cv->move);
-                if (!gSpecialStatuses[cv->battlerAtk].dancerUsedMove)
-                {
-                    gLastUsedMove = cv->move;
-                    if (IsMaxMove(cv->move))
-                        gBattleStruct->dynamax.lastUsedBaseMove = gBattleStruct->dynamax.baseMoves[cv->battlerAtk];
-                }
+                gLastHitByType[cv->battlerDef] = TYPE_MYSTERY;
+                gLastLandedMoves[cv->battlerDef] = MOVE_UNAVAILABLE;
             }
-        }
-        else
-        {
-            gLastHitByType[cv->battlerDef] = TYPE_MYSTERY;
-            gLastLandedMoves[cv->battlerDef] = MOVE_UNAVAILABLE;
         }
     }
 
+    gBattleStruct->eventState.moveEndBattler = 0;
     gBattleScripting.moveendState++;
     return MOVEEND_RESULT_CONTINUE;
 }
@@ -4293,13 +4302,13 @@ static enum MoveEndResult MoveEndMirrorMove(struct BattleCalcValues *cv)
             continue;
     
         if (!gBattleStruct->unableToUseMove
-        && cv->battlerAtk != cv->battlerDef
+        && cv->battlerAtk != battlerDef
         && IsBattlerAlive(cv->battlerAtk)
-        && IsBattlerAlive(cv->battlerDef)
+        && IsBattlerAlive(battlerDef)
         && !IsMoveMirrorMoveBanned(GetOriginallyUsedMove(gChosenMove)))
         {
-            gBattleStruct->lastTakenMove[cv->battlerDef] = gChosenMove;
-            gBattleStruct->lastTakenMoveFrom[cv->battlerDef][cv->battlerAtk] = gChosenMove;
+            gBattleStruct->lastTakenMove[battlerDef] = gChosenMove;
+            gBattleStruct->lastTakenMoveFrom[battlerDef][cv->battlerAtk] = gChosenMove;
         }
     }
 
