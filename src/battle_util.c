@@ -9833,6 +9833,9 @@ void ClearDamageCalcResults(void)
         gSpecialStatuses[battler].criticalHit = FALSE;
         gSpecialStatuses[battler].damagedByAttack = FALSE;
         gBattleStruct->battlerState[battler].resultMessagePrinted = FALSE;
+        gBattleStruct->battlerState[battler].critMessagePrinted = FALSE;
+        gBattleStruct->battlerState[battler].protectMessagePrinted = FALSE;
+        gSpecialStatuses[battler].berryReducedMessagePrinted = FALSE;
     }
 
     gBattleStruct->numSpreadTargets = 0;
