@@ -3266,6 +3266,7 @@ static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
 
         gBattleStruct->battlerState[battlerDef].substituteBlocked = TRUE;
         gBattleStruct->eventState.moveEndBattler++;
+        gBattleStruct->eventState.moveEndBlock = 0;
     }
 
     gBattleStruct->eventState.moveEndBlock = 0;
