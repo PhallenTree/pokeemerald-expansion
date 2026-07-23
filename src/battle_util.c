@@ -4327,6 +4327,7 @@ u32 AbilityBattleEffects(enum AbilityEffect caseID, enum BattlerId battler, enum
              && !MoveHasAdditionalEffect(gCurrentMove, MOVE_EFFECT_FLINCH))
             {
                 SetMoveEffectHelper(gBattlerAttacker, battler, MOVE_EFFECT_FLINCH, gBattlescriptCurrInstr, NO_FLAGS);
+                battler = gBattlerAttacker;
                 effect++;
             }
             break;
