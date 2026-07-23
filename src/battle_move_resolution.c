@@ -3118,10 +3118,14 @@ static enum MoveEndResult MoveEndSetValues(struct BattleCalcValues *cv)
     return MOVEEND_RESULT_CONTINUE;
 }
 
-bool32 ShouldSkipBattlerForMoveEnd(enum BattlerId battlerDef, enum BattlerId calcValuesBattler, enum Move move)
+static bool32 ShouldSkipBattlerForMoveEnd(enum BattlerId battlerDef, enum BattlerId calcValuesBattler, enum Move move)
 {
+    if (gBattleStruct->battlerState[battlerDef].substituteBlocked)
+        return TRUE;
+
     if (IsBattleMoveStatus(move))
         return battlerDef != calcValuesBattler;
+
     return !IsBattlerAlly(battlerDef, calcValuesBattler);
 }
 
@@ -3703,8 +3707,7 @@ static enum MoveEndResult MoveEndAdditionalEffects(struct BattleCalcValues *cv)
         struct SetEffect se = {0};
 
         if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter
-         && IsBattlerAlly(effectBattler, cv->battlerDef)
-         && !IsBattleMoveStatus(cv->move))
+         && !ShouldSkipBattlerForMoveEnd(effectBattler, cv->battlerDef))
         {
             u32 percentChance;
             const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
