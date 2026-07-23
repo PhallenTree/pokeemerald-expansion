@@ -3708,7 +3708,7 @@ static enum MoveEndResult MoveEndAdditionalEffects(struct BattleCalcValues *cv)
         struct SetEffect se = {0};
 
         if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter
-         && !ShouldSkipBattlerForMoveEnd(effectBattler, cv->battlerDef))
+         && !ShouldSkipBattlerForMoveEnd(effectBattler, cv->battlerDef, cv->move))
         {
             u32 percentChance;
             const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
