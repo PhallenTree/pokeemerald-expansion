@@ -1383,7 +1383,7 @@ static void Cmd_resultmessage(void)
     if (gBattleControllerExecFlags)
         return;
 
-    if (gBattleStruct->battlerState[gBattlerTarget].resultMessagePrinted)
+    if (gSpecialStatuses[gBattlerTarget].resultMessagePrinted)
     {
         gBattlescriptCurrInstr = cmd->nextInstr;
         return;
@@ -1536,7 +1536,7 @@ static void Cmd_resultmessage(void)
     if (stringId)
     {
         PrepareStringBattle(stringId, gBattlerAttacker);
-        gBattleStruct->battlerState[gBattlerTarget].resultMessagePrinted = TRUE;
+        gSpecialStatuses[gBattlerTarget].resultMessagePrinted = TRUE;
     }
     else
         gBattleCommunication[MSG_DISPLAY] = 0;
