@@ -3121,7 +3121,7 @@ static enum MoveEndResult MoveEndSetValues(struct BattleCalcValues *cv)
 bool32 ShouldSkipBattlerForMoveEnd(enum BattlerId battlerDef, enum BattlerId calcValuesBattler, enum Move move)
 {
     if (IsBattleMoveStatus(move))
-        return battlerDef == calcValuesBattler;
+        return battlerDef != calcValuesBattler;
     return !IsBattlerAlly(battlerDef, calcValuesBattler);
 }
 
