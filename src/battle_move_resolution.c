@@ -3440,7 +3440,6 @@ static bool32 GetProtectBypassMethod(enum BattlerId battlerDef, enum Ability abi
 
 static enum MoveEndResult MoveEndCritProtectMessage(struct BattleCalcValues *cv)
 {
-    enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
     enum Ability abilityAtk = cv->abilities[cv->battlerAtk];
     enum BattlerId battler1 = cv->battlerDef;
     enum BattlerId battler2 = GetPartnerBattler(battler1);
@@ -3459,7 +3458,7 @@ static enum MoveEndResult MoveEndCritProtectMessage(struct BattleCalcValues *cv)
     if (!anyValidBattler)
     {
         gBattleScripting.moveendState++;
-        return result;
+        return MOVEEND_RESULT_CONTINUE;
     }
 
     if (!gSpecialStatuses[battler1].critMessagePrinted && gSpecialStatuses[battler1].criticalHit)
@@ -3471,8 +3470,7 @@ static enum MoveEndResult MoveEndCritProtectMessage(struct BattleCalcValues *cv)
 
         gSpecialStatuses[battler1].critMessagePrinted = TRUE;
         gBattleScripting.battler = battler1;
-        result = MOVEEND_RESULT_RUN_SCRIPT;
-        return result;
+        return MOVEEND_RESULT_RUN_SCRIPT;
     }
 
     if (!gSpecialStatuses[battler1].protectMessagePrinted)
@@ -3482,16 +3480,14 @@ static enum MoveEndResult MoveEndCritProtectMessage(struct BattleCalcValues *cv)
         case PROTECT_BYPASS_ABILITY_IGNORES:
             BattleScriptCall(BattleScript_UnseenFist);
             gBattleScripting.battler = battler1;
-            result = MOVEEND_RESULT_RUN_SCRIPT;
             gSpecialStatuses[battler1].protectMessagePrinted = TRUE;
-            return result;
+            return MOVEEND_RESULT_RUN_SCRIPT;
             break;
         case PROTECT_BYPASS_OTHER:
             BattleScriptCall(BattleScript_CouldntFullyProtect);
             gBattleScripting.battler = battler1;
-            result = MOVEEND_RESULT_RUN_SCRIPT;
             gSpecialStatuses[battler1].protectMessagePrinted = TRUE;
-            return result;
+            return MOVEEND_RESULT_RUN_SCRIPT;
             break;
         default:
             break;
@@ -3507,8 +3503,7 @@ static enum MoveEndResult MoveEndCritProtectMessage(struct BattleCalcValues *cv)
 
         gSpecialStatuses[battler2].critMessagePrinted = TRUE;
         gBattleScripting.battler = battler2;
-        result = MOVEEND_RESULT_RUN_SCRIPT;
-        return result;
+        return MOVEEND_RESULT_RUN_SCRIPT;
     }
 
     if (!gSpecialStatuses[battler2].protectMessagePrinted)
@@ -3518,16 +3513,14 @@ static enum MoveEndResult MoveEndCritProtectMessage(struct BattleCalcValues *cv)
         case PROTECT_BYPASS_ABILITY_IGNORES:
             BattleScriptCall(BattleScript_UnseenFist);
             gBattleScripting.battler = battler2;
-            result = MOVEEND_RESULT_RUN_SCRIPT;
             gSpecialStatuses[battler2].protectMessagePrinted = TRUE;
-            return result;
+            return MOVEEND_RESULT_RUN_SCRIPT;
             break;
         case PROTECT_BYPASS_OTHER:
             BattleScriptCall(BattleScript_CouldntFullyProtect);
             gBattleScripting.battler = battler2;
-            result = MOVEEND_RESULT_RUN_SCRIPT;
             gSpecialStatuses[battler2].protectMessagePrinted = TRUE;
-            return result;
+            return MOVEEND_RESULT_RUN_SCRIPT;
             break;
         default:
             break;
@@ -3535,7 +3528,7 @@ static enum MoveEndResult MoveEndCritProtectMessage(struct BattleCalcValues *cv)
     }
 
     gBattleScripting.moveendState++;
-    return result;
+    return MOVEEND_RESULT_CONTINUE;
 }
 
 static enum MoveEndResult MoveEndEndureDamageMessage(struct BattleCalcValues *cv)
@@ -3581,8 +3574,6 @@ static enum MoveEndResult MoveEndEndureDamageMessage(struct BattleCalcValues *cv
 
 static enum MoveEndResult MoveEndProtectLikeEffect(struct BattleCalcValues *cv)
 {
-    enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
-
     while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
@@ -3609,7 +3600,7 @@ static enum MoveEndResult MoveEndProtectLikeEffect(struct BattleCalcValues *cv)
                 SetPassiveDamageAmount(cv->battlerAtk, GetNonDynamaxMaxHP(cv->battlerAtk) / 8);
                 PREPARE_MOVE_BUFFER(gBattleTextBuff1, MOVE_SPIKY_SHIELD);
                 BattleScriptCall(BattleScript_SpikyShieldEffect);
-                result = MOVEEND_RESULT_RUN_SCRIPT;
+                return MOVEEND_RESULT_RUN_SCRIPT;
             }
             break;
         case PROTECT_KINGS_SHIELD:
@@ -3618,7 +3609,7 @@ static enum MoveEndResult MoveEndProtectLikeEffect(struct BattleCalcValues *cv)
             gEffectBattler = cv->battlerAtk;
             SetStatChange(gEffectBattler, STAT_ATK, stage);
             BattleScriptCall(BattleScript_KingsShieldEffect);
-            result = MOVEEND_RESULT_RUN_SCRIPT;
+            return MOVEEND_RESULT_RUN_SCRIPT;
             break;
         }
         case PROTECT_BANEFUL_BUNKER:
@@ -3626,7 +3617,7 @@ static enum MoveEndResult MoveEndProtectLikeEffect(struct BattleCalcValues *cv)
             {
                 gBattleScripting.moveEffect = MOVE_EFFECT_POISON;
                 BattleScriptCall(BattleScript_BanefulBunkerEffect);
-                result = MOVEEND_RESULT_RUN_SCRIPT;
+                return MOVEEND_RESULT_RUN_SCRIPT;
             }
             break;
         case PROTECT_BURNING_BULWARK:
@@ -3634,7 +3625,7 @@ static enum MoveEndResult MoveEndProtectLikeEffect(struct BattleCalcValues *cv)
             {
                 gBattleScripting.moveEffect = MOVE_EFFECT_BURN;
                 BattleScriptCall(BattleScript_BanefulBunkerEffect);
-                result = MOVEEND_RESULT_RUN_SCRIPT;
+                return MOVEEND_RESULT_RUN_SCRIPT;
             }
             break;
         case PROTECT_OBSTRUCT:
@@ -3647,7 +3638,7 @@ static enum MoveEndResult MoveEndProtectLikeEffect(struct BattleCalcValues *cv)
             gEffectBattler = cv->battlerAtk;
             SetStatChange(gEffectBattler, STAT_SPEED, -1);
             BattleScriptCall(BattleScript_KingsShieldEffect);
-            result = MOVEEND_RESULT_RUN_SCRIPT;
+            return MOVEEND_RESULT_RUN_SCRIPT;
             break;
         default:
             break;
@@ -3655,7 +3646,7 @@ static enum MoveEndResult MoveEndProtectLikeEffect(struct BattleCalcValues *cv)
     }
 
     gBattleScripting.moveendState++;
-    return result;
+    return MOVEEND_RESULT_CONTINUE;
 }
 
 static bool32 ShouldApplyAfterHitEffects(enum BattlerId battlerAtk, enum BattlerId effectBattler)
@@ -3807,8 +3798,6 @@ static enum MoveEndResult MoveEndAbsorb(struct BattleCalcValues *cv)
 
 static enum MoveEndResult MoveEndRage(struct BattleCalcValues *cv)
 {
-    enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
-
     while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
@@ -3835,13 +3824,11 @@ static enum MoveEndResult MoveEndRage(struct BattleCalcValues *cv)
 
     gBattleStruct->eventState.moveEndBattler = 0;
     gBattleScripting.moveendState++;
-    return result;
+    return MOVEEND_RESULT_CONTINUE;
 }
 
 static enum MoveEndResult MoveEndBeakBlast(struct BattleCalcValues *cv)
 {
-    enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
-
     while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
@@ -3865,13 +3852,11 @@ static enum MoveEndResult MoveEndBeakBlast(struct BattleCalcValues *cv)
 
     gBattleStruct->eventState.moveEndBattler = 0;
     gBattleScripting.moveendState++;
-    return result;
+    return MOVEEND_RESULT_CONTINUE;
 }
 
 static enum MoveEndResult MoveEndAbilitiesTarget(struct BattleCalcValues *cv)
 {
-    enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
-
     while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
@@ -3887,13 +3872,11 @@ static enum MoveEndResult MoveEndAbilitiesTarget(struct BattleCalcValues *cv)
 
     gBattleStruct->eventState.moveEndBattler = 0;
     gBattleScripting.moveendState++;
-    return result;
+    return MOVEEND_RESULT_CONTINUE;
 }
 
 static enum MoveEndResult MoveEndResistBerryMessage(struct BattleCalcValues *cv)
 {
-    enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
-
     while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
@@ -3916,13 +3899,11 @@ static enum MoveEndResult MoveEndResistBerryMessage(struct BattleCalcValues *cv)
 
     gBattleStruct->eventState.moveEndBattler = 0;
     gBattleScripting.moveendState++;
-    return result;
+    return MOVEEND_RESULT_CONTINUE;
 }
 
 static enum MoveEndResult MoveEndFormChangeOnHit(struct BattleCalcValues *cv)
 {
-    enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
-
     while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
@@ -3937,13 +3918,11 @@ static enum MoveEndResult MoveEndFormChangeOnHit(struct BattleCalcValues *cv)
 
     gBattleStruct->eventState.moveEndBattler = 0;
     gBattleScripting.moveendState++;
-    return result;
+    return MOVEEND_RESULT_CONTINUE;
 }
 
 static enum MoveEndResult MoveEndAbilitiesAttacker(struct BattleCalcValues *cv)
 {
-    enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
-
     while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
@@ -3959,13 +3938,11 @@ static enum MoveEndResult MoveEndAbilitiesAttacker(struct BattleCalcValues *cv)
 
     gBattleStruct->eventState.moveEndBattler = 0;
     gBattleScripting.moveendState++;
-    return result;
+    return MOVEEND_RESULT_CONTINUE;
 }
 
 static enum MoveEndResult MoveEndStatusImmunityAbilities(struct BattleCalcValues *cv)
 {
-    enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
-
     while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
@@ -3980,7 +3957,7 @@ static enum MoveEndResult MoveEndStatusImmunityAbilities(struct BattleCalcValues
 
     gBattleStruct->eventState.moveEndBattler = 0;
     gBattleScripting.moveendState++;
-    return result;
+    return MOVEEND_RESULT_CONTINUE;
 }
 
 static enum MoveEndResult MoveEndAttackerInvisible(struct BattleCalcValues *cv)
@@ -4011,8 +3988,7 @@ static enum MoveEndResult MoveEndAttackerVisible(struct BattleCalcValues *cv)
         MarkBattlerForControllerExec(cv->battlerAtk);
         gBattleMons[cv->battlerAtk].volatiles.semiInvulnerable = STATE_NONE;
         gSpecialStatuses[cv->battlerAtk].restoredBattlerSprite = TRUE;
-        gBattleScripting.moveendState++;
-        return MOVEEND_RESULT_BREAK;
+        result = MOVEEND_RESULT_BREAK;
     }
     gBattleScripting.moveendState++;
     return result;
@@ -4080,8 +4056,6 @@ static enum MoveEndResult MoveEndItemEffectsAttacker1(struct BattleCalcValues *c
 
 static enum MoveEndResult MoveEndSymbiosis(struct BattleCalcValues *cv)
 {
-    enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
-
     for (enum BattlerId battlerDef = 0; battlerDef < gBattlersCount; battlerDef++)
     {
         if (ShouldSkipBattlerForMoveEnd(battlerDef, cv))
@@ -4102,7 +4076,7 @@ static enum MoveEndResult MoveEndSymbiosis(struct BattleCalcValues *cv)
     }
 
     gBattleScripting.moveendState++;
-    return result;
+    return MOVEEND_RESULT_CONTINUE;
 }
 
 static enum MoveEndResult MoveEndFaintBlock(struct BattleCalcValues *cv)
@@ -4126,10 +4100,10 @@ static enum MoveEndResult MoveEndFaintBlock(struct BattleCalcValues *cv)
             {
             case FAINT_BLOCK_FINAL_GAMBIT:
                 if (cv->moveEffect == EFFECT_FINAL_GAMBIT
-                && battlerDef == cv->battlerAtk
-                && IsBattlerAlive(cv->battlerAtk)
-                && !gBattleStruct->unableToUseMove
-                && IsAnyTargetAffected())
+                 && battlerDef == cv->battlerAtk
+                 && IsBattlerAlive(cv->battlerAtk)
+                 && !gBattleStruct->unableToUseMove
+                 && IsAnyTargetAffected())
                 {
                     BattleScriptCall(BattleScript_FinalGambit);
                     result = MOVEEND_RESULT_RUN_SCRIPT;
@@ -4138,9 +4112,9 @@ static enum MoveEndResult MoveEndFaintBlock(struct BattleCalcValues *cv)
                 break;
             case FAINT_BLOCK_CHECK_TARGET_FAINTED: // Stop if target already ran the block / is alive or absent
                 if (IsBattlerAlive(battlerDef)
-                || battlerDef >= gBattlersCount
-                || (gAbsentBattlerFlags & 1u << battlerDef)
-                || gBattleStruct->battlerState[battlerDef].notOnField)
+                 || battlerDef >= gBattlersCount
+                 || (gAbsentBattlerFlags & 1u << battlerDef)
+                 || gBattleStruct->battlerState[battlerDef].notOnField)
                 {
                     gBattleStruct->eventState.moveEndBlock = FAINT_BLOCK_COUNT;
                     break;
@@ -4149,8 +4123,8 @@ static enum MoveEndResult MoveEndFaintBlock(struct BattleCalcValues *cv)
                 break;
             case FAINT_BLOCK_VICTORY_CATCH:
                 if (IsVictoryCatch()
-                && gBattleStruct->victoryCatchState != VICTORY_CATCH_FAINTED
-                && !IsOnPlayerSide(battlerDef))
+                 && gBattleStruct->victoryCatchState != VICTORY_CATCH_FAINTED
+                 && !IsOnPlayerSide(battlerDef))
                 {
                     u8 hp = 1;
                     SetMonData(GetBattlerMon(battlerDef), MON_DATA_HP, &hp);
@@ -4173,12 +4147,12 @@ static enum MoveEndResult MoveEndFaintBlock(struct BattleCalcValues *cv)
                 break;
             case FAINT_BLOCK_DO_GRUDGE:
                 if (gBattleMons[battlerDef].volatiles.grudge
-                && IsBattlerTurnDamaged(battlerDef, EXCLUDING_SUBSTITUTES)
-                && IsBattlerAlive(cv->battlerAtk)
-                && !IsBattlerAlly(cv->battlerAtk, battlerDef)
-                && !IsZMove(cv->move)
-                && cv->move != MOVE_STRUGGLE
-                && cv->moveEffect != EFFECT_FUTURE_SIGHT)
+                 && IsBattlerTurnDamaged(battlerDef, EXCLUDING_SUBSTITUTES)
+                 && IsBattlerAlive(cv->battlerAtk)
+                 && !IsBattlerAlly(cv->battlerAtk, battlerDef)
+                 && !IsZMove(cv->move)
+                 && cv->move != MOVE_STRUGGLE
+                 && cv->moveEffect != EFFECT_FUTURE_SIGHT)
                 {
                     u32 moveIndex = gBattleStruct->chosenMovePositions[cv->battlerAtk];
 
@@ -4193,10 +4167,10 @@ static enum MoveEndResult MoveEndFaintBlock(struct BattleCalcValues *cv)
                 break;
             case FAINT_BLOCK_TRY_DESTINY_BOND: // Checked before FAINT_BLOCK_FAINT_TARGET but occurs after since volatiles are cleared on faint
                 if (gBattleMons[battlerDef].volatiles.destinyBond
-                && IsBattlerTurnDamaged(battlerDef, EXCLUDING_SUBSTITUTES)
-                && IsBattlerAlive(cv->battlerAtk)
-                && GetActiveGimmick(cv->battlerAtk) != GIMMICK_DYNAMAX
-                && !IsBattlerAlly(cv->battlerAtk, battlerDef))
+                 && IsBattlerTurnDamaged(battlerDef, EXCLUDING_SUBSTITUTES)
+                 && IsBattlerAlive(cv->battlerAtk)
+                 && GetActiveGimmick(cv->battlerAtk) != GIMMICK_DYNAMAX
+                 && !IsBattlerAlly(cv->battlerAtk, battlerDef))
                 {
                     gBattleStruct->passiveHpUpdate[cv->battlerAtk] = gBattleMons[cv->battlerAtk].hp;
                     BattleScriptCall(BattleScript_DestinyBondTakesLife);
