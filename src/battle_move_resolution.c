@@ -3120,10 +3120,9 @@ static enum MoveEndResult MoveEndSetValues(struct BattleCalcValues *cv)
 
 static bool32 ShouldSkipBattlerForMoveEnd(enum BattlerId battlerDef, struct BattleCalcValues *cv)
 {
-    if (gBattleStruct->battlerState[battlerDef].substituteBlocked || !IsBattlerAlive(battlerDef))
-        return TRUE;
-
-    if (cv->battlerDef >= gBattlersCount)
+    if (gBattleStruct->battlerState[battlerDef].substituteBlocked
+     || !IsBattlerAlive(battlerDef)
+     || gBattleStruct->unableToUseMove)
         return TRUE;
 
     if (IsBattleMoveStatus(cv->move))
