@@ -3818,7 +3818,7 @@ static enum MoveEndResult MoveEndRage(struct BattleCalcValues *cv)
          && !IsBattlerAlly(cv->battlerAtk, battlerDef)
          && IsBattlerTurnDamaged(battlerDef, EXCLUDING_SUBSTITUTES)
          && !IsBattleMoveStatus(cv->move)
-         && CompareStat(cv->battlerDef, STAT_ATK, MAX_STAT_STAGE, CMP_LESS_THAN, cv->abilities[battlerDef]))
+         && CompareStat(battlerDef, STAT_ATK, MAX_STAT_STAGE, CMP_LESS_THAN, cv->abilities[battlerDef]))
         {
             // Does rage show any anim or does it just increase by one and print the rage message?
             gBattleScripting.battler = battlerDef;
@@ -4039,19 +4039,18 @@ static enum MoveEndResult MoveEndTargetVisible(struct BattleCalcValues *cv)
 
 static enum MoveEndResult MoveEndItemEffectsTarget(struct BattleCalcValues *cv)
 {
-    enum HoldEffect holdEffect = cv->holdEffects[cv->battlerDef];
-
     while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
+        enum HoldEffect holdEffect = cv->holdEffects[battlerDef];
 
         gBattleStruct->eventState.moveEndBattler++;
 
         if (ShouldSkipBattlerForMoveEnd(battlerDef, cv))
             continue;
 
-        if (ItemBattleEffects(cv->battlerDef, cv->battlerAtk, holdEffect, IsOnTargetHitActivation)
-         || ItemBattleEffects(cv->battlerDef, cv->battlerAtk, holdEffect, IsOnStatusChangeActivation))
+        if (ItemBattleEffects(battlerDef, cv->battlerAtk, holdEffect, IsOnTargetHitActivation)
+         || ItemBattleEffects(battlerDef, cv->battlerAtk, holdEffect, IsOnStatusChangeActivation))
             return MOVEEND_RESULT_RUN_SCRIPT;
     }
 
@@ -4133,10 +4132,10 @@ static enum MoveEndResult MoveEndFaintBlock(struct BattleCalcValues *cv)
                 gBattleStruct->eventState.moveEndBlock++;
                 break;
             case FAINT_BLOCK_CHECK_TARGET_FAINTED: // Stop if target already ran the block / is alive or absent
-                if (IsBattlerAlive(cv->battlerDef)
+                if (IsBattlerAlive(battlerDef)
                 || battlerDef >= gBattlersCount
-                || (gAbsentBattlerFlags & 1u << cv->battlerDef)
-                || gBattleStruct->battlerState[cv->battlerDef].notOnField)
+                || (gAbsentBattlerFlags & 1u << battlerDef)
+                || gBattleStruct->battlerState[battlerDef].notOnField)
                 {
                     gBattleStruct->eventState.moveEndBlock = FAINT_BLOCK_COUNT;
                     break;
@@ -4289,8 +4288,8 @@ static enum MoveEndResult MoveEndUpdateLastMoves(struct BattleCalcValues *cv)
             }
             else
             {
-                gLastHitByType[cv->battlerDef] = TYPE_MYSTERY;
-                gLastLandedMoves[cv->battlerDef] = MOVE_UNAVAILABLE;
+                gLastHitByType[battlerDef] = TYPE_MYSTERY;
+                gLastLandedMoves[battlerDef] = MOVE_UNAVAILABLE;
             }
         }
     }
