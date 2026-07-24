@@ -3118,15 +3118,15 @@ static enum MoveEndResult MoveEndSetValues(struct BattleCalcValues *cv)
     return MOVEEND_RESULT_CONTINUE;
 }
 
-static bool32 ShouldSkipBattlerForMoveEnd(enum BattlerId battlerAtk, enum BattlerId battlerDef, enum BattlerId calcValuesBattler, enum Move move)
+static bool32 ShouldSkipBattlerForMoveEnd(enum BattlerId battlerDef, struct BattleCalcValues *cv)
 {
     if (gBattleStruct->battlerState[battlerDef].substituteBlocked || !IsBattlerAlive(battlerDef))
         return TRUE;
 
-    if (IsBattleMoveStatus(move))
-        return battlerDef != calcValuesBattler;
+    if (IsBattleMoveStatus(cv->move))
+        return battlerDef != cv->battlerDef;
 
-    return !IsBattlerAlly(battlerDef, calcValuesBattler) || gBattleStruct->battlerState[battlerAtk].targetsDone[battlerDef];
+    return !IsBattlerAlly(battlerDef, calcValuesBattler) || gBattleStruct->battlerState[cv->battlerAtk].targetsDone[battlerDef];
 }
 
 static enum MoveEndResult MoveEndQueueDancerToxicChain(struct BattleCalcValues *cv)
@@ -3173,7 +3173,7 @@ static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
     {
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
 
-        if (!DoesSubstituteBlockMove(cv->battlerAtk, battlerDef, cv->move) || ShouldSkipBattlerForMoveEnd(cv->battlerAtk, battlerDef, cv->battlerDef, cv->move))
+        if (!DoesSubstituteBlockMove(cv->battlerAtk, battlerDef, cv->move) || ShouldSkipBattlerForMoveEnd(battlerDef, cv))
         {
             gBattleStruct->eventState.moveEndBlock = 0;
             gBattleStruct->eventState.moveEndBattler++;
@@ -3583,6 +3583,7 @@ static enum MoveEndResult MoveEndProtectLikeEffect(struct BattleCalcValues *cv)
 
     if (gProtectStructs[cv->battlerAtk].chargingTurn
      || !IsBattlerAlive(cv->battlerAtk)
+     || gBattleStruct->unableToUseMove
      || CanBattlerAvoidContactEffects(cv->battlerAtk, cv->battlerDef, cv->abilities[cv->battlerAtk], cv->holdEffects[cv->battlerAtk], cv->move))
     {
         gBattleScripting.moveendState++;
@@ -3590,12 +3591,6 @@ static enum MoveEndResult MoveEndProtectLikeEffect(struct BattleCalcValues *cv)
     }
 
     if (gSpecialStatuses[cv->battlerDef].breaksThroughProtectFully && GetConfig(B_UNSEEN_FIST_PIERCING_DRILL) <= GEN_9)
-    {
-        gBattleScripting.moveendState++;
-        return result;
-    }
-
-    if (gBattleStruct->unableToUseMove)
     {
         gBattleScripting.moveendState++;
         return result;
@@ -3702,7 +3697,7 @@ static enum MoveEndResult MoveEndAdditionalEffects(struct BattleCalcValues *cv)
         struct SetEffect se = {0};
 
         if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter
-         && !ShouldSkipBattlerForMoveEnd(cv->battlerAtk, effectBattler, cv->battlerDef, cv->move))
+         && !ShouldSkipBattlerForMoveEnd(effectBattler, cv))
         {
             u32 percentChance;
             const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
@@ -3827,7 +3822,7 @@ static enum MoveEndResult MoveEndBeakBlast(struct BattleCalcValues *cv)
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
         gBattleStruct->eventState.moveEndBattler++;
 
-        if (ShouldSkipBattlerForMoveEnd(cv->battlerAtk, battlerDef, cv->battlerDef, cv->move))
+        if (ShouldSkipBattlerForMoveEnd(battlerDef, cv))
             continue;
 
         if (IsBattlerUsingBeakBlast(battlerDef)
@@ -3857,7 +3852,7 @@ static enum MoveEndResult MoveEndAbilitiesTarget(struct BattleCalcValues *cv)
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
         gBattleStruct->eventState.moveEndBattler++;
 
-        if (ShouldSkipBattlerForMoveEnd(cv->battlerAtk, battlerDef, cv->battlerDef, cv->move))
+        if (ShouldSkipBattlerForMoveEnd(battlerDef, cv))
             continue;
 
         if (AbilityBattleEffects(ABILITYEFFECT_MOVE_END, battlerDef, cv->abilities[battlerDef], 0, TRUE)
@@ -3879,7 +3874,7 @@ static enum MoveEndResult MoveEndResistBerryMessage(struct BattleCalcValues *cv)
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
         gBattleStruct->eventState.moveEndBattler++;
 
-        if (ShouldSkipBattlerForMoveEnd(cv->battlerAtk, battlerDef, cv->battlerDef, cv->move))
+        if (ShouldSkipBattlerForMoveEnd(battlerDef, cv))
             continue;
 
         if (gSpecialStatuses[battlerDef].berryReduced
@@ -3908,7 +3903,7 @@ static enum MoveEndResult MoveEndFormChangeOnHit(struct BattleCalcValues *cv)
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
         gBattleStruct->eventState.moveEndBattler++;
 
-        if (ShouldSkipBattlerForMoveEnd(cv->battlerAtk, battlerDef, cv->battlerDef, cv->move))
+        if (ShouldSkipBattlerForMoveEnd(battlerDef, cv))
             continue;
 
         if (AbilityBattleEffects(ABILITYEFFECT_FORM_CHANGE_ON_HIT, battlerDef, cv->abilities[battlerDef], 0, TRUE))
@@ -3951,7 +3946,7 @@ static enum MoveEndResult MoveEndStatusImmunityAbilities(struct BattleCalcValues
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
         gBattleStruct->eventState.moveEndBattler++;
 
-        if (ShouldSkipBattlerForMoveEnd(cv->battlerAtk, battlerDef, cv->battlerDef, cv->move))
+        if (ShouldSkipBattlerForMoveEnd(battlerDef, cv))
             continue;
 
         if (AbilityBattleEffects(ABILITYEFFECT_IMMUNITY, battlerDef, 0, 0, TRUE))
@@ -4032,7 +4027,7 @@ static enum MoveEndResult MoveEndItemEffectsTarget(struct BattleCalcValues *cv)
 
         gBattleStruct->eventState.moveEndBattler++;
 
-        if (ShouldSkipBattlerForMoveEnd(cv->battlerAtk, battlerDef, cv->battlerDef, cv->move))
+        if (ShouldSkipBattlerForMoveEnd(battlerDef, cv))
             continue;
 
         if (ItemBattleEffects(cv->battlerDef, cv->battlerAtk, holdEffect, IsOnTargetHitActivation)
@@ -4065,7 +4060,7 @@ static enum MoveEndResult MoveEndSymbiosis(struct BattleCalcValues *cv)
 
     for (enum BattlerId battlerDef = 0; battlerDef < gBattlersCount; battlerDef++)
     {
-        if (ShouldSkipBattlerForMoveEnd(cv->battlerAtk, battlerDef, cv->battlerDef, cv->move))
+        if (ShouldSkipBattlerForMoveEnd(battlerDef, cv))
             continue;
 
         if ((gSpecialStatuses[battlerDef].berryReduced
@@ -4247,7 +4242,7 @@ static enum MoveEndResult MoveEndUpdateLastMoves(struct BattleCalcValues *cv)
 
             gBattleStruct->eventState.moveEndBattler++;
 
-            if (ShouldSkipBattlerForMoveEnd(cv->battlerAtk, battlerDef, cv->battlerDef, cv->move) || !IsBattlerAlive(battlerDef))
+            if (ShouldSkipBattlerForMoveEnd(battlerDef, cv) || !IsBattlerAlive(battlerDef))
                 continue;
 
             gLastHitBy[battlerDef] = cv->battlerAtk; // Used by switch AI only
@@ -4292,7 +4287,7 @@ static enum MoveEndResult MoveEndMirrorMove(struct BattleCalcValues *cv)
 
         gBattleStruct->eventState.moveEndBattler++;
 
-        if (ShouldSkipBattlerForMoveEnd(cv->battlerAtk, battlerDef, cv->battlerDef, cv->move))
+        if (ShouldSkipBattlerForMoveEnd(battlerDef, cv))
             continue;
     
         if (!gBattleStruct->unableToUseMove
