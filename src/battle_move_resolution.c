@@ -3682,8 +3682,8 @@ static bool32 CanApplyAdditionalEffect(enum BattlerId battlerAtk, enum BattlerId
     if (additionalEffect->onlyIfTargetRaisedStats && !gProtectStructs[effectBattler].statRaised)
         return FALSE;
 
-    // Certain additional effects only apply on a two-turn move's charge turn
-    if (additionalEffect->onChargeTurnOnly != gProtectStructs[battlerAtk].chargingTurn)
+    // Don't apply chargeTurnOnly effects here
+    if (!additionalEffect->onChargeTurnOnly)
         return FALSE;
 
     return TRUE;
