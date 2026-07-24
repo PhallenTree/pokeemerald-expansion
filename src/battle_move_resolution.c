@@ -3582,73 +3582,76 @@ static enum MoveEndResult MoveEndEndureDamageMessage(struct BattleCalcValues *cv
 static enum MoveEndResult MoveEndProtectLikeEffect(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
-    enum ProtectMethod method = gProtectStructs[cv->battlerDef].protected;
 
-    if (gProtectStructs[cv->battlerAtk].chargingTurn
-     || !IsBattlerAlive(cv->battlerAtk)
-     || gBattleStruct->unableToUseMove
-     || CanBattlerAvoidContactEffects(cv->battlerAtk, cv->battlerDef, cv->abilities[cv->battlerAtk], cv->holdEffects[cv->battlerAtk], cv->move))
+    while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
-        gBattleScripting.moveendState++;
-        return result;
-    }
+        enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
+        gBattleStruct->eventState.moveEndBattler++;
 
-    if (gSpecialStatuses[cv->battlerDef].breaksThroughProtectFully && GetConfig(B_UNSEEN_FIST_PIERCING_DRILL) <= GEN_9)
-    {
-        gBattleScripting.moveendState++;
-        return result;
-    }
+        if (ShouldSkipBattlerForMoveEnd(battlerDef, cv)
+         || gProtectStructs[cv->battlerAtk].chargingTurn
+         || !IsBattlerAlive(cv->battlerAtk)
+         || gBattleStruct->unableToUseMove)
+            continue;
 
-    switch (method)
-    {
-    case PROTECT_SPIKY_SHIELD:
-        if (!IsAbilityAndRecord(cv->battlerAtk, cv->abilities[cv->battlerAtk], ABILITY_MAGIC_GUARD))
+        if (CanBattlerAvoidContactEffects(cv->battlerAtk, battlerDef, cv->abilities[cv->battlerAtk], cv->holdEffects[cv->battlerAtk], cv->move))
+            continue;
+
+        if (gSpecialStatuses[battlerDef].breaksThroughProtectFully && GetConfig(B_UNSEEN_FIST_PIERCING_DRILL) <= GEN_9)
+            continue;
+
+        enum ProtectMethod method = gProtectStructs[battlerDef].protected;
+        switch (method)
         {
-            SetPassiveDamageAmount(cv->battlerAtk, GetNonDynamaxMaxHP(cv->battlerAtk) / 8);
-            PREPARE_MOVE_BUFFER(gBattleTextBuff1, MOVE_SPIKY_SHIELD);
-            BattleScriptCall(BattleScript_SpikyShieldEffect);
-            result = MOVEEND_RESULT_RUN_SCRIPT;
-        }
-        break;
-    case PROTECT_KINGS_SHIELD:
-    {
-        s32 stage = (B_KINGS_SHIELD_LOWER_ATK >= GEN_8) ? -1 : -2;
-        gEffectBattler = gBattlerAttacker;
-        SetStatChange(gEffectBattler, STAT_ATK, stage);
-        BattleScriptCall(BattleScript_KingsShieldEffect);
-        result = MOVEEND_RESULT_RUN_SCRIPT;
-        break;
-    }
-    case PROTECT_BANEFUL_BUNKER:
-        if (CanBePoisoned(cv->battlerDef, cv->battlerAtk, cv->abilities[cv->battlerDef], cv->abilities[cv->battlerAtk]))
+        case PROTECT_SPIKY_SHIELD:
+            if (!IsAbilityAndRecord(cv->battlerAtk, cv->abilities[cv->battlerAtk], ABILITY_MAGIC_GUARD))
+            {
+                SetPassiveDamageAmount(cv->battlerAtk, GetNonDynamaxMaxHP(cv->battlerAtk) / 8);
+                PREPARE_MOVE_BUFFER(gBattleTextBuff1, MOVE_SPIKY_SHIELD);
+                BattleScriptCall(BattleScript_SpikyShieldEffect);
+                result = MOVEEND_RESULT_RUN_SCRIPT;
+            }
+            break;
+        case PROTECT_KINGS_SHIELD:
         {
-            gBattleScripting.moveEffect = MOVE_EFFECT_POISON;
-            BattleScriptCall(BattleScript_BanefulBunkerEffect);
+            s32 stage = (B_KINGS_SHIELD_LOWER_ATK >= GEN_8) ? -1 : -2;
+            gEffectBattler = cv->battlerAtk;
+            SetStatChange(gEffectBattler, STAT_ATK, stage);
+            BattleScriptCall(BattleScript_KingsShieldEffect);
             result = MOVEEND_RESULT_RUN_SCRIPT;
+            break;
         }
-        break;
-    case PROTECT_BURNING_BULWARK:
-        if (CanBeBurned(cv->battlerDef, cv->battlerAtk, cv->abilities[cv->battlerAtk]))
-        {
-            gBattleScripting.moveEffect = MOVE_EFFECT_BURN;
-            BattleScriptCall(BattleScript_BanefulBunkerEffect);
+        case PROTECT_BANEFUL_BUNKER:
+            if (CanBePoisoned(battlerDef, cv->battlerAtk, cv->abilities[battlerDef], cv->abilities[cv->battlerAtk]))
+            {
+                gBattleScripting.moveEffect = MOVE_EFFECT_POISON;
+                BattleScriptCall(BattleScript_BanefulBunkerEffect);
+                result = MOVEEND_RESULT_RUN_SCRIPT;
+            }
+            break;
+        case PROTECT_BURNING_BULWARK:
+            if (CanBeBurned(battlerDef, cv->battlerAtk, cv->abilities[cv->battlerAtk]))
+            {
+                gBattleScripting.moveEffect = MOVE_EFFECT_BURN;
+                BattleScriptCall(BattleScript_BanefulBunkerEffect);
+                result = MOVEEND_RESULT_RUN_SCRIPT;
+            }
+            break;
+        case PROTECT_OBSTRUCT:
+            gEffectBattler = cv->battlerAtk;
+            SetStatChange(gEffectBattler, STAT_DEF, -2);
+            BattleScriptCall(BattleScript_KingsShieldEffect);
             result = MOVEEND_RESULT_RUN_SCRIPT;
+            break;
+        case PROTECT_SILK_TRAP:
+            gEffectBattler = cv->battlerAtk;
+            SetStatChange(gEffectBattler, STAT_SPEED, -1);
+            BattleScriptCall(BattleScript_KingsShieldEffect);
+            result = MOVEEND_RESULT_RUN_SCRIPT;
+            break;
+        default:
+            break;
         }
-        break;
-    case PROTECT_OBSTRUCT:
-        gEffectBattler = gBattlerAttacker;
-        SetStatChange(gEffectBattler, STAT_DEF, -2);
-        BattleScriptCall(BattleScript_KingsShieldEffect);
-        result = MOVEEND_RESULT_RUN_SCRIPT;
-        break;
-    case PROTECT_SILK_TRAP:
-        gEffectBattler = gBattlerAttacker;
-        SetStatChange(gEffectBattler, STAT_SPEED, -1);
-        BattleScriptCall(BattleScript_KingsShieldEffect);
-        result = MOVEEND_RESULT_RUN_SCRIPT;
-        break;
-    default:
-        break;
     }
 
     gBattleScripting.moveendState++;
@@ -3721,7 +3724,9 @@ static enum MoveEndResult MoveEndAdditionalEffects(struct BattleCalcValues *cv)
                 // Activate effect if it's primary (chance == 0) or if RNGesus says so
                 if ((percentChance == 0) || RandomPercentage(RNG_SECONDARY_EFFECT + gBattleStruct->additionalEffectsCounter, percentChance))
                 {
-                    cv->battlerDef = effectBattler; // For SetMoveEffect, will be restored to previous value when moveend is run again
+                    if (!additionalEffect->self)
+                        cv->battlerDef = effectBattler; // For SetMoveEffect, will be restored to previous value when moveend is run again
+
                     se.additionalEffect = additionalEffect;
                     se.moveEffect = additionalEffect->moveEffect;
                     se.script = gBattlescriptCurrInstr;
