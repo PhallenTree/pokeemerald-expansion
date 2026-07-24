@@ -922,7 +922,7 @@ static enum CancelerResult CancelerSetTargets(struct BattleCalcValues *cv)
                 cv->battlerDef = GetPartnerBattler(cv->battlerDef);
             }
         }
-        else if (moveTarget == TARGET_ALLY && !IsBattlerAlly(cv->battlerDef, cv->battlerAtk))
+        else if (IsDoubleBattle() && moveTarget == TARGET_ALLY && !IsBattlerAlly(cv->battlerDef, cv->battlerAtk))
         {
             cv->battlerDef = BATTLE_PARTNER(cv->battlerAtk);
         }
@@ -1973,8 +1973,7 @@ static enum CancelerResult CancelerNoTarget(struct BattleCalcValues *cv)
     }
 
     if (cv->battlerAtk == cv->battlerDef
-     && moveTarget == TARGET_ALLY
-     && gProtectStructs[BATTLE_PARTNER(cv->battlerAtk)].usedAllySwitch)
+     && moveTarget == TARGET_ALLY)
     {
         gBattlescriptCurrInstr = BattleScript_ButItFailed;
         return CANCELER_RESULT_FAILURE;
