@@ -3120,14 +3120,15 @@ static enum MoveEndResult MoveEndSetValues(struct BattleCalcValues *cv)
 static bool32 ShouldSkipBattlerForMoveEnd(enum BattlerId battlerDef, struct BattleCalcValues *cv)
 {
     if (gBattleStruct->battlerState[battlerDef].substituteBlocked
-     || !IsBattlerAlive(battlerDef)
-     || gBattleStruct->unableToUseMove)
+     || !IsBattlerAlive(battlerDef))
         return TRUE;
 
     if (IsBattleMoveStatus(cv->move))
         return battlerDef != cv->battlerDef;
 
-    return !IsBattlerAlly(battlerDef, cv->battlerDef) || gBattleStruct->battlerState[cv->battlerAtk].targetsDone[battlerDef];
+    return !IsBattlerAlly(battlerDef, cv->battlerDef)
+        || gBattleStruct->battlerState[cv->battlerAtk].targetsDone[battlerDef]
+        || gBattleStruct->unableToUseMove;
 }
 
 static enum MoveEndResult MoveEndQueueDancerToxicChain(struct BattleCalcValues *cv)
