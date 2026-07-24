@@ -3632,7 +3632,7 @@ static enum MoveEndResult MoveEndProtectLikeEffect(struct BattleCalcValues *cv)
             gEffectBattler = cv->battlerAtk;
             SetStatChange(gEffectBattler, STAT_DEF, -2);
             BattleScriptCall(BattleScript_KingsShieldEffect);
-            result = MOVEEND_RESULT_RUN_SCRIPT;
+            return MOVEEND_RESULT_RUN_SCRIPT;
             break;
         case PROTECT_SILK_TRAP:
             gEffectBattler = cv->battlerAtk;
