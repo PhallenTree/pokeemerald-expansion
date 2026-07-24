@@ -3120,7 +3120,8 @@ static enum MoveEndResult MoveEndSetValues(struct BattleCalcValues *cv)
 static bool32 ShouldSkipBattlerForMoveEnd(enum BattlerId battlerDef, struct BattleCalcValues *cv)
 {
     if (gBattleStruct->battlerState[battlerDef].substituteBlocked
-     || !IsBattlerAlive(battlerDef))
+     || !IsBattlerAlive(battlerDef)
+     || battlerDef >= gBattlersCount)
         return TRUE;
 
     if (IsBattleMoveStatus(cv->move))
@@ -4108,7 +4109,8 @@ static enum MoveEndResult MoveEndFaintBlock(struct BattleCalcValues *cv)
     {
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
 
-        if (!IsBattlerAlly(battlerDef, cv->battlerDef) && !IsBattleMoveStatus(cv->move))
+        if ((!IsBattlerAlly(battlerDef, cv->battlerDef) && !IsBattleMoveStatus(cv->move))
+         || battlerDef >= gBattlersCount)
         {
             gBattleStruct->eventState.moveEndBattler++;
             continue;
