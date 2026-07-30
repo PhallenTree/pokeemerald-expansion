@@ -3304,7 +3304,7 @@ static bool32 ShouldPrintEffectivenessMessageForFlag(enum BattlerId battler1, en
 {
     gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_NO_TARGET;
 
-    if (gBattleStruct->moveResultFlags[battler1] & moveResultFlag)
+    if (gBattleStruct->moveResultFlags[battler1] & moveResultFlag && !gSpecialStatuses[battler1].resultMessagePrinted)
     {
         if (IsDoubleSpreadMove())
         {
@@ -3318,7 +3318,7 @@ static bool32 ShouldPrintEffectivenessMessageForFlag(enum BattlerId battler1, en
             gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
         }
     }
-    else if (gBattleStruct->moveResultFlags[battler2] & moveResultFlag)
+    else if (gBattleStruct->moveResultFlags[battler2] & moveResultFlag && !gSpecialStatuses[battler2].resultMessagePrinted)
     {
         battler1 = battler2;
         if (IsDoubleSpreadMove())
