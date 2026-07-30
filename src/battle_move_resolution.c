@@ -3345,9 +3345,9 @@ static bool32 ShouldPrintEffectivenessMessage(enum BattlerId battler1, enum Batt
     if (ShouldPrintEffectivenessMessageForFlag(battler1, battler2, MOVE_RESULT_EXTREMELY_EFFECTIVE))
     {
         if (gSpecialStatuses[battler1].resultMessagePrinted)
-            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler1, cv->battlerAtk);
+            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler1, gBattlerAttacker);
         if (battler2 != battler1 && gSpecialStatuses[battler2].resultMessagePrinted)
-            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler2, cv->battlerAtk);
+            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler2, gBattlerAttacker);
 
         BattleScriptCall(BattleScript_PrintExtremelyEffectiveMessage);
         return TRUE;
@@ -3355,9 +3355,9 @@ static bool32 ShouldPrintEffectivenessMessage(enum BattlerId battler1, enum Batt
     else if (ShouldPrintEffectivenessMessageForFlag(battler1, battler2, MOVE_RESULT_SUPER_EFFECTIVE))
     {
         if (gSpecialStatuses[battler1].resultMessagePrinted)
-            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler1, cv->battlerAtk);
+            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler1, gBattlerAttacker);
         if (battler2 != battler1 && gSpecialStatuses[battler2].resultMessagePrinted)
-            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler2, cv->battlerAtk);
+            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler2, gBattlerAttacker);
 
         BattleScriptCall(BattleScript_PrintSuperEffectiveMessage);
         return TRUE;
