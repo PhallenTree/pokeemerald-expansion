@@ -3203,7 +3203,10 @@ static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
             case SUBSTITUTE_BLOCK_EFFECTIVENESS_MESSAGE:
                 if (IsBattlerTurnDamaged(battlerDef, INCLUDING_SUBSTITUTES)
                  && ShouldPrintEffectivenessMessage(battlerDef, battlerDef)) // Always prints individual effectiveness messages
+                {
                     result = MOVEEND_RESULT_RUN_SCRIPT;
+                    gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
+                }
                 break;
             case SUBSTITUTE_BLOCK_CRIT_MESSAGE:
                 if (IsBattlerTurnDamaged(battlerDef, INCLUDING_SUBSTITUTES)
@@ -3313,7 +3316,7 @@ static bool32 ShouldPrintEffectivenessMessageForFlag(enum BattlerId battler1, en
             else
                 gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_OF_TWO_TARGETS;
         }
-        else if (!gMultiHitCounter)
+        else
         {
             gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
         }
@@ -3323,7 +3326,7 @@ static bool32 ShouldPrintEffectivenessMessageForFlag(enum BattlerId battler1, en
         battler1 = battler2;
         if (IsDoubleSpreadMove())
             gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_OF_TWO_TARGETS;
-        else if (!gMultiHitCounter)
+        else
             gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
     }
     
@@ -3401,7 +3404,7 @@ static enum MoveEndResult MoveEndEffectivenessMessage(struct BattleCalcValues *c
         return MOVEEND_RESULT_CONTINUE;
     }
 
-    if (ShouldPrintEffectivenessMessage(battler1, battler2))
+    if (gMultiHitCounter == 0 && ShouldPrintEffectivenessMessage(battler1, battler2))
         return MOVEEND_RESULT_RUN_SCRIPT;
 
     gBattleScripting.moveendState++;
@@ -3469,21 +3472,20 @@ static bool32 ShouldPrintProtectMessage(enum BattlerId battler, enum Ability abi
 
 static enum MoveEndResult MoveEndCritProtectMessage(struct BattleCalcValues *cv)
 {
-    enum Ability abilityAtk = cv->abilities[cv->battlerAtk];
     while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
 
         if (ShouldSkipBattlerForMoveEnd(battlerDef, cv))
         {
-            gBattleScripting.moveendState++;
+            gBattleStruct->eventState.moveEndBattler++;
             continue;
         }
 
         if (ShouldPrintCritMessage(battlerDef))
             return MOVEEND_RESULT_RUN_SCRIPT;
 
-        if (ShouldPrintProtectMessage(battlerDef, abilityAtk))
+        if (ShouldPrintProtectMessage(battlerDef, cv->abilities[cv->battlerAtk]))
             return MOVEEND_RESULT_RUN_SCRIPT;
 
         gBattleStruct->eventState.moveEndBattler++;
@@ -4487,8 +4489,8 @@ static enum MoveEndResult MoveEndMultihitMoveBlock(struct BattleCalcValues *cv)
         case MULTIHIT_BLOCK_EFFECTIVENESS_MESSAGE:
             if (gMultiHitCounter == 0 || target == TARGET_SMART) // Dragon Darts shows this after every hit
             {
-                BattleScriptCall(BattleScript_PrintEffectivenessMessage);
-                result = MOVEEND_RESULT_RUN_SCRIPT;
+                if (ShouldPrintEffectivenessMessage(battlerDef, battlerDef))
+                    result = MOVEEND_RESULT_RUN_SCRIPT;
             }
             gBattleStruct->eventState.moveEndBlock++;
             break;

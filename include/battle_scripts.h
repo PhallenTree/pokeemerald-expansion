@@ -412,7 +412,6 @@ extern const u8 BattleScript_AffectionBasedStatusHeal[];
 extern const u8 BattleScript_AffectionBasedEndurance[];
 extern const u8 BattleScript_SymbiosisActivates[];
 extern const u8 BattleScript_MultiHitPrintStrings[];
-extern const u8 BattleScript_PrintEffectivenessMessage[];
 extern const u8 BattleScript_PrintExtremelyEffectiveMessage[];
 extern const u8 BattleScript_PrintSuperEffectiveMessage[];
 extern const u8 BattleScript_PrintNotVeryEffectiveMessage[];

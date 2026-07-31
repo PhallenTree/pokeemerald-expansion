@@ -1667,11 +1667,6 @@ BattleScript_MultiHitPrintStrings::
 	waitmessage B_WAIT_TIME_LONG
 	return
 
-BattleScript_PrintEffectivenessMessage::
-	resultmessage
-	waitmessage B_WAIT_TIME_LONG
-	return
-
 BattleScript_PrintExtremelyEffectiveMessage::
 	printfromtable gExtremelyEffectiveStringIds
 	waitmessage B_WAIT_TIME_LONG
