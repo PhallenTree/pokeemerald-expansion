@@ -3429,7 +3429,7 @@ static bool32 ShouldPrintCritMessage(enum BattlerId battler)
     if (!gSpecialStatuses[battler].criticalHit || gSpecialStatuses[battler].critMessagePrinted)
         return FALSE;
 
-    if (IsDoubleSpreadMove())
+    if (IsDoubleSpreadMove() && IsBattlerTurnDamaged(battler, EXCLUDING_SUBSTITUTES)) // Single target message is used when Substitute blocks
         BattleScriptCall(BattleScript_CriticalHitMessageMultiTarget);
     else
         BattleScriptCall(BattleScript_CriticalHitMessage);
@@ -3475,7 +3475,10 @@ static enum MoveEndResult MoveEndCritProtectMessage(struct BattleCalcValues *cv)
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
 
         if (ShouldSkipBattlerForMoveEnd(battlerDef, cv))
+        {
+            gBattleScripting.moveendState++;
             continue;
+        }
 
         if (ShouldPrintCritMessage(battlerDef))
             return MOVEEND_RESULT_RUN_SCRIPT;
