@@ -39,7 +39,11 @@ static enum Move GetSleepTalkMove(void);
 static enum Move GetCopycatMove(void);
 static enum Move GetMeFirstMove(void);
 
-// Move End message printing functions
+// Move End functions shared by Substitute Block
+static bool32 ShouldApplyAfterHitEffects(enum BattlerId battlerAtk, enum BattlerId effectBattler);
+static bool32 CanApplyAdditionalEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, const struct AdditionalEffect *additionalEffect);
+
+static bool32 ShouldApplyProtectLikeEffects(enum BattlerId battlerDef, struct BattleCalcValues *cv);
 static bool32 ShouldPrintCritMessage(enum BattlerId battler);
 static bool32 ShouldPrintProtectMessage(enum BattlerId battler, enum Ability abilityAtk);
 static bool32 ShouldPrintEffectivenessMessage(enum BattlerId battler1, enum BattlerId battler2);
@@ -3229,14 +3233,53 @@ static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
                 }
                 break;
             case SUBSTITUTE_BLOCK_ADDITIONAL_EFFECTS: // Those that activate even if Substitute is active
+            {
+                u32 numAdditionalEffects = GetMoveAdditionalEffectCount(cv->move);
+                if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter && !IsBattleMoveStatus(cv->move))
+                {
+                    u32 percentChance;
+                    struct SetEffect se = {0};
+                    const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
+
+                    // Various checks for if this move effect can be applied this turn
+                    if (CanApplyAdditionalEffect(cv->battlerAtk, battlerDef, additionalEffect)
+                     && ShouldApplyAfterHitEffects(cv->battlerAtk, battlerDef)
+                     && !additionalEffect->self) // handled in MoveEndAdditionalEffects
+                    {
+                        percentChance = CalcSecondaryEffectChance(cv->battlerAtk, cv->abilities[cv->battlerAtk], additionalEffect);
+
+                        // Activate effect if it's primary (chance == 0) or if RNGesus says so
+                        if ((percentChance == 0) || RandomPercentage(RNG_SECONDARY_EFFECT + gBattleStruct->additionalEffectsCounter, percentChance))
+                        {
+                            cv->battlerDef = battlerDef; // For SetMoveEffect, will be restored to previous value when moveend is run again
+
+                            se.additionalEffect = additionalEffect;
+                            se.moveEffect = additionalEffect->moveEffect;
+                            se.script = gBattlescriptCurrInstr;
+                            se.effectBattler = battlerDef;
+                            se.primary = percentChance == 0;
+                            se.certain = percentChance >= 100;
+                            se.onSide = additionalEffect->onSide; // TODO
+                            SetMoveEffect(cv, &se);
+                        }
+                    }
+
+                    gBattleStruct->additionalEffectsCounter++;
+                    return MOVEEND_RESULT_RUN_SCRIPT; // try to run effect script if possible and don't increment block state
+                }
+                gBattleStruct->additionalEffectsCounter = 0;
+                gBattleScripting.moveEffect = 0;
                 break;
+            }
             case SUBSTITUTE_BLOCK_ITEM_EFFECT_TARGET:
                 if (ItemBattleEffects(battlerDef, cv->battlerAtk, cv->holdEffects[battlerDef], IsOnTargetHitActivation))
                     result = MOVEEND_RESULT_RUN_SCRIPT;
                 break;
             case SUBSTITUTE_BLOCK_PROTECT_LIKE_EFFECT:
+                if (ShouldApplyProtectLikeEffects(battlerDef, cv))
+                    result = MOVEEND_RESULT_RUN_SCRIPT;
                 break;
-            case SUBSTITUTE_BLOCK_DYNAMAX_MOVE_EFFECTS:
+            case SUBSTITUTE_BLOCK_DYNAMAX_MOVE_EFFECTS: // TODO when these are split from regular additional effects
                 break;
             case SUBSTITUTE_BLOCK_COUNT:
                 break;
@@ -3312,9 +3355,14 @@ static bool32 ShouldPrintEffectivenessMessageForFlag(enum BattlerId battler1, en
         if (IsDoubleSpreadMove())
         {
             if (battler2 != battler1 && gBattleStruct->moveResultFlags[battler2] & moveResultFlag)
+            {
                 gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_TWO_TARGETS;
+                gSpecialStatuses[battler2].resultMessagePrinted = TRUE;
+            }
             else
+            {
                 gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_OF_TWO_TARGETS;
+            }
         }
         else
         {
@@ -3335,9 +3383,6 @@ static bool32 ShouldPrintEffectivenessMessageForFlag(enum BattlerId battler1, en
     }
 
     gSpecialStatuses[battler1].resultMessagePrinted = TRUE;
-
-    if (gBattleCommunication[MULTISTRING_CHOOSER] == B_MSG_TWO_TARGETS)
-        gSpecialStatuses[battler2].resultMessagePrinted = TRUE;
 
     return TRUE;
 }
@@ -3496,45 +3541,134 @@ static enum MoveEndResult MoveEndCritProtectMessage(struct BattleCalcValues *cv)
     return MOVEEND_RESULT_CONTINUE;
 }
 
+static bool32 ShouldPrintEndureHitMessage(enum BattlerId battler)
+{
+    u32 *moveResultFlags = &(gBattleStruct->moveResultFlags[battler]);
+
+    if (*moveResultFlags & MOVE_RESULT_ONE_HIT_KO)
+    {
+        *moveResultFlags &= ~MOVE_RESULT_ONE_HIT_KO;
+        BattleScriptCall(BattleScript_OneHitKOMsg);
+        return TRUE;
+    }
+    else if (*moveResultFlags & MOVE_RESULT_STURDIED)
+    {
+        gBattleScripting.battler = gBattlerAbility = battler;
+        *moveResultFlags &= ~(MOVE_RESULT_STURDIED | MOVE_RESULT_FOE_ENDURED | MOVE_RESULT_FOE_HUNG_ON);
+        BattleScriptCall(BattleScript_SturdiedMsg);
+        return TRUE;
+    }
+    else if (*moveResultFlags & MOVE_RESULT_FOE_ENDURED)
+    {
+        gBattleScripting.battler = battler;
+        *moveResultFlags &= ~(MOVE_RESULT_FOE_ENDURED | MOVE_RESULT_FOE_HUNG_ON);
+        BattleScriptCall(BattleScript_EnduredMsg);
+        return TRUE;
+    }
+    else if (*moveResultFlags & MOVE_RESULT_FOE_HUNG_ON)
+    {
+        gBattleScripting.battler = battler;
+        gLastUsedItem = gBattleMons[battler].item;
+        gPotentialItemEffectBattler = battler;
+        *moveResultFlags &= ~MOVE_RESULT_FOE_HUNG_ON;
+        BattleScriptCall(BattleScript_HangedOnMsg);
+        return TRUE;
+    }
+    else if (B_AFFECTION_MECHANICS == TRUE && (*moveResultFlags & MOVE_RESULT_FOE_ENDURED_AFFECTION))
+    {
+        gBattleScripting.battler = battler;
+        *moveResultFlags &= ~MOVE_RESULT_FOE_ENDURED_AFFECTION;
+        BattleScriptCall(BattleScript_AffectionBasedEndurance);
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static enum MoveEndResult MoveEndEndureDamageMessage(struct BattleCalcValues *cv)
 {
-    // if (*moveResultFlags & MOVE_RESULT_ONE_HIT_KO)
-    // {
-    //     *moveResultFlags &= ~MOVE_RESULT_ONE_HIT_KO;
-    //     *moveResultFlags &= ~MOVE_RESULT_SUPER_EFFECTIVE;
-    //     *moveResultFlags &= ~MOVE_RESULT_NOT_VERY_EFFECTIVE;
-    //     BattleScriptCall(BattleScript_OneHitKOMsg);
-    //     return MOVEEND_RESULT_RUN_SCRIPT;
-    // }
-    // else if (*moveResultFlags & MOVE_RESULT_STURDIED)
-    // {
-    //     *moveResultFlags &= ~(MOVE_RESULT_STURDIED | MOVE_RESULT_FOE_ENDURED | MOVE_RESULT_FOE_HUNG_ON);
-    //     BattleScriptCall(BattleScript_SturdiedMsg);
-    //     return MOVEEND_RESULT_RUN_SCRIPT;
-    // }
-    // else if (*moveResultFlags & MOVE_RESULT_FOE_ENDURED)
-    // {
-    //     *moveResultFlags &= ~(MOVE_RESULT_FOE_ENDURED | MOVE_RESULT_FOE_HUNG_ON);
-    //     BattleScriptCall(BattleScript_EnduredMsg);
-    //     return MOVEEND_RESULT_RUN_SCRIPT;
-    // }
-    // else if (*moveResultFlags & MOVE_RESULT_FOE_HUNG_ON)
-    // {
-    //     gLastUsedItem = gBattleMons[battler].item;
-    //     gPotentialItemEffectBattler = battler;
-    //     *moveResultFlags &= ~(MOVE_RESULT_FOE_ENDURED | MOVE_RESULT_FOE_HUNG_ON);
-    //     BattleScriptCall(BattleScript_HangedOnMsg);
-    //     return MOVEEND_RESULT_RUN_SCRIPT;
-    // }
-    // else if (B_AFFECTION_MECHANICS == TRUE && (*moveResultFlags & MOVE_RESULT_FOE_ENDURED_AFFECTION))
-    // {
-    //     *moveResultFlags &= ~MOVE_RESULT_FOE_ENDURED_AFFECTION;
-    //     BattleScriptCall(BattleScript_AffectionBasedEndurance);
-    //     return MOVEEND_RESULT_RUN_SCRIPT;
-    // }
-    // TODO
+    while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
+    {
+        enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
+        gBattleStruct->eventState.moveEndBattler++;
+
+        if (ShouldSkipBattlerForMoveEnd(battlerDef, cv))
+            continue;
+
+        if (ShouldPrintEndureHitMessage(battlerDef))
+            return MOVEEND_RESULT_RUN_SCRIPT;
+    }
+
+    gBattleStruct->eventState.moveEndBattler = 0;
     gBattleScripting.moveendState++;
     return MOVEEND_RESULT_CONTINUE;
+}
+
+static bool32 ShouldApplyProtectLikeEffects(enum BattlerId battlerDef, struct BattleCalcValues *cv)
+{
+    if (gProtectStructs[cv->battlerAtk].chargingTurn
+     || !IsBattlerAlive(cv->battlerAtk)
+     || gBattleStruct->unableToUseMove)
+        return FALSE;
+
+    if (CanBattlerAvoidContactEffects(cv->battlerAtk, battlerDef, cv->abilities[cv->battlerAtk], cv->holdEffects[cv->battlerAtk], cv->move))
+        return FALSE;
+
+    if (gSpecialStatuses[battlerDef].breaksThroughProtectFully && GetConfig(B_UNSEEN_FIST_PIERCING_DRILL) <= GEN_9)
+        return FALSE;
+
+    enum ProtectMethod method = gProtectStructs[battlerDef].protected;
+    switch (method)
+    {
+    case PROTECT_SPIKY_SHIELD:
+        if (!IsAbilityAndRecord(cv->battlerAtk, cv->abilities[cv->battlerAtk], ABILITY_MAGIC_GUARD))
+        {
+            SetPassiveDamageAmount(cv->battlerAtk, GetNonDynamaxMaxHP(cv->battlerAtk) / 8);
+            PREPARE_MOVE_BUFFER(gBattleTextBuff1, MOVE_SPIKY_SHIELD);
+            BattleScriptCall(BattleScript_SpikyShieldEffect);
+            return TRUE;
+        }
+        break;
+    case PROTECT_KINGS_SHIELD:
+    {
+        s32 stage = (B_KINGS_SHIELD_LOWER_ATK >= GEN_8) ? -1 : -2;
+        gEffectBattler = cv->battlerAtk;
+        SetStatChange(gEffectBattler, STAT_ATK, stage);
+        BattleScriptCall(BattleScript_KingsShieldEffect);
+        return TRUE;
+        break;
+    }
+    case PROTECT_BANEFUL_BUNKER:
+        if (CanBePoisoned(battlerDef, cv->battlerAtk, cv->abilities[battlerDef], cv->abilities[cv->battlerAtk]))
+        {
+            gBattleScripting.moveEffect = MOVE_EFFECT_POISON;
+            BattleScriptCall(BattleScript_BanefulBunkerEffect);
+            return TRUE;
+        }
+        break;
+    case PROTECT_BURNING_BULWARK:
+        if (CanBeBurned(battlerDef, cv->battlerAtk, cv->abilities[cv->battlerAtk]))
+        {
+            gBattleScripting.moveEffect = MOVE_EFFECT_BURN;
+            BattleScriptCall(BattleScript_BanefulBunkerEffect);
+            return TRUE;
+        }
+        break;
+    case PROTECT_OBSTRUCT:
+        gEffectBattler = cv->battlerAtk;
+        SetStatChange(gEffectBattler, STAT_DEF, -2);
+        BattleScriptCall(BattleScript_KingsShieldEffect);
+        return TRUE;
+        break;
+    case PROTECT_SILK_TRAP:
+        gEffectBattler = cv->battlerAtk;
+        SetStatChange(gEffectBattler, STAT_SPEED, -1);
+        BattleScriptCall(BattleScript_KingsShieldEffect);
+        return TRUE;
+        break;
+    default:
+        break;
+    }
+    return FALSE;
 }
 
 static enum MoveEndResult MoveEndProtectLikeEffect(struct BattleCalcValues *cv)
@@ -3544,70 +3678,11 @@ static enum MoveEndResult MoveEndProtectLikeEffect(struct BattleCalcValues *cv)
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
         gBattleStruct->eventState.moveEndBattler++;
 
-        if (ShouldSkipBattlerForMoveEnd(battlerDef, cv)
-         || gProtectStructs[cv->battlerAtk].chargingTurn
-         || !IsBattlerAlive(cv->battlerAtk)
-         || gBattleStruct->unableToUseMove)
+        if (ShouldSkipBattlerForMoveEnd(battlerDef, cv))
             continue;
 
-        if (CanBattlerAvoidContactEffects(cv->battlerAtk, battlerDef, cv->abilities[cv->battlerAtk], cv->holdEffects[cv->battlerAtk], cv->move))
-            continue;
-
-        if (gSpecialStatuses[battlerDef].breaksThroughProtectFully && GetConfig(B_UNSEEN_FIST_PIERCING_DRILL) <= GEN_9)
-            continue;
-
-        enum ProtectMethod method = gProtectStructs[battlerDef].protected;
-        switch (method)
-        {
-        case PROTECT_SPIKY_SHIELD:
-            if (!IsAbilityAndRecord(cv->battlerAtk, cv->abilities[cv->battlerAtk], ABILITY_MAGIC_GUARD))
-            {
-                SetPassiveDamageAmount(cv->battlerAtk, GetNonDynamaxMaxHP(cv->battlerAtk) / 8);
-                PREPARE_MOVE_BUFFER(gBattleTextBuff1, MOVE_SPIKY_SHIELD);
-                BattleScriptCall(BattleScript_SpikyShieldEffect);
-                return MOVEEND_RESULT_RUN_SCRIPT;
-            }
-            break;
-        case PROTECT_KINGS_SHIELD:
-        {
-            s32 stage = (B_KINGS_SHIELD_LOWER_ATK >= GEN_8) ? -1 : -2;
-            gEffectBattler = cv->battlerAtk;
-            SetStatChange(gEffectBattler, STAT_ATK, stage);
-            BattleScriptCall(BattleScript_KingsShieldEffect);
+        if (ShouldApplyProtectLikeEffects(battlerDef, cv))
             return MOVEEND_RESULT_RUN_SCRIPT;
-            break;
-        }
-        case PROTECT_BANEFUL_BUNKER:
-            if (CanBePoisoned(battlerDef, cv->battlerAtk, cv->abilities[battlerDef], cv->abilities[cv->battlerAtk]))
-            {
-                gBattleScripting.moveEffect = MOVE_EFFECT_POISON;
-                BattleScriptCall(BattleScript_BanefulBunkerEffect);
-                return MOVEEND_RESULT_RUN_SCRIPT;
-            }
-            break;
-        case PROTECT_BURNING_BULWARK:
-            if (CanBeBurned(battlerDef, cv->battlerAtk, cv->abilities[cv->battlerAtk]))
-            {
-                gBattleScripting.moveEffect = MOVE_EFFECT_BURN;
-                BattleScriptCall(BattleScript_BanefulBunkerEffect);
-                return MOVEEND_RESULT_RUN_SCRIPT;
-            }
-            break;
-        case PROTECT_OBSTRUCT:
-            gEffectBattler = cv->battlerAtk;
-            SetStatChange(gEffectBattler, STAT_DEF, -2);
-            BattleScriptCall(BattleScript_KingsShieldEffect);
-            return MOVEEND_RESULT_RUN_SCRIPT;
-            break;
-        case PROTECT_SILK_TRAP:
-            gEffectBattler = cv->battlerAtk;
-            SetStatChange(gEffectBattler, STAT_SPEED, -1);
-            BattleScriptCall(BattleScript_KingsShieldEffect);
-            return MOVEEND_RESULT_RUN_SCRIPT;
-            break;
-        default:
-            break;
-        }
     }
 
     gBattleScripting.moveendState++;
@@ -3665,7 +3740,7 @@ static enum MoveEndResult MoveEndAdditionalEffects(struct BattleCalcValues *cv)
         struct SetEffect se = {0};
 
         if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter
-         && !ShouldSkipBattlerForMoveEnd(effectBattler, cv))
+         && !(ShouldSkipBattlerForMoveEnd(effectBattler, cv) || effectBattler == cv->battlerAtk))
         {
             u32 percentChance;
             const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);

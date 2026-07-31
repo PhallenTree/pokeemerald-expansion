@@ -512,8 +512,8 @@ BattleScript_EffectTeatimeGetTarget:
 	end
 
 BattleScript_AffectionBasedEndurance::
-	playanimation BS_TARGET, B_ANIM_AFFECTION_HANGED_ON
-	printstring STRINGID_TARGETTOUGHEDITOUT
+	playanimation BS_SCRIPTING, B_ANIM_AFFECTION_HANGED_ON
+	printstring STRINGID_BATTLERTOUGHEDITOUT
 	waitmessage B_WAIT_TIME_LONG
 	return
 
@@ -3927,7 +3927,7 @@ BattleScript_EnduredMsg::
 
 BattleScript_SturdiedMsg::
 	pause B_WAIT_TIME_SHORTEST
-	call BattleScript_AbilityPopUpTarget
+	call BattleScript_AbilityPopUp
 	printstring STRINGID_PKMNENDUREDHIT
 	waitmessage B_WAIT_TIME_LONG
 	return
