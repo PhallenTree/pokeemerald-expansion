@@ -5092,7 +5092,7 @@ BattleScript_MummyActivates::
 
 BattleScript_WanderingSpiritActivates::
 	saveattacker
-	copybyte gBattlerAbility, BS_SCRIPTING
+	copybyte gBattlerAbility, sBATTLER
 	sethword sABILITY_OVERWRITE, ABILITY_WANDERING_SPIRIT
 	call BattleScript_AbilityPopUpOverwriteThenNormal
 	copybyte gBattlerAbility, gBattlerAttacker
@@ -5102,10 +5102,7 @@ BattleScript_WanderingSpiritActivates::
 	recordability BS_ATTACKER
 	printstring STRINGID_SWAPPEDABILITIES
 	waitmessage B_WAIT_TIME_LONG
-	switchinabilities BS_ATTACKER
-	jumpiffainted BS_SCRIPTING, TRUE, BattleScript_WanderingSpiritActivatesRet
 	switchinabilities BS_SCRIPTING
-BattleScript_WanderingSpiritActivatesRet:
 	restoreattacker
 	return
 
