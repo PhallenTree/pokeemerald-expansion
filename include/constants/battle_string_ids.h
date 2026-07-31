@@ -736,7 +736,6 @@ enum StringID
 // gExtremelyEffectiveStringIds, gSuperEffectiveStringIds, gNotVeryEffectiveStringIds and gMostlyIneffectiveStringIds
 enum EffectivenessTargetStringID
 {
-    B_MSG_NO_TARGET,
     B_MSG_ONE_TARGET,
     B_MSG_ONE_OF_TWO_TARGETS,
     B_MSG_TWO_TARGETS,

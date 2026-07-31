@@ -913,7 +913,6 @@ const u16 gTrainerUsedItemStringIds[] =
 
 const u16 gExtremelyEffectiveStringIds[] =
 {
-    [B_MSG_NO_TARGET]           = STRINGID_EXTREMELYEFFECTIVE, // placeholder, shouldn't be used
     [B_MSG_ONE_TARGET]          = STRINGID_EXTREMELYEFFECTIVE,
     [B_MSG_ONE_OF_TWO_TARGETS]  = STRINGID_EXTREMELYEFFECTIVEONDEF,
     [B_MSG_TWO_TARGETS]         = STRINGID_EXTREMELYEFFECTIVETWOFOES,
@@ -921,7 +920,6 @@ const u16 gExtremelyEffectiveStringIds[] =
 
 const u16 gSuperEffectiveStringIds[] =
 {
-    [B_MSG_NO_TARGET]           = STRINGID_SUPEREFFECTIVE, // placeholder, shouldn't be used
     [B_MSG_ONE_TARGET]          = STRINGID_SUPEREFFECTIVE,
     [B_MSG_ONE_OF_TWO_TARGETS]  = STRINGID_SUPEREFFECTIVEONDEF,
     [B_MSG_TWO_TARGETS]         = STRINGID_SUPEREFFECTIVETWOFOES,
@@ -929,7 +927,6 @@ const u16 gSuperEffectiveStringIds[] =
 
 const u16 gNotVeryEffectiveStringIds[] =
 {
-    [B_MSG_NO_TARGET]           = STRINGID_NOTVERYEFFECTIVE, // placeholder, shouldn't be used
     [B_MSG_ONE_TARGET]          = STRINGID_NOTVERYEFFECTIVE,
     [B_MSG_ONE_OF_TWO_TARGETS]  = STRINGID_NOTVERYEFFECTIVEONDEF,
     [B_MSG_TWO_TARGETS]         = STRINGID_NOTVERYEFFECTIVETWOFOES,
@@ -937,7 +934,6 @@ const u16 gNotVeryEffectiveStringIds[] =
 
 const u16 gMostlyIneffectiveStringIds[] =
 {
-    [B_MSG_NO_TARGET]           = STRINGID_MOSTLYINEFFECTIVE, // placeholder, shouldn't be used
     [B_MSG_ONE_TARGET]          = STRINGID_MOSTLYINEFFECTIVE,
     [B_MSG_ONE_OF_TWO_TARGETS]  = STRINGID_MOSTLYINEFFECTIVEONDEF,
     [B_MSG_TWO_TARGETS]         = STRINGID_MOSTLYINEFFECTIVETWOFOES,
