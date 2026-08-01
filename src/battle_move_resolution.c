@@ -4130,9 +4130,9 @@ static enum MoveEndResult MoveEndFaintBlock(struct BattleCalcValues *cv)
     {
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
 
-        if ((!IsBattlerAlly(battlerDef, cv->battlerDef) && !IsBattleMoveStatus(cv->move))
-         || battlerDef >= gBattlersCount)
+        if (!IsBattlerAlly(battlerDef, cv->battlerDef) && !IsBattleMoveStatus(cv->move))
         {
+            gBattleStruct->eventState.moveEndBlock = 0;
             gBattleStruct->eventState.moveEndBattler++;
             continue;
         }

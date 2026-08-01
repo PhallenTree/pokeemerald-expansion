@@ -2475,6 +2475,8 @@ BattleScript_NotAffected::
 BattleScript_NotAffectedAbilityPopUp::
 	pause B_WAIT_TIME_SHORT
 	call BattleScript_AbilityPopUp
+	printstring STRINGID_ITDOESNTAFFECT
+	waitmessage B_WAIT_TIME_LONG
 	goto BattleScript_MoveEnd
 
 BattleScript_Stockpile::
@@ -4034,7 +4036,7 @@ BattleScript_ZenMode::
 	return
 
 BattleScript_BattlerFormChangeDisguise::
-	call BattleScript_AbilityPopUpScripting
+	call BattleScript_AbilityPopUp
 	pause B_WAIT_TIME_LONG
 	handleformchange BS_SCRIPTING, 0
 	playanimation BS_SCRIPTING, B_ANIM_FORM_CHANGE_DISGUISE
@@ -4505,6 +4507,7 @@ BattleScript_MoveEffectRecoil::
 	datahpupdate BS_ATTACKER, ASSURANCE_DOUBLE
 	printstring STRINGID_PKMNHITWITHRECOIL
 	waitmessage B_WAIT_TIME_LONG
+	tryfaintmon BS_ATTACKER
 	return
 
 BattleScript_ItemSteal::
@@ -4997,7 +5000,7 @@ BattleScript_OwnTempoPreventsRet::
 	return
 
 BattleScript_IceFaceNullsDamage::
-	call BattleScript_TargetFormChangeWithString
+	call BattleScript_BattlerFormChangeWithString
 	return
 
 BattleScript_PokemonCannotUseMove::
@@ -5515,12 +5518,12 @@ BattleScript_SelectingNotAllowedPlaceholderInPalace::
 	goto BattleScript_SelectingUnusableMoveInPalace
 
 BattleScript_HangedOnMsg::
-	call BattleScript_ItemPopUp_Target
-	playanimation BS_TARGET, B_ANIM_HANGED_ON
+	call BattleScript_ItemPopUp_Scripting
+	playanimation BS_SCRIPTING, B_ANIM_HANGED_ON
 	printstring STRINGID_PKMNHUNGONWITHX
 	waitmessage B_WAIT_TIME_LONG
-	jumpifnoholdeffect BS_TARGET, HOLD_EFFECT_FOCUS_SASH, BattleScript_HangedOnMsgRet
-	removeitem BS_TARGET
+	jumpifnoholdeffect BS_SCRIPTING, HOLD_EFFECT_FOCUS_SASH, BattleScript_HangedOnMsgRet
+	removeitem BS_SCRIPTING
 BattleScript_HangedOnMsgRet:
 	return
 
