@@ -3130,8 +3130,7 @@ static enum MoveEndResult MoveEndSetValues(struct BattleCalcValues *cv)
 static bool32 ShouldSkipBattlerForMoveEnd(enum BattlerId battler, struct BattleCalcValues *cv)
 {
     if (gBattleStruct->battlerState[battler].substituteBlocked
-     || !IsBattlerAlive(battler)
-     || battler >= gBattlersCount)
+     || !IsBattlerAlive(battler))
         return TRUE;
 
     if (IsBattleMoveStatus(cv->move))
@@ -3185,7 +3184,9 @@ static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
     {
         enum BattlerId battlerDef = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
 
-        if (!DoesSubstituteBlockMove(cv->battlerAtk, battlerDef, cv->move) || ShouldSkipBattlerForMoveEnd(battlerDef, cv))
+        if (!DoesSubstituteBlockMove(cv->battlerAtk, battlerDef, cv->move)
+         || ShouldSkipBattlerForMoveEnd(battlerDef, cv)
+         || !IsBattlerTurnDamaged(battlerDef, INCLUDING_SUBSTITUTES))
         {
             gBattleStruct->eventState.moveEndBlock = 0;
             gBattleStruct->eventState.moveEndBattler++;
@@ -3197,29 +3198,23 @@ static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
             switch (gBattleStruct->eventState.moveEndBlock)
             {
             case SUBSTITUTE_BLOCK_DAMAGED_MESSAGE:
-                if (IsBattlerTurnDamaged(battlerDef, INCLUDING_SUBSTITUTES))
-                {
-                    gBattleScripting.battler = battlerDef;
-                    BattleScriptCall(BattleScript_SubstituteTookDamage);
-                    result = MOVEEND_RESULT_RUN_SCRIPT;
-                }
+                gBattleScripting.battler = battlerDef;
+                BattleScriptCall(BattleScript_SubstituteTookDamage);
+                result = MOVEEND_RESULT_RUN_SCRIPT;
                 break;
             case SUBSTITUTE_BLOCK_EFFECTIVENESS_MESSAGE:
-                if (IsBattlerTurnDamaged(battlerDef, INCLUDING_SUBSTITUTES)
-                 && ShouldPrintEffectivenessMessage(battlerDef, battlerDef, cv->battlerAtk)) // Always prints individual effectiveness messages
+                if (ShouldPrintEffectivenessMessage(battlerDef, battlerDef, cv->battlerAtk)) // Always prints individual effectiveness messages
                 {
                     result = MOVEEND_RESULT_RUN_SCRIPT;
                     gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
                 }
                 break;
             case SUBSTITUTE_BLOCK_CRIT_MESSAGE:
-                if (IsBattlerTurnDamaged(battlerDef, INCLUDING_SUBSTITUTES)
-                 && ShouldPrintCritMessage(battlerDef))
+                if (ShouldPrintCritMessage(battlerDef))
                     result = MOVEEND_RESULT_RUN_SCRIPT;
                 break;
             case SUBSTITUTE_BLOCK_BYPASS_PROTECT_MESSAGE:
-                if (IsBattlerTurnDamaged(battlerDef, INCLUDING_SUBSTITUTES)
-                 && ShouldPrintProtectMessage(battlerDef, cv->abilities[cv->battlerAtk]))
+                if (ShouldPrintProtectMessage(battlerDef, cv->abilities[cv->battlerAtk]))
                     result = MOVEEND_RESULT_RUN_SCRIPT;
                 break;
             case SUBSTITUTE_BLOCK_SUBSTITUTE_DISAPPEARS:
@@ -3727,7 +3722,7 @@ static bool32 CanApplyAdditionalEffect(enum BattlerId battlerAtk, enum BattlerId
         return FALSE;
 
     // Don't apply chargeTurnOnly effects here
-    if (!additionalEffect->onChargeTurnOnly)
+    if (additionalEffect->onChargeTurnOnly)
         return FALSE;
 
     return TRUE;
