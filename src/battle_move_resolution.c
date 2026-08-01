@@ -46,7 +46,7 @@ static bool32 CanApplyAdditionalEffect(enum BattlerId battlerAtk, enum BattlerId
 static bool32 ShouldApplyProtectLikeEffects(enum BattlerId battlerDef, struct BattleCalcValues *cv);
 static bool32 ShouldPrintCritMessage(enum BattlerId battler);
 static bool32 ShouldPrintProtectMessage(enum BattlerId battler, enum Ability abilityAtk);
-static bool32 ShouldPrintEffectivenessMessage(enum BattlerId battler1, enum BattlerId battler2);
+static bool32 ShouldPrintEffectivenessMessage(enum BattlerId battler1, enum BattlerId battler2, enum BattlerId battlerAtk);
 
 // Stat change moves
 static bool32 TryBellyDrum(enum BattlerId battler);
@@ -2214,6 +2214,7 @@ static enum CancelerResult CancelerTargetFailure(struct BattleCalcValues *cv)
 
             if (ctx.abilityBlocked)
             {
+                gSpecialStatuses[cv->battlerDef].resultMessagePrinted = TRUE;
                 gSpecialStatuses[cv->battlerDef].updateStallMons = TRUE;
                 gBattleStruct->moveResultFlags[cv->battlerDef] = MOVE_RESULT_FAILED;
                 gBattlerAbility = cv->battlerDef;
@@ -2223,6 +2224,7 @@ static enum CancelerResult CancelerTargetFailure(struct BattleCalcValues *cv)
             }
             else if (ctx.airBalloonBlocked)
             {
+                gSpecialStatuses[cv->battlerDef].resultMessagePrinted = TRUE;
                 gSpecialStatuses[cv->battlerDef].updateStallMons = TRUE;
                 gBattleStruct->moveResultFlags[cv->battlerDef] = MOVE_RESULT_FAILED;
                 BattleScriptCall(BattleScript_DoesntAffectScripting);
@@ -2230,6 +2232,7 @@ static enum CancelerResult CancelerTargetFailure(struct BattleCalcValues *cv)
             }
             else if (ctx.typeEffectivenessModifier == UQ_4_12(0.0))
             {
+                gSpecialStatuses[cv->battlerDef].resultMessagePrinted = TRUE;
                 TryInitializeTrainerSlideMonUnaffected(cv->battlerDef, cv->battlerAtk);
                 gSpecialStatuses[cv->battlerDef].updateStallMons = TRUE;
                 gBattleStruct->moveResultFlags[cv->battlerDef] = MOVE_RESULT_FAILED;
@@ -2238,6 +2241,7 @@ static enum CancelerResult CancelerTargetFailure(struct BattleCalcValues *cv)
             }
             else if (IsTargetUnaffectedByMoveEffect(cv))
             {
+                gSpecialStatuses[cv->battlerDef].resultMessagePrinted = TRUE;
                 TryInitializeTrainerSlideMonUnaffected(cv->battlerDef, cv->battlerAtk);
                 gSpecialStatuses[cv->battlerDef].updateStallMons = TRUE;
                 return TargetAvoidedAttack(cv->battlerAtk, cv->battlerDef);
@@ -3208,7 +3212,7 @@ static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
                 break;
             case SUBSTITUTE_BLOCK_EFFECTIVENESS_MESSAGE:
                 if (IsBattlerTurnDamaged(battlerDef, INCLUDING_SUBSTITUTES)
-                 && ShouldPrintEffectivenessMessage(battlerDef, battlerDef)) // Always prints individual effectiveness messages
+                 && ShouldPrintEffectivenessMessage(battlerDef, battlerDef, cv->battlerAtk)) // Always prints individual effectiveness messages
                 {
                     result = MOVEEND_RESULT_RUN_SCRIPT;
                     gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ONE_TARGET;
@@ -3387,15 +3391,24 @@ static bool32 ShouldPrintEffectivenessMessageForFlag(enum BattlerId battler1, en
     return TRUE;
 }
 
-static bool32 ShouldPrintEffectivenessMessage(enum BattlerId battler1, enum BattlerId battler2)
+static bool32 ShouldPrintEffectivenessMessage(enum BattlerId battler1, enum BattlerId battler2, enum BattlerId battlerAtk)
 {
-    // Extremely effective for either battler -> super effective for either battler -> not very effective -> mostly ineffective
-    if (ShouldPrintEffectivenessMessageForFlag(battler1, battler2, MOVE_RESULT_EXTREMELY_EFFECTIVE))
+    // No effect -> Extremely effective -> super effective -> not very effective -> mostly ineffective
+    if (ShouldPrintEffectivenessMessageForFlag(battler1, battler2, MOVE_RESULT_DOESNT_AFFECT_FOE))
     {
         if (gSpecialStatuses[battler1].resultMessagePrinted)
-            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler1, gBattlerAttacker);
+            TryInitializeTrainerSlideMonUnaffected(battler1, battlerAtk);
         if (battler2 != battler1 && gSpecialStatuses[battler2].resultMessagePrinted)
-            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler2, gBattlerAttacker);
+            TryInitializeTrainerSlideMonUnaffected(battler2, battlerAtk);
+        BattleScriptCall(BattleScript_PrintNoEffectMessage);
+        return TRUE;
+    }
+    else if (ShouldPrintEffectivenessMessageForFlag(battler1, battler2, MOVE_RESULT_EXTREMELY_EFFECTIVE))
+    {
+        if (gSpecialStatuses[battler1].resultMessagePrinted)
+            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler1, battlerAtk);
+        if (battler2 != battler1 && gSpecialStatuses[battler2].resultMessagePrinted)
+            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler2, battlerAtk);
 
         BattleScriptCall(BattleScript_PrintExtremelyEffectiveMessage);
         return TRUE;
@@ -3403,9 +3416,9 @@ static bool32 ShouldPrintEffectivenessMessage(enum BattlerId battler1, enum Batt
     else if (ShouldPrintEffectivenessMessageForFlag(battler1, battler2, MOVE_RESULT_SUPER_EFFECTIVE))
     {
         if (gSpecialStatuses[battler1].resultMessagePrinted)
-            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler1, gBattlerAttacker);
+            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler1, battlerAtk);
         if (battler2 != battler1 && gSpecialStatuses[battler2].resultMessagePrinted)
-            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler2, gBattlerAttacker);
+            TryInitializeTrainerSlideLandsFirstSuperEffectiveHit(battler2, battlerAtk);
 
         BattleScriptCall(BattleScript_PrintSuperEffectiveMessage);
         return TRUE;

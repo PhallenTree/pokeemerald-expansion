@@ -1659,6 +1659,11 @@ BattleScript_MultiHitPrintStrings::
 	waitmessage B_WAIT_TIME_LONG
 	return
 
+BattleScript_PrintNoEffectMessage::
+	printfromtable gNoEffectStringIds
+	waitmessage B_WAIT_TIME_LONG
+	return
+
 BattleScript_PrintExtremelyEffectiveMessage::
 	printfromtable gExtremelyEffectiveStringIds
 	waitmessage B_WAIT_TIME_LONG
