@@ -1910,6 +1910,8 @@ BattleScript_SkyDropFlyingType::
 BattleScript_SkyDropNoTarget::
 	pause B_WAIT_TIME_SHORT
 	setmoveresultflags MOVE_RESULT_FAILED
+	printstring STRINGID_BUTITFAILED
+	waitmessage B_WAIT_TIME_LONG
 	makevisible BS_ATTACKER
 	goto BattleScript_MoveEnd
 

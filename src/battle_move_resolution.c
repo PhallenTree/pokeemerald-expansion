@@ -3382,6 +3382,7 @@ static bool32 ShouldPrintEffectivenessMessageForFlag(enum BattlerId battler1, en
     }
 
     gSpecialStatuses[battler1].resultMessagePrinted = TRUE;
+    gBattleScripting.battler = battler1;
 
     return TRUE;
 }
