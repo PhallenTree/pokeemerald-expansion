@@ -1481,6 +1481,8 @@ BattleScript_MoveAnimation::
 
 BattleScript_MoveMissed::
 	pause B_WAIT_TIME_SHORT
+	printstring STRINGID_PKMNAVOIDEDATTACK
+	waitmessage B_WAIT_TIME_LONG
 	goto BattleScript_MoveEnd
 
 BattleScript_TerrainPrevents::
@@ -1696,6 +1698,8 @@ BattleScript_CriticalHitMessageMultiTarget::
 
 BattleScript_BattlerAvoidedMultiHit::
 	pause B_WAIT_TIME_LONG
+	printstring STRINGID_PKMNAVOIDEDATTACK
+	waitmessage B_WAIT_TIME_LONG
 	copyarray gBattleTextBuff1, sMULTIHIT_STRING, 6
 	multihitplurality
 	printstring STRINGID_HITXTIMES
@@ -2447,6 +2451,8 @@ BattleScript_FailedFromAtkCanceler::
 	attackcanceler
 BattleScript_ButItFailed::
 	pause B_WAIT_TIME_SHORT
+	printstring STRINGID_BUTITFAILED
+	waitmessage B_WAIT_TIME_LONG
 	setmoveresultflags MOVE_RESULT_FAILED
 	goto BattleScript_MoveEnd
 BattleScript_RestoreAttackerButItFailed:
