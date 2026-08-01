@@ -2860,7 +2860,7 @@ static enum CancelerResult CancelerHitAnimation(struct BattleCalcValues *cv)
         if (ShouldSkipBattlerForDamage(cv->battlerAtk, battlerDef))
             continue;
 
-        if (!(DoesSubstituteBlockMove(cv->battlerAtk, battlerDef, gCurrentMove))
+        if (!(DoesSubstituteBlockMove(cv->battlerAtk, battlerDef, cv->move))
          || gBattleMons[battlerDef].volatiles.substituteHP == 0)
         {
             BtlController_EmitHitAnimation(battlerDef, B_COMM_TO_CONTROLLER);
@@ -2880,13 +2880,8 @@ static enum CancelerResult CancelerHealthBarUpdate(struct BattleCalcValues *cv)
 {
     for (enum BattlerId battlerDef = 0; battlerDef < gBattlersCount; battlerDef++)
     {
-        if (DoesSubstituteBlockMove(cv->battlerAtk, battlerDef, cv->move))
-        {
-            PrepareStringBattle(STRINGID_SUBSTITUTEDAMAGED, battlerDef);
-            continue;
-        }
-
         if (ShouldSkipBattlerForDamage(cv->battlerAtk, battlerDef)
+         || DoesSubstituteBlockMove(cv->battlerAtk, battlerDef, cv->move)
          || DoesDisguiseBlockMove(battlerDef, cv->move)
          || DoesIceFaceBlockMove(battlerDef, cv->move))
             continue;
@@ -3132,18 +3127,18 @@ static enum MoveEndResult MoveEndSetValues(struct BattleCalcValues *cv)
     return MOVEEND_RESULT_CONTINUE;
 }
 
-static bool32 ShouldSkipBattlerForMoveEnd(enum BattlerId battlerDef, struct BattleCalcValues *cv)
+static bool32 ShouldSkipBattlerForMoveEnd(enum BattlerId battler, struct BattleCalcValues *cv)
 {
-    if (gBattleStruct->battlerState[battlerDef].substituteBlocked
-     || !IsBattlerAlive(battlerDef)
-     || battlerDef >= gBattlersCount)
+    if (gBattleStruct->battlerState[battler].substituteBlocked
+     || !IsBattlerAlive(battler)
+     || battler >= gBattlersCount)
         return TRUE;
 
     if (IsBattleMoveStatus(cv->move))
-        return battlerDef != cv->battlerDef;
+        return battler != cv->battlerDef;
 
-    return !IsBattlerAlly(battlerDef, cv->battlerDef)
-        || gBattleStruct->battlerState[cv->battlerAtk].targetsDone[battlerDef]
+    return !IsBattlerAlly(battler, cv->battlerDef)
+        || gBattleStruct->battlerState[cv->battlerAtk].targetsDone[battler]
         || gBattleStruct->unableToUseMove;
 }
 
