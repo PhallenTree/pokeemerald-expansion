@@ -3234,7 +3234,9 @@ static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
             case SUBSTITUTE_BLOCK_ADDITIONAL_EFFECTS: // Those that activate even if Substitute is active
             {
                 u32 numAdditionalEffects = GetMoveAdditionalEffectCount(cv->move);
-                if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter && !IsBattleMoveStatus(cv->move))
+                if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter
+                 && !IsBattleMoveStatus(cv->move)
+                 && battlerDef != cv->battlerAtk)
                 {
                     u32 percentChance;
                     struct SetEffect se = {0};
@@ -3746,12 +3748,11 @@ static enum MoveEndResult MoveEndAdditionalEffects(struct BattleCalcValues *cv)
     {
         enum BattlerId effectBattler = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
 
-        struct SetEffect se = {0};
-
         if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter
-         && !(ShouldSkipBattlerForMoveEnd(effectBattler, cv) || effectBattler == cv->battlerAtk))
+         && (!ShouldSkipBattlerForMoveEnd(effectBattler, cv) || effectBattler == cv->battlerAtk))
         {
             u32 percentChance;
+            struct SetEffect se = {0};
             const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
 
             // Various checks for if this move effect can be applied this turn
