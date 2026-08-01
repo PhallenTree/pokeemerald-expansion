@@ -1471,10 +1471,6 @@ BattleScript_EffectPlaceholder::
 
 BattleScript_EffectHit::
 	attackcanceler
-	critmessage
-	waitmessage B_WAIT_TIME_LONG
-	resultmessage
-	waitmessage B_WAIT_TIME_LONG
 BattleScript_MoveEnd::
 	moveendall
 	end
@@ -1485,8 +1481,6 @@ BattleScript_MoveAnimation::
 
 BattleScript_MoveMissed::
 	pause B_WAIT_TIME_SHORT
-	resultmessage
-	waitmessage B_WAIT_TIME_LONG
 	goto BattleScript_MoveEnd
 
 BattleScript_TerrainPrevents::
@@ -1659,8 +1653,6 @@ BattleScript_RoarBlockedByDynamax:
 	goto BattleScript_MoveEnd
 
 BattleScript_MultiHitPrintStrings::
-	resultmessage
-	waitmessage B_WAIT_TIME_LONG
 	copyarray gBattleTextBuff1, sMULTIHIT_STRING, 6
 	multihitplurality
 	printstring STRINGID_HITXTIMES
@@ -1823,8 +1815,6 @@ BattleScript_EffectConfuse::
 	attackanimation
 	waitanimation
 	seteffectprimary BS_ATTACKER, BS_TARGET, MOVE_EFFECT_CONFUSION
-	resultmessage
-	waitmessage B_WAIT_TIME_LONG
 	goto BattleScript_MoveEnd
 
 BattleScript_AlreadyConfused::
@@ -1911,8 +1901,6 @@ BattleScript_SkyDropFlyingType::
 BattleScript_SkyDropNoTarget::
 	pause B_WAIT_TIME_SHORT
 	setmoveresultflags MOVE_RESULT_FAILED
-	resultmessage
-	waitmessage B_WAIT_TIME_LONG
 	makevisible BS_ATTACKER
 	goto BattleScript_MoveEnd
 
@@ -2455,8 +2443,6 @@ BattleScript_FailedFromAtkCanceler::
 BattleScript_ButItFailed::
 	pause B_WAIT_TIME_SHORT
 	setmoveresultflags MOVE_RESULT_FAILED
-	resultmessage
-	waitmessage B_WAIT_TIME_LONG
 	goto BattleScript_MoveEnd
 BattleScript_RestoreAttackerButItFailed:
 	restoreattacker
@@ -2471,15 +2457,11 @@ BattleScript_SwapTargetAttackerButItFailed:
 BattleScript_NotAffected::
 	pause B_WAIT_TIME_SHORT
 	setmoveresultflags MOVE_RESULT_DOESNT_AFFECT_FOE
-	resultmessage
-	waitmessage B_WAIT_TIME_LONG
 	goto BattleScript_MoveEnd
 
 BattleScript_NotAffectedAbilityPopUp::
 	pause B_WAIT_TIME_SHORT
 	call BattleScript_AbilityPopUp
-	resultmessage
-	waitmessage B_WAIT_TIME_LONG
 	goto BattleScript_MoveEnd
 
 BattleScript_Stockpile::
@@ -2525,8 +2507,6 @@ BattleScript_EffectNonVolatileStatus::
 	waitanimation
 	setnonvolatilestatus TRIGGER_ON_MOVE
 	clearmoveresultflags MOVE_RESULT_NOT_VERY_EFFECTIVE | MOVE_RESULT_SUPER_EFFECTIVE | MOVE_RESULT_MOSTLY_INEFFECTIVE | MOVE_RESULT_EXTREMELY_EFFECTIVE
-	resultmessage
-	waitmessage B_WAIT_TIME_LONG
 	goto BattleScript_MoveEnd
 
 BattleScript_AlreadyBurned::
@@ -3685,13 +3665,7 @@ BattleScript_RemoveHazardsRet:
 BattleScript_MonTookFutureAttack::
 	printstring STRINGID_PKMNTOOKATTACK
 	waitmessage B_WAIT_TIME_LONG
-	futuresighttargetfailure BattleScript_DoFutureAttackResult
-	critmessage
-	waitmessage B_WAIT_TIME_LONG
-BattleScript_DoFutureAttackResult:
-	resultmessage
-	waitmessage B_WAIT_TIME_LONG
-BattleScript_FutureAttackEnd::
+	futuresighttargetfailure
 	moveendall
 	checkteamslost BattleScript_FutureAttackClearResults
 BattleScript_FutureAttackClearResults:
@@ -4308,8 +4282,6 @@ BattleScript_DoSelfConfusionDmg::
 	tryselfconfusiondmgformchange
 	healthbarupdate BS_ATTACKER
 	datahpupdate BS_ATTACKER, ASSURANCE_IGNORE
-	resultmessage
-	waitmessage B_WAIT_TIME_LONG
 	goto BattleScript_MoveEnd
 BattleScript_MoveUsedIsConfusedRet::
 	return

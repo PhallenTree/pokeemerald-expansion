@@ -3567,9 +3567,8 @@ static bool32 ShouldPrintEndureHitMessage(enum BattlerId battler)
     }
     else if (*moveResultFlags & MOVE_RESULT_FOE_HUNG_ON)
     {
-        gBattleScripting.battler = battler;
+        gBattleScripting.battler = gPotentialItemEffectBattler = battler;
         gLastUsedItem = gBattleMons[battler].item;
-        gPotentialItemEffectBattler = battler;
         *moveResultFlags &= ~MOVE_RESULT_FOE_HUNG_ON;
         BattleScriptCall(BattleScript_HangedOnMsg);
         return TRUE;
