@@ -3138,8 +3138,7 @@ static bool32 ShouldSkipBattlerForMoveEnd(enum BattlerId battler, struct BattleC
         return battler != cv->battlerDef;
 
     return !IsBattlerAlly(battler, cv->battlerDef)
-        || gBattleStruct->battlerState[cv->battlerAtk].targetsDone[battler]
-        || gBattleStruct->unableToUseMove;
+        || gBattleStruct->battlerState[cv->battlerAtk].targetsDone[battler];
 }
 
 static enum MoveEndResult MoveEndQueueDancerToxicChain(struct BattleCalcValues *cv)
