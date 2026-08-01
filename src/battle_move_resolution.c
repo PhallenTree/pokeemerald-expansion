@@ -3462,7 +3462,7 @@ static enum MoveEndResult MoveEndEffectivenessMessage(struct BattleCalcValues *c
         return MOVEEND_RESULT_CONTINUE;
     }
 
-    if (gMultiHitCounter == 0 && ShouldPrintEffectivenessMessage(battler1, battler2))
+    if (gMultiHitCounter == 0 && ShouldPrintEffectivenessMessage(battler1, battler2, cv->battlerAtk))
         return MOVEEND_RESULT_RUN_SCRIPT;
 
     gBattleScripting.moveendState++;
@@ -4579,7 +4579,7 @@ static enum MoveEndResult MoveEndMultihitMoveBlock(struct BattleCalcValues *cv)
         case MULTIHIT_BLOCK_EFFECTIVENESS_MESSAGE:
             if (gMultiHitCounter == 0 || target == TARGET_SMART) // Dragon Darts shows this after every hit
             {
-                if (ShouldPrintEffectivenessMessage(cv->battlerDef, cv->battlerDef))
+                if (ShouldPrintEffectivenessMessage(cv->battlerDef, cv->battlerDef, cv->battlerAtk))
                     result = MOVEEND_RESULT_RUN_SCRIPT;
             }
             gBattleStruct->eventState.moveEndBlock++;
