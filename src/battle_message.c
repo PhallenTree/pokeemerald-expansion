@@ -3247,7 +3247,8 @@ u32 BattleStringExpandPlaceholders(const u8 *src, u8 *dst, u32 dstSize)
                 HANDLE_NICKNAME_STRING_CASE(gBattleScripting.battler)
                 break;
             case B_TXT_SCR_PARTNER_NAME:
-                HANDLE_NICKNAME_STRING_CASE(BATTLE_PARTNER(gBattleScripting.battler))
+                GetBattlerNick(BATTLE_PARTNER(gBattlerScripting.battler), text);
+                toCpy = text;
                 break;
             case B_TXT_CURRENT_MOVE: // current move name
                 if (gBattleMsgDataPtr->currentMove >= MOVES_COUNT
