@@ -4385,14 +4385,11 @@ u32 AbilityBattleEffects(enum AbilityEffect caseID, enum BattlerId battler, enum
         case ABILITY_POISON_PUPPETEER:
             if (IsRestrictedAbility(battler, ABILITY_POISON_PUPPETEER)
              && gBattleScripting.battler == battler // Is the battler that applied status
-             && gSpecialStatuses[gBattleScripting.savedBattler].poisonPuppeteer)
+             && gSpecialStatuses[gEffectBattler].poisonPuppeteer)
             {
-                enum BattlerId effectBattler = gBattleScripting.savedBattler;
-                gSpecialStatuses[effectBattler].poisonPuppeteer = FALSE;
-                if (CanBeConfused(battler, effectBattler))
+                gSpecialStatuses[gEffectBattler].poisonPuppeteer = FALSE;
+                if (CanBeConfused(battler, gEffectBattler))
                 {
-                    gBattleScripting.battler = battler;
-                    gEffectBattler = effectBattler;
                     gBattleScripting.moveEffect = MOVE_EFFECT_CONFUSION;
                     PREPARE_ABILITY_BUFFER(gBattleTextBuff1, gLastUsedAbility);
                     BattleScriptCall(BattleScript_AbilityStatusEffect);

@@ -1689,6 +1689,7 @@ void TrySynchronizeActivation(enum BattlerId battlerAtk, enum BattlerId effectBa
 void SetNonVolatileStatus(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum MoveEffect effect, const u8 *battleScript, enum StatusTrigger trigger)
 {
     gEffectBattler = effectBattler;
+    gBattleScripting.battler = battlerAtk;
 
     if (effect == MOVE_EFFECT_SLEEP || effect == MOVE_EFFECT_FREEZE)
         CancelMultiTurnMoves(effectBattler);
@@ -11244,8 +11245,6 @@ void BS_TryPsychoShift(void)
         return;
     }
     gBattleMons[gBattlerTarget].status1 = gBattleMons[gBattlerAttacker].status1 & STATUS1_ANY;
-    gEffectBattler = gBattlerTarget;
-    gBattleScripting.battler = gBattlerAttacker;
     BtlController_EmitSetMonData(
         gBattlerTarget,
         B_COMM_TO_CONTROLLER,
