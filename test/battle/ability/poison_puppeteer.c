@@ -99,7 +99,7 @@ SINGLE_BATTLE_TEST("Poison Puppeteer does not trigger when poison came from Pois
     }
 }
 
-SINGLE_BATTLE_TEST("Poison Puppeteer confuses target (not user) after Flame Body also triggers")
+SINGLE_BATTLE_TEST("Poison Puppeteer confuses target (not user) before Flame Body also triggers")
 {
     GIVEN {
         ASSUME(MoveMakesContact(MOVE_MORTAL_SPIN));
@@ -114,13 +114,13 @@ SINGLE_BATTLE_TEST("Poison Puppeteer confuses target (not user) after Flame Body
         ANIMATION(ANIM_TYPE_STATUS, B_ANIM_STATUS_PSN, opponent);
         STATUS_ICON(opponent, poison: TRUE);
 
-        ABILITY_POPUP(opponent, ABILITY_FLAME_BODY);
-        ANIMATION(ANIM_TYPE_STATUS, B_ANIM_STATUS_BRN, player);
-        STATUS_ICON(player, burn: TRUE);
-
         ABILITY_POPUP(player, ABILITY_POISON_PUPPETEER);
         ANIMATION(ANIM_TYPE_STATUS, B_ANIM_STATUS_CONFUSION, opponent);
         NOT ANIMATION(ANIM_TYPE_STATUS, B_ANIM_STATUS_CONFUSION, player);
+
+        ABILITY_POPUP(opponent, ABILITY_FLAME_BODY);
+        ANIMATION(ANIM_TYPE_STATUS, B_ANIM_STATUS_BRN, player);
+        STATUS_ICON(player, burn: TRUE);
     } THEN {
         EXPECT(player->status1 & STATUS1_BURN);
         EXPECT(opponent->status1 & STATUS1_POISON);
