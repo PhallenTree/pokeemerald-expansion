@@ -200,9 +200,11 @@ SINGLE_BATTLE_TEST("Poison Puppeteer and Synchronize may activate from a single 
     GIVEN {
         ASSUME(MoveMakesContact(MOVE_MORTAL_SPIN));
         ASSUME(MoveHasAdditionalEffect(MOVE_MORTAL_SPIN, MOVE_EFFECT_POISON));
+        ASSUME(GetMoveEffect(MOVE_SOAK) == EFFECT_SOAK);
         PLAYER(SPECIES_PECHARUNT) { Ability(ABILITY_POISON_PUPPETEER); Speed(speedPlayer); }
         OPPONENT(SPECIES_MEW) { Ability(ABILITY_SYNCHRONIZE); Speed(speedOpponent); }
     } WHEN {
+        TURN { MOVE(opponent, MOVE_SOAK); } // Remove Pecharunt's Poison type
         TURN { MOVE(player, MOVE_MORTAL_SPIN, WITH_RNG(RNG_FLAME_BODY, TRUE)); }
     } SCENE {
         ANIMATION(ANIM_TYPE_MOVE, MOVE_MORTAL_SPIN, player);

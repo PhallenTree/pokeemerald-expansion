@@ -1654,7 +1654,7 @@ bool32 TrySetLightScreen(enum BattlerId battler)
 
 void TrySynchronizeActivation(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum MoveEffect effect)
 {
-    if (battlerAtk == effectBattler || gBattleStruct->synchronizeStatus != MOVE_EFFECT_NONE)
+    if (battlerAtk == effectBattler || gSpecialStatuses[battlerAtk].synchronize)
         return;
 
     enum Ability effectAbility = GetBattlerAbility(effectBattler);
