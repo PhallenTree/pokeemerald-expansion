@@ -11245,6 +11245,9 @@ void BS_TryPsychoShift(void)
         return;
     }
     gBattleMons[gBattlerTarget].status1 = gBattleMons[gBattlerAttacker].status1 & STATUS1_ANY;
+    gEffectBattler = gBattlerTarget;
+    gBattleScripting.battler = gBattlerAttacker;
+
     BtlController_EmitSetMonData(
         gBattlerTarget,
         B_COMM_TO_CONTROLLER,
