@@ -4417,7 +4417,7 @@ u32 AbilityBattleEffects(enum AbilityEffect caseID, enum BattlerId battler, enum
                     // fallthrough
                 default:
                     gEffectBattler = gBattleScripting.battler; // battler that originally inflicted status
-                    gBattleScripting.battler = gBattleScripting.savedBattler; // battler originally inflicted by status
+                    gBattleScripting.battler = battler; // battler originally inflicted by status
                     gBattleScripting.moveEffect = gBattleStruct->synchronizeStatus;
                     PREPARE_ABILITY_BUFFER(gBattleTextBuff1, ABILITY_SYNCHRONIZE);
                     effect++;

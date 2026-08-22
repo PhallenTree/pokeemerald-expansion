@@ -8790,11 +8790,11 @@ static void Cmd_tryoverwriteability(void)
 
 static void Cmd_tryabilityonstatuschange(void)
 {
-    CMD_ARGS(u8 battler);
+    CMD_ARGS();
 
-    if (gSpecialStatuses[cmd->battler].synchronize) // Don't activate on Synchronize activation
+    if (gSpecialStatuses[gBattleScripting.battler].synchronize) // Don't activate on Synchronize activation
     {
-        gSpecialStatuses[cmd->battler].synchronize = FALSE;
+        gSpecialStatuses[gBattleScripting.battler].synchronize = FALSE;
         gBattlescriptCurrInstr = cmd->nextInstr;
         return;
     }
@@ -8803,7 +8803,7 @@ static void Cmd_tryabilityonstatuschange(void)
     {
         enum BattlerId battler = gBattlersBySpeed[i];
 
-        if (AbilityBattleEffects(ABILITYEFFECT_ON_STATUS_CHANGE, battler, GetBattlerAbility(battler), 0, TRUE))
+        if (AbilityBattleEffects(ABILITYEFFECT_ON_STATUS_CHANGE, battler, GetBattlerAbility(battler), MOVE_NONE, TRUE))
             return;
     }
 
