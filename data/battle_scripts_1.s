@@ -930,7 +930,7 @@ BattleScript_EffectPsychoShiftCanWork:
 	statusanimation BS_TARGET
 	updatestatusicon BS_TARGET
 	waitstate
-	trysynchronize
+	tryabilityonstatuschange BS_TARGET
 	curestatus BS_ATTACKER
 	printfromtable gCureStatusStringIds
 	waitmessage B_WAIT_TIME_LONG
@@ -4336,7 +4336,7 @@ BattleScript_UpdateEffectStatusIconRet::
 	updatestatusicon BS_EFFECT_BATTLER
 	waitstate
 	trytriggerstatusform
-	trysynchronize
+	tryabilityonstatuschange BS_EFFECT_BATTLER
 	tryactivateitem BS_EFFECT_BATTLER, ACTIVATION_ON_STATUS_CHANGE
 	flushtextbox
 	return
@@ -5168,6 +5168,10 @@ BattleScript_SynchronizeActivates::
 	waitstate
 	call BattleScript_AbilityPopUp
 	setnonvolatilestatus TRIGGER_ON_ABILITY
+	@ restore back battlers
+	copybyte sSAVED_BATTLER, sBATTLER
+	copybyte sBATTLER, gEffectBattler
+	copybyte gEffectBattler, sSAVED_BATTLER
 	return
 
 BattleScript_AbilityCuredStatus::
