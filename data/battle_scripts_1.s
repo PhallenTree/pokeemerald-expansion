@@ -5168,7 +5168,7 @@ BattleScript_SynchronizeActivates::
 	waitstate
 	call BattleScript_AbilityPopUp
 	setnonvolatilestatus TRIGGER_ON_ABILITY
-	@ restore back battlers
+	@ restore back battlers for Poison Puppeteer
 	copybyte sSAVED_BATTLER, sBATTLER
 	copybyte sBATTLER, gEffectBattler
 	copybyte gEffectBattler, sSAVED_BATTLER

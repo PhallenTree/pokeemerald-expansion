@@ -4408,6 +4408,7 @@ u32 AbilityBattleEffects(enum AbilityEffect caseID, enum BattlerId battler, enum
                 case MOVE_EFFECT_NONE: // Couldn't set status on Synchronize target
                     effect++;
                     gBattlerAbility = battler;
+                    gSpecialStatuses[battler].synchronize = FALSE;
                     BattleScriptCall(BattleScript_AbilityPopUp);
                     break;
                 case MOVE_EFFECT_TOXIC:
