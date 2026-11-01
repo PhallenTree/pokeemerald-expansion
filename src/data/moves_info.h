@@ -3612,7 +3612,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
             .moveEffect = MOVE_EFFECT_STAT_PLUS,
             .defense = 1,
             .self = TRUE,
-            .onChargeTurnOnly = TRUE,
+            .timing = TIMING_EFFECT_CHARGE_TURN,
         }),
     #else
         .description = COMPOUND_STRING(
@@ -7106,7 +7106,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .category = DAMAGE_CATEGORY_PHYSICAL,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_BEAT_UP_MESSAGE,
-            .preAttackEffect = TRUE,
+            .timing = TIMING_EFFECT_BEFORE_ATTACK,
             .self = TRUE,
         }),
         .contestEffect = C_UPDATED_MOVE_EFFECTS >= GEN_6 ? CONTEST_EFFECT_BETTER_WITH_GOOD_CONDITION : CONTEST_EFFECT_BADLY_STARTLE_MONS_WITH_GOOD_APPEALS,
@@ -7975,7 +7975,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .category = DAMAGE_CATEGORY_PHYSICAL,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_BREAK_SCREEN,
-            .preAttackEffect = TRUE,
+            .timing = TIMING_EFFECT_BEFORE_ATTACK,
         }),
         .makesContact = TRUE,
         .contestEffect = C_UPDATED_MOVE_EFFECTS >= GEN_6 ? CONTEST_EFFECT_HIGHLY_APPEALING : CONTEST_EFFECT_BADLY_STARTLE_FRONT_MON,
@@ -10558,7 +10558,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .parentalBondBanned = TRUE,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_ITEM_MESSAGE,
-            .preAttackEffect = TRUE,
+            .timing = TIMING_EFFECT_BEFORE_ATTACK,
             .self = TRUE,
         },
         {
@@ -18131,7 +18131,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .category = DAMAGE_CATEGORY_PHYSICAL,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_BREAK_SCREEN,
-            .preAttackEffect = TRUE,
+            .timing = TIMING_EFFECT_BEFORE_ATTACK,
         }),
         .makesContact = TRUE,
         .bitingMove = TRUE,
@@ -18281,7 +18281,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .category = DAMAGE_CATEGORY_PHYSICAL,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_STEAL_STATS,
-            .preAttackEffect = TRUE,
+            .timing = TIMING_EFFECT_BEFORE_ATTACK,
         }),
         .ignoresSubstitute = TRUE,
         .makesContact = TRUE,
@@ -19875,7 +19875,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
             .moveEffect = MOVE_EFFECT_STAT_PLUS,
             .spAtk = 1,
             .self = TRUE,
-            .onChargeTurnOnly = TRUE,
+            .timing = TIMING_EFFECT_CHARGE_TURN,
         }),
         .contestEffect = CONTEST_EFFECT_USER_MORE_EASILY_STARTLED,
         .contestCategory = CONTEST_CATEGORY_COOL,
@@ -20099,7 +20099,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .category = DAMAGE_CATEGORY_PHYSICAL,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_ITEM_MESSAGE,
-            .preAttackEffect = TRUE,
+            .timing = TIMING_EFFECT_BEFORE_ATTACK,
         }),
         .contestEffect = CONTEST_EFFECT_BETTER_IF_FIRST,
         .contestCategory = CONTEST_CATEGORY_SMART,
@@ -21623,7 +21623,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .category = DAMAGE_CATEGORY_PHYSICAL,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_BREAK_SCREEN,
-            .preAttackEffect = TRUE,
+            .timing = TIMING_EFFECT_BEFORE_ATTACK,
         }),
         .makesContact = TRUE,
         .metronomeBanned = TRUE,
@@ -22400,7 +22400,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
             .moveEffect = MOVE_EFFECT_STAT_PLUS,
             .spAtk = 1,
             .self = TRUE,
-            .onChargeTurnOnly = TRUE,
+            .timing = TIMING_EFFECT_CHARGE_TURN,
             .sheerForceOverride = TRUE,
         }),
         .battleAnimScript = gBattleAnimMove_ElectroShot,

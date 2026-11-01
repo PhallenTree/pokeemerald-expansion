@@ -89,7 +89,7 @@ enum CancelerState
     CANCELER_MULTIHIT_MOVES,
     CANCELER_SUBSTITUTE,
     CANCELER_ACCURACY_CHECK,
-    CANCELER_PRE_ATTACK_MOVE_EFFECT,
+    CANCELER_BEFORE_ATTACK_MOVE_EFFECT,
     CANCELER_STATUS_EFFECTS,
     CANCELER_DAMAGE_CALC,
     CANCELER_PRE_ANIM_ACTIVATIONS,
@@ -215,9 +215,9 @@ enum MoveEndState
     MOVEEND_BOUNCED_MOVE,
     MOVEEND_MULTIHIT_MOVE_BLOCK, // HP threshold items, effectiveness message, end move
     MOVEEND_DEFROST,
-    MOVEEND_MOVE_BLOCK_RECOIL, // Recoil effects should still happen even if Sheer Force applies
+    MOVEEND_FIRST_MOVE_BLOCK, // Recoil effects should still happen even if Sheer Force applies
     MOVEEND_SHEER_FORCE, // If move is Sheer Force affected, jump to effects that are not suppressed
-    MOVEEND_MOVE_BLOCK,
+    MOVEEND_SECOND_MOVE_BLOCK,
     MOVEEND_ITEM_EFFECTS_ATTACKER_2,
     MOVEEND_ABILITY_EFFECT_FOES_FAINTED, // Moxie-like abilities / Battle Bond / Magician
     MOVEEND_SHELL_TRAP,
@@ -231,6 +231,7 @@ enum MoveEndState
     MOVEEND_PICKPOCKET,
     MOVEEND_ITEMS_EFFECTS_ALL,
     MOVEEND_OPPORTUNIST,
+    MOVEEND_NATURAL_GIFT_ITEM_REMOVAL,
     MOVEEND_THIRD_MOVE_BLOCK,
     MOVEEND_RAMPAGE,
     MOVEEND_CONFUSION_AFTER_SKY_DROP, // If target was previously rampaging, it should be confused when dropped

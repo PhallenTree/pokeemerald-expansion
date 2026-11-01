@@ -9822,7 +9822,7 @@ bool32 MoveHasChargeTurnAdditionalEffect(enum Move move)
     u32 numAdditionalEffects = GetMoveAdditionalEffectCount(move);
     for (i = 0; i < numAdditionalEffects; i++)
     {
-        if (GetMoveAdditionalEffectById(move, i)->onChargeTurnOnly)
+        if (GetMoveAdditionalEffectById(move, i)->timing == TIMING_EFFECT_CHARGE_TURN)
             return TRUE;
     }
     return FALSE;

@@ -4158,6 +4158,27 @@ static void HandleSetEffectDragonCheer(struct BattleCalcValues *cv, struct SetEf
     }
 }
 
+static void HandleSetEffectRemoveTerrain(struct BattleCalcValues *cv, struct SetEffect * se)
+{
+    if (gFieldTimers.terrain == B_TERRAIN_NONE)
+        SetEffectFail(BattleScript_ButItFailedRet, cv->isStatusMove);
+
+    if (cv->onlyChecking || se->effectFailed)
+        return;
+
+    // Steel Roller activates regardless of the conditions below, Ice Spinner checks for them
+    if (cv->moveEffect != EFFECT_STEEL_ROLLER)
+    {
+        if (!IsBattlerAlive(cv->battlerAtk) && GetConfig(B_FAINT_MOVE_EFFECT_TIMING) < GEN_CHAMPIONS)
+            return;
+
+        if (gBattleStruct->battlerState[cv->battlerAtk].originalBattlerPartyId != PARTY_SIZE) // Red Card forced attacker out
+            return;
+    }
+
+    BattleScriptPushAndSet(se->script, BattleScript_RemoveTerrain);
+}
+
 static void (*const sSetEffectHandlers[])(struct BattleCalcValues *cv, struct SetEffect *se) =
 {
     [MOVE_EFFECT_NONE] = HandleSetEffectNone,
@@ -4305,6 +4326,7 @@ static void (*const sSetEffectHandlers[])(struct BattleCalcValues *cv, struct Se
     [MOVE_EFFECT_HEAL_PULSE] = HandleSetEffectHealPulse,
     [MOVE_EFFECT_POLLEN_PUFF] = HandleSetEffectPollenPuff,
     [MOVE_EFFECT_FLORAL_HEALING] = HandleSetEffectHealPulse,
+    [MOVE_EFFECT_REMOVE_TERRAIN] = HandleSetEffectRemoveTerrain,
     [MOVE_EFFECT_SUN] = HandleSetEffectWeather,
     [MOVE_EFFECT_RAIN] = HandleSetEffectWeather,
     [MOVE_EFFECT_SANDSTORM] = HandleSetEffectWeather,

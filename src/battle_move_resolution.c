@@ -43,7 +43,7 @@ static enum Move GetMeFirstMove(void);
 
 // Move End functions shared by Substitute Block
 static bool32 ShouldApplyAfterHitEffects(enum BattlerId battlerAtk, enum BattlerId effectBattler);
-static bool32 CanApplyAdditionalEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, const struct AdditionalEffect *additionalEffect);
+static bool32 CanApplyAdditionalEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, const struct AdditionalEffect *additionalEffect, enum SetEffectTimings timing);
 static void TryTriggerAdditionalEffect(struct BattleCalcValues *cv, const struct AdditionalEffect *additionalEffect, enum BattlerId effectBattler);
 static bool32 IsDamageMoveSelfStatChange(bool32 self, enum MoveEffect moveEffect);
 
@@ -1810,7 +1810,7 @@ static enum CancelerResult CancelerCharging(struct BattleCalcValues *cv)
 
                 bool32 isSelf = effectBattler == cv->battlerAtk;
 
-                if (!additionalEffect->onChargeTurnOnly
+                if (CanApplyAdditionalEffect(cv->battlerAtk, effectBattler, additionalEffect, TIMING_EFFECT_CHARGE_TURN)
                  || isSelf != additionalEffect->self
                  || (!isSelf && ShouldSkipFailureCheckOnBattler(effectBattler)))
                 {
@@ -2642,7 +2642,7 @@ static bool32 ShouldSkipBattlerForDamage(enum BattlerId battlerAtk, enum Battler
     return FALSE;
 }
 
-static enum CancelerResult CancelerPreAttackMoveEffect(struct BattleCalcValues *cv)
+static enum CancelerResult CancelerBeforeAttackMoveEffect(struct BattleCalcValues *cv)
 {
     if (cv->isStatusMove) return CANCELER_RESULT_SUCCESS;
 
@@ -2658,7 +2658,7 @@ static enum CancelerResult CancelerPreAttackMoveEffect(struct BattleCalcValues *
 
             bool32 isSelf = effectBattler == cv->battlerAtk;
 
-            if (!additionalEffect->preAttackEffect
+            if (CanApplyAdditionalEffect(cv->battlerAtk, effectBattler, additionalEffect, TIMING_EFFECT_BEFORE_ATTACK)
              || isSelf != additionalEffect->self
              || (!isSelf && ShouldSkipFailureCheckOnBattler(effectBattler)))
             {
@@ -3294,7 +3294,7 @@ static enum CancelerResult (*const sMoveSuccessOrderCancelers[])(struct BattleCa
     [CANCELER_MULTIHIT_MOVES] = CancelerMultihitMoves,
     [CANCELER_SUBSTITUTE] = CancelerSubstitute,
     [CANCELER_ACCURACY_CHECK] = CancelerAccuracyCheck,
-    [CANCELER_PRE_ATTACK_MOVE_EFFECT] = CancelerPreAttackMoveEffect,
+    [CANCELER_BEFORE_ATTACK_MOVE_EFFECT] = CancelerBeforeAttackMoveEffect,
     [CANCELER_STATUS_EFFECTS] = CancelerStatusEffects,
     [CANCELER_DAMAGE_CALC] = CancelerDamageCalc,
     [CANCELER_PRE_ANIM_ACTIVATIONS] = CancelerPreAnimActivations,
@@ -3478,7 +3478,7 @@ static enum MoveEndResult MoveEndSubstituteBlock(struct BattleCalcValues *cv)
                 {
                     const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
 
-                    if (!CanApplyAdditionalEffect(cv->battlerAtk, battlerDef, additionalEffect)
+                    if (!CanApplyAdditionalEffect(cv->battlerAtk, battlerDef, additionalEffect, TIMING_EFFECT_ADDITIONAL_EFFECT)
                      || !ShouldApplyAfterHitEffects(cv->battlerAtk, battlerDef)
                      || additionalEffect->self) // handled in MoveEndAdditionalEffects
                     {
@@ -3950,9 +3950,9 @@ static bool32 ShouldApplyAfterHitEffects(enum BattlerId battlerAtk, enum Battler
     return !IsBattlerUnaffectedByMove(effectBattler);
 }
 
-static bool32 CanApplyAdditionalEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, const struct AdditionalEffect *additionalEffect)
+static bool32 CanApplyAdditionalEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, const struct AdditionalEffect *additionalEffect, enum SetEffectTimings timing)
 {
-    if (additionalEffect->preAttackEffect)
+    if (additionalEffect->timing != timing)
         return FALSE;
 
     if (additionalEffect->pledgeCombo && gBattleStruct->pledgeState != PLEDGE_COMBO_ATTACK)
@@ -3964,10 +3964,6 @@ static bool32 CanApplyAdditionalEffect(enum BattlerId battlerAtk, enum BattlerId
 
     // Certain move effects only apply if the target raised stats this turn (e.g. Burning Jealousy)
     if (additionalEffect->onlyIfTargetRaisedStats && !gProtectStructs[effectBattler].statRaised)
-        return FALSE;
-
-    // Don't apply chargeTurnOnly effects here
-    if (additionalEffect->onChargeTurnOnly || gBattleMons[battlerAtk].volatiles.chargeTurn)
         return FALSE;
 
     return TRUE;
@@ -4050,7 +4046,7 @@ static enum MoveEndResult MoveEndAdditionalEffects(struct BattleCalcValues *cv)
             switch (cv->isStatusMove)
             {
             case FALSE:
-                if (!CanApplyAdditionalEffect(cv->battlerAtk, effectBattler, additionalEffect)
+                if (!CanApplyAdditionalEffect(cv->battlerAtk, effectBattler, additionalEffect, TIMING_EFFECT_ADDITIONAL_EFFECT)
                  || !ShouldApplyAfterHitEffects(cv->battlerAtk, effectBattler)
                  || IsDamageMoveSelfStatChange(additionalEffect->self, additionalEffect->moveEffect)
                  || (effectBattler == cv->battlerAtk) != additionalEffect->self)
@@ -4105,7 +4101,7 @@ static enum MoveEndResult MoveEndAdditionalEffectsChangeStatsAttacker(struct Bat
         const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
 
         // Various checks for if this move effect can be applied this turn
-        if (!CanApplyAdditionalEffect(cv->battlerAtk, cv->battlerAtk, additionalEffect)
+        if (!CanApplyAdditionalEffect(cv->battlerAtk, cv->battlerAtk, additionalEffect, TIMING_EFFECT_ADDITIONAL_EFFECT)
          || !ShouldApplyAfterHitEffects(cv->battlerAtk, cv->battlerAtk)
          || !IsDamageMoveSelfStatChange(additionalEffect->self, additionalEffect->moveEffect))
         {
@@ -4875,7 +4871,7 @@ static enum MoveEndResult MoveEndDefrost(struct BattleCalcValues *cv)
     return MOVEEND_RESULT_CONTINUE;
 }
 
-static enum MoveEndResult MoveEndMoveBlockRecoil(struct BattleCalcValues *cv)
+static enum MoveEndResult MoveEndFirstMoveBlock(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
 
@@ -4967,13 +4963,12 @@ static enum MoveEndResult MoveEndSheerForce(struct BattleCalcValues *cv)
     return MOVEEND_RESULT_CONTINUE;
 }
 
-static enum MoveEndResult MoveEndMoveBlock(struct BattleCalcValues *cv)
+static enum MoveEndResult MoveEndSecondMoveBlock(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
 
     while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
-
         enum BattlerId battlerDef = gEffectBattler = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
         gBattleStruct->eventState.moveEndBattler++;
 
@@ -5796,8 +5791,28 @@ static enum MoveEndResult MoveEndOpportunist(struct BattleCalcValues *cv)
     return MOVEEND_RESULT_CONTINUE;
 }
 
+static enum MoveEndResult MoveEndNaturalGiftItemRemoval(struct BattleCalcValues *cv)
+{
+    gBattleScripting.moveendState++;
+
+    if (gBattleStruct->unableToUseMove && gBattleStruct->flungItem != FLUNG_ITEM_REMOVE)
+        return MOVEEND_RESULT_CONTINUE;
+
+    if (cv->moveEffect != EFFECT_NATURAL_GIFT
+     || gBattleMons[cv->battlerAtk].item == ITEM_NONE
+     || gBattleStruct->battlerState[cv->battlerAtk].originalBattlerPartyId == PARTY_SIZE)
+        return MOVEEND_RESULT_CONTINUE;
+
+    gLastUsedItem = gBattleMons[cv->battlerAtk].item;
+    gBattleStruct->flungItem = FLUNG_ITEM_REMOVE;
+    gBattleScripting.battler = cv->battlerAtk;
+    BattleScriptCall(BattleScript_RemoveItem);
+    return MOVEEND_RESULT_RUN_SCRIPT;
+}
+
 static enum MoveEndResult MoveEndThirdMoveBlock(struct BattleCalcValues *cv)
 {
+    // Order Up, Burn Up, Double Shock
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
 
     switch (cv->moveEffect)
@@ -5818,28 +5833,6 @@ static enum MoveEndResult MoveEndThirdMoveBlock(struct BattleCalcValues *cv)
 
             BattleScriptCall(BattleScript_RemoveTerrain);
             result = MOVEEND_RESULT_RUN_SCRIPT;
-        }
-        break;
-    case EFFECT_NATURAL_GIFT:
-        if (!gBattleStruct->unableToUseMove && GetItemPocket(gBattleMons[cv->battlerAtk].item) == POCKET_BERRIES)
-        {
-            enum Item item = gBattleMons[cv->battlerAtk].item;
-            gBattleMons[gBattlerAttacker].item = ITEM_NONE;
-            gBattleStruct->battlerState[cv->battlerAtk].canPickupItem = TRUE;
-            GetBattlerPartyState(cv->battlerAtk)->usedHeldItem = item;
-            CheckSetUnburden(cv->battlerAtk);
-            BtlController_EmitSetMonData(
-                cv->battlerAtk,
-                B_COMM_TO_CONTROLLER,
-                REQUEST_HELDITEM_BATTLE,
-                0,
-                sizeof(gBattleMons[cv->battlerAtk].item),
-                &gBattleMons[cv->battlerAtk].item);
-            MarkBattlerForControllerExec(cv->battlerAtk);
-            ClearBattlerItemEffectHistory(cv->battlerAtk);
-
-            if (!TrySymbiosis(cv->battlerAtk, item, NULL))
-                result = MOVEEND_RESULT_RUN_SCRIPT;
         }
         break;
     default:
@@ -6194,9 +6187,9 @@ static enum MoveEndResult (*const sMoveEndHandlers[])(struct BattleCalcValues *c
     [MOVEEND_BOUNCED_MOVE] = MoveEndBouncedMove,
     [MOVEEND_MULTIHIT_MOVE_BLOCK] = MoveEndMultihitMoveBlock,
     [MOVEEND_DEFROST] = MoveEndDefrost,
-    [MOVEEND_MOVE_BLOCK_RECOIL] = MoveEndMoveBlockRecoil,
+    [MOVEEND_FIRST_MOVE_BLOCK] = MoveEndFirstMoveBlock,
     [MOVEEND_SHEER_FORCE] = MoveEndSheerForce,
-    [MOVEEND_MOVE_BLOCK] = MoveEndMoveBlock,
+    [MOVEEND_SECOND_MOVE_BLOCK] = MoveEndSecondMoveBlock,
     [MOVEEND_ITEM_EFFECTS_ATTACKER_2] = MoveEndItemEffectsAttacker2,
     [MOVEEND_ABILITY_EFFECT_FOES_FAINTED] = MoveEndAbilityEffectFoesFainted,
     [MOVEEND_SHELL_TRAP] = MoveEndShellTrap,
@@ -6210,6 +6203,7 @@ static enum MoveEndResult (*const sMoveEndHandlers[])(struct BattleCalcValues *c
     [MOVEEND_PICKPOCKET] = MoveEndPickpocket,
     [MOVEEND_ITEMS_EFFECTS_ALL] = MoveEndItemsEffectsAll,
     [MOVEEND_OPPORTUNIST] = MoveEndOpportunist,
+    [MOVEEND_NATURAL_GIFT_ITEM_REMOVAL] = MoveEndNaturalGiftItemRemoval,
     [MOVEEND_THIRD_MOVE_BLOCK] = MoveEndThirdMoveBlock,
     [MOVEEND_RAMPAGE] = MoveEndRampage,
     [MOVEEND_CONFUSION_AFTER_SKY_DROP] = MoveEndConfusionAfterSkyDrop,
