@@ -1810,7 +1810,7 @@ static enum CancelerResult CancelerCharging(struct BattleCalcValues *cv)
 
                 bool32 isSelf = effectBattler == cv->battlerAtk;
 
-                if (CanApplyAdditionalEffect(cv->battlerAtk, effectBattler, additionalEffect, TIMING_EFFECT_CHARGE_TURN)
+                if (!CanApplyAdditionalEffect(cv->battlerAtk, effectBattler, additionalEffect, TIMING_EFFECT_CHARGE_TURN)
                  || isSelf != additionalEffect->self
                  || (!isSelf && ShouldSkipFailureCheckOnBattler(effectBattler)))
                 {
@@ -2658,7 +2658,7 @@ static enum CancelerResult CancelerBeforeAttackMoveEffect(struct BattleCalcValue
 
             bool32 isSelf = effectBattler == cv->battlerAtk;
 
-            if (CanApplyAdditionalEffect(cv->battlerAtk, effectBattler, additionalEffect, TIMING_EFFECT_BEFORE_ATTACK)
+            if (!CanApplyAdditionalEffect(cv->battlerAtk, effectBattler, additionalEffect, TIMING_EFFECT_BEFORE_ATTACK)
              || isSelf != additionalEffect->self
              || (!isSelf && ShouldSkipFailureCheckOnBattler(effectBattler)))
             {
@@ -4965,15 +4965,49 @@ static enum MoveEndResult MoveEndSheerForce(struct BattleCalcValues *cv)
 
 static enum MoveEndResult MoveEndSecondMoveBlock(struct BattleCalcValues *cv)
 {
+    // Secret Power, Genesis Supernova, Rapid Spin/Mortal Spin (Gen 9), Eerie Spell, Sparkling Aria
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
+
+    if (cv->isStatusMove)
+    {
+        gBattleScripting.moveendState++;
+        return MOVEEND_RESULT_CONTINUE;
+    }
 
     while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
         enum BattlerId battlerDef = gEffectBattler = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
-        gBattleStruct->eventState.moveEndBattler++;
 
         if (battlerDef == cv->battlerAtk)
+        {
+            gBattleStruct->eventState.moveEndBattler++;
             continue;
+        }
+
+        
+        u32 numAdditionalEffects = GetMoveAdditionalEffectCount(cv->move);
+
+        if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter)
+        {
+            const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
+
+            // Various checks for if this move effect can be applied this turn
+            if (!CanApplyAdditionalEffect(cv->battlerAtk, battlerDef, additionalEffect, TIMING_EFFECT_SECOND_BLOCK)
+             || !ShouldApplyAfterHitEffects(cv->battlerAtk, battlerDef))
+            {
+                gBattleStruct->additionalEffectsCounter++;
+                return MOVEEND_RESULT_BREAK; // recall the same state
+            }
+
+            TryTriggerAdditionalEffect(cv, additionalEffect, battlerDef);
+
+            return MOVEEND_RESULT_RUN_SCRIPT; // try to run effect script if possible
+        }
+
+        gBattleStruct->additionalEffectsCounter = 0;
+        gBattleScripting.moveEffect = 0;
+
+        gBattleStruct->eventState.moveEndBattler++;
 
         enum BattleSide side = GetBattlerSide(battlerDef);
 
@@ -5115,43 +5149,6 @@ static enum MoveEndResult MoveEndSecondMoveBlock(struct BattleCalcValues *cv)
                 else
                     BattleScriptCall(BattleScript_ItemStealNoAnim);
 
-                return MOVEEND_RESULT_RUN_SCRIPT;
-            }
-            break;
-        case EFFECT_HIT_SWITCH_TARGET:
-            battlerDef = gBattlerTarget;
-            if (IsBattlerTurnDamaged(battlerDef , EXCLUDING_SUBSTITUTES)
-             && IsBattlerAlive(battlerDef)
-             && IsBattlerAlive(cv->battlerAtk)
-             && gBattleStruct->battlerState[battlerDef].commanderSpecies == SPECIES_NONE)
-            {
-                if (cv->abilities[battlerDef] == ABILITY_GUARD_DOG)
-                {
-                    gBattleStruct->eventState.moveEndBattler = 0;
-                    gBattleScripting.moveendState++;
-                    return MOVEEND_RESULT_CONTINUE;
-                }
-                else if (cv->abilities[battlerDef] == ABILITY_SUCTION_CUPS)
-                {
-                    gBattlerAbility = battlerDef;
-                    BattleScriptCall(BattleScript_AbilityPreventsPhasingOut);
-                }
-                else if (gBattleMons[battlerDef].volatiles.root)
-                {
-                    BattleScriptCall(BattleScript_PrintMonIsRooted);
-                }
-                else if (GetActiveGimmick(battlerDef) == GIMMICK_DYNAMAX)
-                {
-                    BattleScriptCall(BattleScript_HitSwitchTargetDynamaxed);
-                }
-                else
-                {
-                    gBattleScripting.switchCase = B_SWITCH_HIT;
-                    BattleScriptCall(BattleScript_TryHitSwitchTarget);
-                }
-
-                gBattleStruct->eventState.moveEndBattler = 0;
-                gBattleScripting.moveendState++;
                 return MOVEEND_RESULT_RUN_SCRIPT;
             }
             break;
@@ -5399,8 +5396,6 @@ static bool32 TryRedCard(enum BattlerId battlerAtk, enum BattlerId redCardBattle
 
     gBattleStruct->redCardActivated = TRUE;
     gLastUsedItem = gBattleMons[redCardBattler].item;
-    SaveBattlerTarget(redCardBattler); // save battler with red card
-    SaveBattlerAttacker(battlerAtk);
     gBattleScripting.battler = gBattlerTarget = redCardBattler;
     gEffectBattler = battlerAtk;
     if (gBattleStruct->battlerState[battlerAtk].commanderSpecies != SPECIES_NONE
@@ -5798,9 +5793,10 @@ static enum MoveEndResult MoveEndNaturalGiftItemRemoval(struct BattleCalcValues 
     if (gBattleStruct->unableToUseMove && gBattleStruct->flungItem != FLUNG_ITEM_REMOVE)
         return MOVEEND_RESULT_CONTINUE;
 
+    // Item isn't removed if user is no longer on the field
     if (cv->moveEffect != EFFECT_NATURAL_GIFT
      || gBattleMons[cv->battlerAtk].item == ITEM_NONE
-     || gBattleStruct->battlerState[cv->battlerAtk].originalBattlerPartyId == PARTY_SIZE)
+     || gBattleStruct->battlerState[cv->battlerAtk].originalBattlerPartyId != PARTY_SIZE)
         return MOVEEND_RESULT_CONTINUE;
 
     gLastUsedItem = gBattleMons[cv->battlerAtk].item;

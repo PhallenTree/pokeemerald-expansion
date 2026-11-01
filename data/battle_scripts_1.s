@@ -2079,22 +2079,15 @@ BattleScript_BideNoEnergyToAttack::
 
 BattleScript_RoarSuccessSwitch::
 	call BattleScript_RoarSuccessRet
-	getswitchedmondata BS_TARGET
-	switchindataupdate BS_TARGET
+	getswitchedmondata BS_EFFECT_BATTLER
+	switchindataupdate BS_EFFECT_BATTLER
 	trytoclearprimalweather
 	flushtextbox
-	switchinanim BS_TARGET, FALSE, FALSE
+	switchinanim BS_EFFECT_BATTLER, FALSE, FALSE
 	waitstate
 	printstring STRINGID_PKMNWASDRAGGEDOUT
-	switchineffects BS_TARGET
+	switchineffects BS_EFFECT_BATTLER
 	switchinevents
-	jumpifbyte CMP_EQUAL, sSWITCH_CASE, B_SWITCH_RED_CARD, BattleScript_RoarSuccessSwitch_Ret
-	setbyte sSWITCH_CASE, B_SWITCH_NORMAL
-	return
-BattleScript_RoarSuccessSwitch_Ret:
-	swapattackerwithtarget  @ continuation of RedCardActivates
-	restoretarget
-	restoreattacker
 	setbyte sSWITCH_CASE, B_SWITCH_NORMAL
 	return
 
@@ -2110,9 +2103,9 @@ BattleScript_RoarSuccessRet:
 	attackanimation
 	waitanimation
 BattleScript_RoarSuccessRet_Ret:
-	returntoball BS_TARGET, FALSE
+	returntoball BS_EFFECT_BATTLER, FALSE
 	waitstate
-	switchoutabilities BS_TARGET
+	switchoutabilities BS_EFFECT_BATTLER
 	return
 
 BattleScript_MistProtected::
@@ -4590,8 +4583,6 @@ BattleScript_RedCardActivationNoSwitch::
 	waitmessage B_WAIT_TIME_LONG
 	destroyitempopup
 	removeitem BS_SCRIPTING
-	restoretarget
-	restoreattacker
 	return
 
 BattleScript_RedCardActivates::
@@ -4599,14 +4590,13 @@ BattleScript_RedCardActivates::
 	playanimation BS_SCRIPTING, B_ANIM_HELD_ITEM_EFFECT
 	printstring STRINGID_REDCARDACTIVATE
 	waitmessage B_WAIT_TIME_LONG
-	swapattackerwithtarget
 	jumpifvolatile BS_EFFECT_BATTLER, VOLATILE_ROOT, BattleScript_RedCardIngrain
 	jumpifability BS_EFFECT_BATTLER, ABILITY_SUCTION_CUPS, BattleScript_RedCardSuctionCups
 	jumpiftargetdynamaxed BattleScript_RedCardDynamaxed
 	removeitem BS_SCRIPTING
 	setbyte sSWITCH_CASE, B_SWITCH_RED_CARD
 	forcerandomswitch BattleScript_RedCardEnd
-	@ changes the current battle script. the rest happens in BattleScript_RoarSuccessSwitch_Ret, if switch is successful
+	@ changes the current battle script.
 BattleScript_RedCardIngrain:
 	printstring STRINGID_PKMNANCHOREDITSELF
 BattleScript_RedCardIngrainContinue:
@@ -4622,8 +4612,6 @@ BattleScript_RedCardDynamaxed:
 	goto BattleScript_RedCardIngrainContinue
 
 BattleScript_RedCardEnd:
-	restoretarget
-	restoreattacker
 	return
 
 BattleScript_EjectItemActivates::

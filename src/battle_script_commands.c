@@ -4687,7 +4687,7 @@ static void Cmd_forcerandomswitch(void)
     // Red card swaps attacker with target to get the animation correct, so here we check attacker which is really the target. Thanks GF...
     if (gBattleScripting.switchCase == B_SWITCH_RED_CARD
       && !IsTrainerBattle()
-      && !IsOnPlayerSide(gBattlerAttacker))   // Check opponent's red card activating
+      && !IsOnPlayerSide(gBattleScripting.battler))   // Check opponent's red card activating
     {
         if (!IsWildDoubleBattle())
         {
@@ -4698,7 +4698,7 @@ static void Cmd_forcerandomswitch(void)
         else
         {
             // Wild double battle, wild mon red card activation on player
-            if (IsWholeSideAlive(gBattlerTarget))
+            if (IsWholeSideAlive(gEffectBattler))
             {
                 // Both player's battlers are alive
                 redCardForcedSwitch = FALSE;
@@ -4717,29 +4717,29 @@ static void Cmd_forcerandomswitch(void)
     // wild double battle when a player Pokémon uses it against its partner
     if ((IsTrainerBattle())
         || (IsWildDoubleBattle()
-            && !IsOnPlayerSide(gBattlerAttacker)
-            && IsOnPlayerSide(gBattlerTarget)
-            && IsWholeSideAlive(gBattlerTarget))
+            && !IsOnPlayerSide(gBattleScripting.battler)
+            && IsOnPlayerSide(gEffectBattler)
+            && IsWholeSideAlive(gEffectBattler))
         || (IsWildDoubleBattle()
-            && IsOnPlayerSide(gBattlerAttacker)
-            && IsOnPlayerSide(gBattlerTarget))
+            && IsOnPlayerSide(gBattleScripting.battler)
+            && IsOnPlayerSide(gEffectBattler))
         || redCardForcedSwitch
        )
     {
-        party = GetBattlerParty(gBattlerTarget);
+        party = GetBattlerParty(gEffectBattler);
 
-        if (IsMultiVsOneOpponentBattle() && !IsOnPlayerSide(gBattlerTarget))
+        if (IsMultiVsOneOpponentBattle() && !IsOnPlayerSide(gEffectBattler))
         {
             firstMonId = PARTY_SLOT_0;
             lastMonId = 6;
-            battler2PartyId = gBattlerPartyIndexes[gBattlerTarget];
-            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gBattlerTarget)];
+            battler2PartyId = gBattlerPartyIndexes[gEffectBattler];
+            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gEffectBattler)];
         }
         else if (HasAllBattleFlags(BATTLE_TYPE_BATTLE_TOWER | BATTLE_TYPE_LINK)
             || HasAllBattleFlags(BATTLE_TYPE_BATTLE_TOWER | BATTLE_TYPE_RECORDED_LINK)
             || HasAnyBattleFlags(BATTLE_TYPE_INGAME_PARTNER))
         {
-            if ((gBattlerTarget & BIT_FLANK) != B_FLANK_LEFT)
+            if ((gEffectBattler & BIT_FLANK) != B_FLANK_LEFT)
             {
                 firstMonId = PARTY_SLOT_3;
                 lastMonId = PARTY_SIZE;
@@ -4749,27 +4749,27 @@ static void Cmd_forcerandomswitch(void)
                 firstMonId = PARTY_SLOT_0;
                 lastMonId = PARTY_SIZE / 2;
             }
-            battler2PartyId = gBattlerPartyIndexes[gBattlerTarget];
-            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gBattlerTarget)];
+            battler2PartyId = gBattlerPartyIndexes[gEffectBattler];
+            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gEffectBattler)];
         }
         else if (HasAllBattleFlags(BATTLE_TYPE_MULTI | BATTLE_TYPE_LINK)
                  || HasAllBattleFlags(BATTLE_TYPE_MULTI | BATTLE_TYPE_RECORDED_LINK))
         {
             firstMonId = PARTY_SLOT_0;
             lastMonId = PARTY_SIZE / 2;
-            battler2PartyId = gBattlerPartyIndexes[gBattlerTarget];
-            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gBattlerTarget)];
+            battler2PartyId = gBattlerPartyIndexes[gEffectBattler];
+            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gEffectBattler)];
         }
         else if (HasAnyBattleFlags(BATTLE_TYPE_TWO_OPPONENTS))
         {
-            if (IsOnPlayerSide(gBattlerTarget))
+            if (IsOnPlayerSide(gEffectBattler))
             {
                 firstMonId = PARTY_SLOT_0;
                 lastMonId = PARTY_SIZE;
             }
             else
             {
-                if ((gBattlerTarget & BIT_FLANK) != B_FLANK_LEFT)
+                if ((gEffectBattler & BIT_FLANK) != B_FLANK_LEFT)
                 {
                     firstMonId = PARTY_SLOT_3;
                     lastMonId = PARTY_SIZE;
@@ -4780,22 +4780,22 @@ static void Cmd_forcerandomswitch(void)
                     lastMonId = PARTY_SIZE / 2;
                 }
             }
-            battler2PartyId = gBattlerPartyIndexes[gBattlerTarget];
-            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gBattlerTarget)];
+            battler2PartyId = gBattlerPartyIndexes[gEffectBattler];
+            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gEffectBattler)];
         }
         else if (IsDoubleBattle())
         {
             firstMonId = PARTY_SLOT_0;
             lastMonId = PARTY_SIZE;
-            battler2PartyId = gBattlerPartyIndexes[gBattlerTarget];
-            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gBattlerTarget)];
+            battler2PartyId = gBattlerPartyIndexes[gEffectBattler];
+            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gEffectBattler)];
         }
         else
         {
             firstMonId = PARTY_SLOT_0;
             lastMonId = PARTY_SIZE;
-            battler2PartyId = gBattlerPartyIndexes[gBattlerTarget]; // there is only one Pokémon out in single battles
-            battler1PartyId = gBattlerPartyIndexes[gBattlerTarget];
+            battler2PartyId = gBattlerPartyIndexes[gEffectBattler]; // there is only one Pokémon out in single battles
+            battler1PartyId = gBattlerPartyIndexes[gEffectBattler];
         }
 
         for (enum PartySlot i = firstMonId; i < lastMonId; i++)
@@ -4818,30 +4818,31 @@ static void Cmd_forcerandomswitch(void)
         {
             for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
                 gBattleMons[battler].volatiles.tryEjectPack = FALSE; // Disable Eject Pack activations
-            gBattleStruct->battlerPartyIndexes[gBattlerTarget] = gBattlerPartyIndexes[gBattlerTarget];
-            gBattlescriptCurrInstr = BattleScript_RoarSuccessSwitch;
-            gProtectStructs[gBattlerTarget].forcedSwitch = TRUE;
-            gBattleStruct->monToSwitchIntoId[gBattlerTarget] = validMons[RandomUniform(RNG_FORCE_RANDOM_SWITCH, 0, validMonsCount - 1)];
+            gBattleStruct->battlerPartyIndexes[gEffectBattler] = gBattlerPartyIndexes[gEffectBattler];
+            gProtectStructs[gEffectBattler].forcedSwitch = TRUE;
+            gBattleStruct->monToSwitchIntoId[gEffectBattler] = validMons[RandomUniform(RNG_FORCE_RANDOM_SWITCH, 0, validMonsCount - 1)];
             if (!IsMultiBattle())
-                SwitchPartyOrder(gBattlerTarget);
+                SwitchPartyOrder(gEffectBattler);
 
             if (HasAllBattleFlags(BATTLE_TYPE_LINK | BATTLE_TYPE_BATTLE_TOWER)
                 || HasAllBattleFlags(BATTLE_TYPE_LINK | BATTLE_TYPE_MULTI)
                 || HasAllBattleFlags(BATTLE_TYPE_RECORDED_LINK | BATTLE_TYPE_BATTLE_TOWER)
                 || HasAllBattleFlags(BATTLE_TYPE_RECORDED_LINK | BATTLE_TYPE_MULTI))
             {
-                SwitchPartyOrderLinkMulti(gBattlerTarget, gBattleStruct->monToSwitchIntoId[gBattlerTarget], PARTY_BATTLE_ORDER_0);
-                SwitchPartyOrderLinkMulti(GetPartnerBattler(gBattlerTarget), gBattleStruct->monToSwitchIntoId[gBattlerTarget], PARTY_BATTLE_ORDER_1);
+                SwitchPartyOrderLinkMulti(gEffectBattler, gBattleStruct->monToSwitchIntoId[gEffectBattler], PARTY_BATTLE_ORDER_0);
+                SwitchPartyOrderLinkMulti(GetPartnerBattler(gEffectBattler), gBattleStruct->monToSwitchIntoId[gEffectBattler], PARTY_BATTLE_ORDER_1);
             }
 
             if (HasAnyBattleFlags(BATTLE_TYPE_INGAME_PARTNER))
-                SwitchPartyOrderInGameMulti(gBattlerTarget, gBattleStruct->monToSwitchIntoId[gBattlerTarget]);
+                SwitchPartyOrderInGameMulti(gEffectBattler, gBattleStruct->monToSwitchIntoId[gEffectBattler]);
+
+            gBattlescriptCurrInstr = BattleScript_RoarSuccessSwitch;
         }
     }
     else
     {
         // In normal wild doubles, Roar will always fail if the user's level is less than the target's.
-        if (gBattleMons[gBattlerAttacker].level >= gBattleMons[gBattlerTarget].level)
+        if (gBattleMons[gBattleScripting.battler].level >= gBattleMons[gEffectBattler].level)
             gBattlescriptCurrInstr = BattleScript_RoarSuccessEndBattle;
         else
             gBattlescriptCurrInstr = cmd->failInstr;

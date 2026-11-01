@@ -153,6 +153,8 @@ enum __attribute__((packed)) MoveEffect
     MOVE_EFFECT_FOCUS_ENERGY,
     MOVE_EFFECT_DRAGON_CHEER,
     MOVE_EFFECT_REMOVE_TERRAIN,
+    MOVE_EFFECT_SMACK_DOWN,
+    MOVE_EFFECT_HIT_SWITCH_TARGET,
 
     // Max move effects happen earlier in the execution chain.
     // For example stealth rock from G-Max Stonesurge is set up before abilities but from Stone Axe after.
@@ -225,8 +227,8 @@ enum SetEffectTimings
     TIMING_EFFECT_ADDITIONAL_EFFECT,
     TIMING_EFFECT_BEFORE_ATTACK,
     TIMING_EFFECT_CHARGE_TURN,
-    TIMING_EFFECT_FIRST_BLOCK, // Just before Sheer Force
-    TIMING_EFFECT_SECOND_BLOCK, // Just after Sheer Force
+    TIMING_EFFECT_FIRST_BLOCK, // Just before Sheer Force's jump
+    TIMING_EFFECT_SECOND_BLOCK, // Just after Sheer Force's jump
     TIMING_EFFECT_THIRD_BLOCK, // After switching effects, Pickpocket and Opportunist
 };
 

@@ -4160,6 +4160,7 @@ static void HandleSetEffectDragonCheer(struct BattleCalcValues *cv, struct SetEf
 
 static void HandleSetEffectRemoveTerrain(struct BattleCalcValues *cv, struct SetEffect * se)
 {
+    // Use self
     if (gFieldTimers.terrain == B_TERRAIN_NONE)
         SetEffectFail(BattleScript_ButItFailedRet, cv->isStatusMove);
 
@@ -4177,6 +4178,62 @@ static void HandleSetEffectRemoveTerrain(struct BattleCalcValues *cv, struct Set
     }
 
     BattleScriptPushAndSet(se->script, BattleScript_RemoveTerrain);
+}
+
+static void HandleSetEffectSmackDown(struct BattleCalcValues *cv, struct SetEffect * se)
+{
+    enum SemiInvulnerableState state = gBattleMons[se->effectBattler].volatiles.semiInvulnerable;
+    bool32 onAir = state == STATE_ON_AIR;
+    bool32 isOnAirSemiInvulnerable = onAir || state == STATE_SKY_DROP_ATTACKER || state == STATE_SKY_DROP_TARGET;
+    
+    if (IsBattlerGrounded(se->effectBattler, cv->abilities[se->effectBattler], cv->holdEffects[se->effectBattler])
+     && !isOnAirSemiInvulnerable)
+        SetEffectFail(BattleScript_ButItFailed, cv->isStatusMove);
+
+    if (cv->onlyChecking || se->effectFailed)
+        return;
+
+    gBattleMons[se->effectBattler].volatiles.smackDown = TRUE;
+    gBattleMons[se->effectBattler].volatiles.telekinesis = FALSE;
+    gBattleMons[se->effectBattler].volatiles.magnetRiseTimer = FALSE;
+
+    if (onAir)
+    {
+        gBattleMons[se->effectBattler].volatiles.semiInvulnerable = STATE_NONE;
+        gBattleMons[se->effectBattler].volatiles.multipleTurns = FALSE;
+    }
+    PrepareStringBattleWithWait(STRINGID_FELLSTRAIGHTDOWN, se->effectBattler);
+    BattleScriptPushAndSet(se->script, BattleScript_WaitMessage);
+}
+
+static void HandleSetEffectHitSwitchTarget(struct BattleCalcValues *cv, struct SetEffect * se)
+{
+    if (!IsBattlerAlive(cv->battlerAtk)
+     || gBattleStruct->battlerState[se->effectBattler].commanderSpecies != SPECIES_NONE
+     || cv->abilities[se->effectBattler] == ABILITY_GUARD_DOG)
+        SetEffectFail(BattleScript_ButItFailed, cv->isStatusMove);
+
+    if (cv->onlyChecking || se->effectFailed)
+        return;
+
+    if (cv->abilities[se->effectBattler] == ABILITY_SUCTION_CUPS)
+    {
+        gBattlerAbility = se->effectBattler;
+        BattleScriptPushAndSet(se->script, BattleScript_AbilityPreventsPhasingOut);
+    }
+    else if (gBattleMons[se->effectBattler].volatiles.root)
+    {
+        BattleScriptPushAndSet(se->script, BattleScript_PrintMonIsRooted);
+    }
+    else if (GetActiveGimmick(se->effectBattler) == GIMMICK_DYNAMAX)
+    {
+        BattleScriptPushAndSet(se->script, BattleScript_HitSwitchTargetDynamaxed);
+    }
+    else
+    {
+        gBattleScripting.switchCase = B_SWITCH_HIT;
+        BattleScriptPushAndSet(se->script, BattleScript_TryHitSwitchTarget);
+    }
 }
 
 static void (*const sSetEffectHandlers[])(struct BattleCalcValues *cv, struct SetEffect *se) =
@@ -4327,6 +4384,8 @@ static void (*const sSetEffectHandlers[])(struct BattleCalcValues *cv, struct Se
     [MOVE_EFFECT_POLLEN_PUFF] = HandleSetEffectPollenPuff,
     [MOVE_EFFECT_FLORAL_HEALING] = HandleSetEffectHealPulse,
     [MOVE_EFFECT_REMOVE_TERRAIN] = HandleSetEffectRemoveTerrain,
+    [MOVE_EFFECT_SMACK_DOWN] = HandleSetEffectSmackDown,
+    [MOVE_EFFECT_HIT_SWITCH_TARGET] = HandleSetEffectHitSwitchTarget,
     [MOVE_EFFECT_SUN] = HandleSetEffectWeather,
     [MOVE_EFFECT_RAIN] = HandleSetEffectWeather,
     [MOVE_EFFECT_SANDSTORM] = HandleSetEffectWeather,
