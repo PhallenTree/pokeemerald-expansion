@@ -155,6 +155,7 @@ enum __attribute__((packed)) MoveEffect
     MOVE_EFFECT_REMOVE_TERRAIN,
     MOVE_EFFECT_SMACK_DOWN,
     MOVE_EFFECT_HIT_SWITCH_TARGET,
+    MOVE_EFFECT_KNOCK_OFF,
 
     // Max move effects happen earlier in the execution chain.
     // For example stealth rock from G-Max Stonesurge is set up before abilities but from Stone Axe after.

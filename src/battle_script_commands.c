@@ -396,7 +396,6 @@ static void Cmd_tryselfconfusiondmgformchange(void);
 static void Cmd_return(void);
 static void Cmd_end(void);
 static void Cmd_end3(void);
-static void Cmd_setchargingturn(void);
 static void Cmd_call(void);
 static void Cmd_jumpifabilitypresent(void);
 static void Cmd_endselectionscript(void);
@@ -548,7 +547,6 @@ void (*const gBattleScriptingCommandsTable[])(void) =
     [B_SCR_OP_RETURN]                                = Cmd_return,
     [B_SCR_OP_END]                                   = Cmd_end,
     [B_SCR_OP_END3]                                  = Cmd_end3,
-    [B_SCR_OP_SETCHARGINGTURN]                       = Cmd_setchargingturn,
     [B_SCR_OP_CALL]                                  = Cmd_call,
     [B_SCR_OP_JUMPIFABILITYPRESENT]                  = Cmd_jumpifabilitypresent,
     [B_SCR_OP_ENDSELECTIONSCRIPT]                    = Cmd_endselectionscript,
@@ -742,6 +740,7 @@ void (*const gBattleScriptingCommandsTable[])(void) =
     [B_SCR_OP_UNUSED_95]                             = Cmd_dummy,
     [B_SCR_OP_UNUSED_96]                             = Cmd_dummy,
     [B_SCR_OP_UNUSED_97]                             = Cmd_dummy,
+    [B_SCR_OP_UNUSED_98]                             = Cmd_dummy,
 
     [B_SCR_OP_CALLNATIVE]                            = Cmd_callnative,
 };
@@ -910,19 +909,6 @@ static void Cmd_attackcanceler(void)
     gBattlescriptCurrInstr = cmd->nextInstr;
 }
 
-static void Cmd_setchargingturn(void)
-{
-    CMD_ARGS();
-
-    if (!gBattleMons[gBattlerAttacker].volatiles.multipleTurns)
-    {
-        gBattleMons[gBattlerAttacker].volatiles.multipleTurns = TRUE;
-        gLockedMoves[gBattlerAttacker] = gCurrentMove;
-        gBattleMons[gBattlerAttacker].volatiles.chargeTurn = TRUE;
-    }
-    gBattlescriptCurrInstr = cmd->nextInstr;
-}
-
 static void Cmd_printattackstring(void)
 {
     CMD_ARGS();
@@ -931,11 +917,14 @@ static void Cmd_printattackstring(void)
         return;
 
     PrepareStringBattle(STRINGID_USEDMOVE, gBattlerAttacker);
-    gBattleCommunication[MSG_DISPLAY] = MSG_DISPLAY_CONTINUE;
     if (gBattleMoveEffects[GetMoveEffect(gCurrentMove)].twoTurnEffect
      && !gBattleMons[gBattlerAttacker].volatiles.multipleTurns)
     {
         gBattleCommunication[MSG_DISPLAY] = MSG_DISPLAY_WAIT;
+    }
+    else
+    {
+        gBattleCommunication[MSG_DISPLAY] = MSG_DISPLAY_CONTINUE;
     }
     gBattlescriptCurrInstr = cmd->nextInstr;
 }
@@ -1406,8 +1395,6 @@ static void Cmd_clearvolatile(void)
     enum BattlerId battler = GetBattlerForBattleScript(cmd->battler);
 
     SetMonVolatile(battler, cmd->_volatile, 0);
-    if (cmd->_volatile == VOLATILE_MULTIPLETURNS)
-        gBattleMons[battler].volatiles.chargeTurn = FALSE;
 
     gBattlescriptCurrInstr = cmd->nextInstr;
 }
@@ -4674,6 +4661,8 @@ static void Cmd_forcerandomswitch(void)
 
     enum PartySlot battler1PartyId = PARTY_SLOT_0;
     enum PartySlot battler2PartyId = PARTY_SLOT_0;
+    enum BattlerId battlerCausedSwitch = gBattleScripting.battler;
+    enum BattlerId battlerForcedToSwitch = gEffectBattler;
 
     enum PartySlot firstMonId;
     s32 lastMonId = 0; // + 1
@@ -4687,7 +4676,7 @@ static void Cmd_forcerandomswitch(void)
     // Red card swaps attacker with target to get the animation correct, so here we check attacker which is really the target. Thanks GF...
     if (gBattleScripting.switchCase == B_SWITCH_RED_CARD
       && !IsTrainerBattle()
-      && !IsOnPlayerSide(gBattleScripting.battler))   // Check opponent's red card activating
+      && !IsOnPlayerSide(battlerCausedSwitch))   // Check opponent's red card activating
     {
         if (!IsWildDoubleBattle())
         {
@@ -4698,7 +4687,7 @@ static void Cmd_forcerandomswitch(void)
         else
         {
             // Wild double battle, wild mon red card activation on player
-            if (IsWholeSideAlive(gEffectBattler))
+            if (IsWholeSideAlive(battlerForcedToSwitch))
             {
                 // Both player's battlers are alive
                 redCardForcedSwitch = FALSE;
@@ -4717,29 +4706,29 @@ static void Cmd_forcerandomswitch(void)
     // wild double battle when a player Pokémon uses it against its partner
     if ((IsTrainerBattle())
         || (IsWildDoubleBattle()
-            && !IsOnPlayerSide(gBattleScripting.battler)
-            && IsOnPlayerSide(gEffectBattler)
-            && IsWholeSideAlive(gEffectBattler))
+            && !IsOnPlayerSide(battlerCausedSwitch)
+            && IsOnPlayerSide(battlerForcedToSwitch)
+            && IsWholeSideAlive(battlerForcedToSwitch))
         || (IsWildDoubleBattle()
-            && IsOnPlayerSide(gBattleScripting.battler)
-            && IsOnPlayerSide(gEffectBattler))
+            && IsOnPlayerSide(battlerCausedSwitch)
+            && IsOnPlayerSide(battlerForcedToSwitch))
         || redCardForcedSwitch
        )
     {
-        party = GetBattlerParty(gEffectBattler);
+        party = GetBattlerParty(battlerForcedToSwitch);
 
-        if (IsMultiVsOneOpponentBattle() && !IsOnPlayerSide(gEffectBattler))
+        if (IsMultiVsOneOpponentBattle() && !IsOnPlayerSide(battlerForcedToSwitch))
         {
             firstMonId = PARTY_SLOT_0;
             lastMonId = 6;
-            battler2PartyId = gBattlerPartyIndexes[gEffectBattler];
-            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gEffectBattler)];
+            battler2PartyId = gBattlerPartyIndexes[battlerForcedToSwitch];
+            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(battlerForcedToSwitch)];
         }
         else if (HasAllBattleFlags(BATTLE_TYPE_BATTLE_TOWER | BATTLE_TYPE_LINK)
             || HasAllBattleFlags(BATTLE_TYPE_BATTLE_TOWER | BATTLE_TYPE_RECORDED_LINK)
             || HasAnyBattleFlags(BATTLE_TYPE_INGAME_PARTNER))
         {
-            if ((gEffectBattler & BIT_FLANK) != B_FLANK_LEFT)
+            if ((battlerForcedToSwitch & BIT_FLANK) != B_FLANK_LEFT)
             {
                 firstMonId = PARTY_SLOT_3;
                 lastMonId = PARTY_SIZE;
@@ -4749,27 +4738,27 @@ static void Cmd_forcerandomswitch(void)
                 firstMonId = PARTY_SLOT_0;
                 lastMonId = PARTY_SIZE / 2;
             }
-            battler2PartyId = gBattlerPartyIndexes[gEffectBattler];
-            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gEffectBattler)];
+            battler2PartyId = gBattlerPartyIndexes[battlerForcedToSwitch];
+            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(battlerForcedToSwitch)];
         }
         else if (HasAllBattleFlags(BATTLE_TYPE_MULTI | BATTLE_TYPE_LINK)
                  || HasAllBattleFlags(BATTLE_TYPE_MULTI | BATTLE_TYPE_RECORDED_LINK))
         {
             firstMonId = PARTY_SLOT_0;
             lastMonId = PARTY_SIZE / 2;
-            battler2PartyId = gBattlerPartyIndexes[gEffectBattler];
-            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gEffectBattler)];
+            battler2PartyId = gBattlerPartyIndexes[battlerForcedToSwitch];
+            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(battlerForcedToSwitch)];
         }
         else if (HasAnyBattleFlags(BATTLE_TYPE_TWO_OPPONENTS))
         {
-            if (IsOnPlayerSide(gEffectBattler))
+            if (IsOnPlayerSide(battlerForcedToSwitch))
             {
                 firstMonId = PARTY_SLOT_0;
                 lastMonId = PARTY_SIZE;
             }
             else
             {
-                if ((gEffectBattler & BIT_FLANK) != B_FLANK_LEFT)
+                if ((battlerForcedToSwitch & BIT_FLANK) != B_FLANK_LEFT)
                 {
                     firstMonId = PARTY_SLOT_3;
                     lastMonId = PARTY_SIZE;
@@ -4780,22 +4769,22 @@ static void Cmd_forcerandomswitch(void)
                     lastMonId = PARTY_SIZE / 2;
                 }
             }
-            battler2PartyId = gBattlerPartyIndexes[gEffectBattler];
-            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gEffectBattler)];
+            battler2PartyId = gBattlerPartyIndexes[battlerForcedToSwitch];
+            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(battlerForcedToSwitch)];
         }
         else if (IsDoubleBattle())
         {
             firstMonId = PARTY_SLOT_0;
             lastMonId = PARTY_SIZE;
-            battler2PartyId = gBattlerPartyIndexes[gEffectBattler];
-            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gEffectBattler)];
+            battler2PartyId = gBattlerPartyIndexes[battlerForcedToSwitch];
+            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(battlerForcedToSwitch)];
         }
         else
         {
             firstMonId = PARTY_SLOT_0;
             lastMonId = PARTY_SIZE;
-            battler2PartyId = gBattlerPartyIndexes[gEffectBattler]; // there is only one Pokémon out in single battles
-            battler1PartyId = gBattlerPartyIndexes[gEffectBattler];
+            battler2PartyId = gBattlerPartyIndexes[battlerForcedToSwitch]; // there is only one Pokémon out in single battles
+            battler1PartyId = gBattlerPartyIndexes[battlerForcedToSwitch];
         }
 
         for (enum PartySlot i = firstMonId; i < lastMonId; i++)
@@ -4818,23 +4807,23 @@ static void Cmd_forcerandomswitch(void)
         {
             for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
                 gBattleMons[battler].volatiles.tryEjectPack = FALSE; // Disable Eject Pack activations
-            gBattleStruct->battlerPartyIndexes[gEffectBattler] = gBattlerPartyIndexes[gEffectBattler];
-            gProtectStructs[gEffectBattler].forcedSwitch = TRUE;
-            gBattleStruct->monToSwitchIntoId[gEffectBattler] = validMons[RandomUniform(RNG_FORCE_RANDOM_SWITCH, 0, validMonsCount - 1)];
+            gBattleStruct->battlerPartyIndexes[battlerForcedToSwitch] = gBattlerPartyIndexes[battlerForcedToSwitch];
+            gProtectStructs[battlerForcedToSwitch].forcedSwitch = TRUE;
+            gBattleStruct->monToSwitchIntoId[battlerForcedToSwitch] = validMons[RandomUniform(RNG_FORCE_RANDOM_SWITCH, 0, validMonsCount - 1)];
             if (!IsMultiBattle())
-                SwitchPartyOrder(gEffectBattler);
+                SwitchPartyOrder(battlerForcedToSwitch);
 
             if (HasAllBattleFlags(BATTLE_TYPE_LINK | BATTLE_TYPE_BATTLE_TOWER)
                 || HasAllBattleFlags(BATTLE_TYPE_LINK | BATTLE_TYPE_MULTI)
                 || HasAllBattleFlags(BATTLE_TYPE_RECORDED_LINK | BATTLE_TYPE_BATTLE_TOWER)
                 || HasAllBattleFlags(BATTLE_TYPE_RECORDED_LINK | BATTLE_TYPE_MULTI))
             {
-                SwitchPartyOrderLinkMulti(gEffectBattler, gBattleStruct->monToSwitchIntoId[gEffectBattler], PARTY_BATTLE_ORDER_0);
-                SwitchPartyOrderLinkMulti(GetPartnerBattler(gEffectBattler), gBattleStruct->monToSwitchIntoId[gEffectBattler], PARTY_BATTLE_ORDER_1);
+                SwitchPartyOrderLinkMulti(battlerForcedToSwitch, gBattleStruct->monToSwitchIntoId[battlerForcedToSwitch], PARTY_BATTLE_ORDER_0);
+                SwitchPartyOrderLinkMulti(GetPartnerBattler(battlerForcedToSwitch), gBattleStruct->monToSwitchIntoId[battlerForcedToSwitch], PARTY_BATTLE_ORDER_1);
             }
 
             if (HasAnyBattleFlags(BATTLE_TYPE_INGAME_PARTNER))
-                SwitchPartyOrderInGameMulti(gEffectBattler, gBattleStruct->monToSwitchIntoId[gEffectBattler]);
+                SwitchPartyOrderInGameMulti(battlerForcedToSwitch, gBattleStruct->monToSwitchIntoId[battlerForcedToSwitch]);
 
             gBattlescriptCurrInstr = BattleScript_RoarSuccessSwitch;
         }
@@ -4842,7 +4831,7 @@ static void Cmd_forcerandomswitch(void)
     else
     {
         // In normal wild doubles, Roar will always fail if the user's level is less than the target's.
-        if (gBattleMons[gBattleScripting.battler].level >= gBattleMons[gEffectBattler].level)
+        if (gBattleMons[battlerCausedSwitch].level >= gBattleMons[battlerForcedToSwitch].level)
             gBattlescriptCurrInstr = BattleScript_RoarSuccessEndBattle;
         else
             gBattlescriptCurrInstr = cmd->failInstr;

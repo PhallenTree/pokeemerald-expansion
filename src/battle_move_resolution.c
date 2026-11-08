@@ -1136,7 +1136,6 @@ static enum CancelerResult CancelerWeatherPrimal(struct BattleCalcValues *cv)
         }
         if (result == CANCELER_RESULT_FAILURE)
         {
-            gBattleMons[cv->battlerAtk].volatiles.chargeTurn = FALSE;
             CancelMultiTurnMoves(cv->battlerAtk);
             gBattlescriptCurrInstr = BattleScript_PrimalWeatherBlocksMove;
         }
@@ -3947,12 +3946,15 @@ static bool32 ShouldApplyAfterHitEffects(enum BattlerId battlerAtk, enum Battler
     if (battlerAtk == effectBattler)
         return IsAnyTargetAffected();
 
-    return !IsBattlerUnaffectedByMove(effectBattler);
+    return !IsBattlerMoveResultSet(effectBattler, MOVE_RESULT_NO_EFFECT | MOVE_RESULT_INVALID_TARGET);
 }
 
 static bool32 CanApplyAdditionalEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, const struct AdditionalEffect *additionalEffect, enum SetEffectTimings timing)
 {
     if (additionalEffect->timing != timing)
+        return FALSE;
+
+    if (timing != TIMING_EFFECT_CHARGE_TURN && gBattleMons[battlerAtk].volatiles.chargeTurn)
         return FALSE;
 
     if (additionalEffect->pledgeCombo && gBattleStruct->pledgeState != PLEDGE_COMBO_ATTACK)
@@ -4090,7 +4092,7 @@ static enum MoveEndResult MoveEndAdditionalEffectsChangeStatsAttacker(struct Bat
 {
     u32 numAdditionalEffects = GetMoveAdditionalEffectCount(cv->move);
 
-    if (IsBattleMoveStatus(cv->move))
+    if (cv->isStatusMove)
     {
         gBattleScripting.moveendState++;
         return MOVEEND_RESULT_CONTINUE;
@@ -4968,12 +4970,6 @@ static enum MoveEndResult MoveEndSecondMoveBlock(struct BattleCalcValues *cv)
     // Secret Power, Genesis Supernova, Rapid Spin/Mortal Spin (Gen 9), Eerie Spell, Sparkling Aria
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
 
-    if (cv->isStatusMove)
-    {
-        gBattleScripting.moveendState++;
-        return MOVEEND_RESULT_CONTINUE;
-    }
-
     while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
         enum BattlerId battlerDef = gEffectBattler = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
@@ -4983,7 +4979,6 @@ static enum MoveEndResult MoveEndSecondMoveBlock(struct BattleCalcValues *cv)
             gBattleStruct->eventState.moveEndBattler++;
             continue;
         }
-
         
         u32 numAdditionalEffects = GetMoveAdditionalEffectCount(cv->move);
 

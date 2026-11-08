@@ -4226,6 +4226,47 @@ static void HandleSetEffectHitSwitchTarget(struct BattleCalcValues *cv, struct S
     }
 }
 
+static void HandleSetEffectKnockOff(struct BattleCalcValues *cv, struct SetEffect *se)
+{
+    if (gBattleMons[se->effectBattler].item == ITEM_NONE
+     || (B_KNOCK_OFF_REMOVAL >= GEN_5 && GetBattlerSide(se->effectBattler) == B_SIDE_PLAYER && !IsTrainerBattle())
+     || !CanBattlerGetOrLoseItem(se->effectBattler, cv->battlerAtk, gBattleMons[se->effectBattler].item)
+     || NoAliveMonsForEitherParty()
+     || (!IsBattlerAlive(cv->battlerAtk) && GetConfig(B_FAINT_MOVE_EFFECT_TIMING) < GEN_CHAMPIONS))
+        SetEffectFail(BattleScript_ButItFailed, cv->isStatusMove);
+
+    if (cv->onlyChecking || se->effectFailed)
+        return;
+
+    if (cv->abilities[se->effectBattler] == ABILITY_STICKY_HOLD)
+    {
+        gBattlerAbility = se->effectBattler;
+        SetEffectFail(BattleScript_StickyHoldActivatesRet);
+        return;
+    }
+
+    gLastUsedItem = gBattleMons[se->effectBattler].item;
+    gBattleMons[se->effectBattler].item = ITEM_NONE;
+    if (gBattleMons[se->effectBattler].ability != ABILITY_GORILLA_TACTICS)
+        gBattleStruct->choicedMove[se->effectBattler] = MOVE_NONE;
+    CheckSetUnburden(se->effectBattler);
+
+    // In Gen 5+, Knock Off removes the target's item rather than rendering it unusable
+    if (B_KNOCK_OFF_REMOVAL >= GEN_5)
+    {
+        BtlController_EmitSetMonData(se->effectBattler, B_COMM_TO_CONTROLLER, REQUEST_HELDITEM_BATTLE, 0, sizeof(gBattleMons[se->effectBattler].item), &gBattleMons[se->effectBattler].item);
+        MarkBattlerForControllerExec(se->effectBattler);
+        // Mark item as stolen so it will be restored after battle
+        GetLostItemState(GetBattlerTrainer(se->effectBattler), gBattlerPartyIndexes[se->effectBattler])->stolen = TRUE;
+    }
+    else
+    {
+        GetBattlerPartyState(se->effectBattler)->isKnockedOff = TRUE;
+    }
+
+    BattleScriptPushAndSet(se->script, BattleScript_KnockedOff);
+}
+
 static void (*const sSetEffectHandlers[])(struct BattleCalcValues *cv, struct SetEffect *se) =
 {
     [MOVE_EFFECT_NONE] = HandleSetEffectNone,
@@ -4376,6 +4417,7 @@ static void (*const sSetEffectHandlers[])(struct BattleCalcValues *cv, struct Se
     [MOVE_EFFECT_REMOVE_TERRAIN] = HandleSetEffectRemoveTerrain,
     [MOVE_EFFECT_SMACK_DOWN] = HandleSetEffectSmackDown,
     [MOVE_EFFECT_HIT_SWITCH_TARGET] = HandleSetEffectHitSwitchTarget,
+    [MOVE_EFFECT_KNOCK_OFF] = HandleSetEffectKnockOff,
     [MOVE_EFFECT_SUN] = HandleSetEffectWeather,
     [MOVE_EFFECT_RAIN] = HandleSetEffectWeather,
     [MOVE_EFFECT_SANDSTORM] = HandleSetEffectWeather,
@@ -4520,6 +4562,7 @@ static inline bool32 IgnoreTargetingForMoveEffect(enum MoveEffect moveEffect) //
     case MOVE_EFFECT_SWAMP:
     case MOVE_EFFECT_ABSORB:
     case MOVE_EFFECT_STICKY_WEB:
+    case MOVE_EFFECT_KNOCK_OFF:
         return TRUE;
     default:
         return FALSE;
@@ -4537,7 +4580,7 @@ static bool32 DoesSubstituteBlockMoveEffectOnTarget(enum BattlerId battlerAtk, e
     if (moveEffect == MOVE_EFFECT_BREAK_SCREEN)
         return FALSE;
 
-    if (DoesSubstituteBlockMove(battlerAtk, battlerDef, gCurrentMove))
+    if (DoesSubstituteBlockMove(battlerAtk, battlerDef, gCurrentMove) || gBattleStruct->battlerState[battlerDef].substituteBlocked)
         return TRUE;
 
     return FALSE;
