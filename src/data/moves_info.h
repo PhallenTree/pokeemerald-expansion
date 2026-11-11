@@ -16986,6 +16986,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .skyBattleBanned = TRUE,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_PREVENT_ESCAPE,
+            .timing = TIMING_EFFECT_FIRST_BLOCK,
         }),
         .contestEffect = CONTEST_EFFECT_WORSEN_CONDITION_OF_PREV_MONS,
         .contestCategory = CONTEST_CATEGORY_TOUGH,
@@ -18534,6 +18535,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .contestComboMoves = {0},
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_ION_DELUGE,
+            .timing = TIMING_EFFECT_FIRST_BLOCK,
         }),
         .battleAnimScript = gBattleAnimMove_PlasmaFists,
     },
@@ -18970,6 +18972,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .bitingMove = TRUE,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_JAW_LOCK,
+            .timing = TIMING_EFFECT_FIRST_BLOCK,
         }),
         .contestEffect = CONTEST_EFFECT_DONT_EXCITE_AUDIENCE,
         .contestCategory = CONTEST_CATEGORY_TOUGH,
@@ -20697,7 +20700,9 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .makesContact = TRUE,
         .slicingMove = TRUE,
         .additionalEffects = ADDITIONAL_EFFECTS({
-            .sheerForceOverride = TRUE,
+            .moveEffect = MOVE_EFFECT_STEALTH_ROCK,
+            .chance = 100,
+            .timing = TIMING_EFFECT_FIRST_BLOCK,
         }),
         .battleAnimScript = gBattleAnimMove_StoneAxe,
     },
@@ -21050,7 +21055,9 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .makesContact = TRUE,
         .slicingMove = TRUE,
         .additionalEffects = ADDITIONAL_EFFECTS({
-            .sheerForceOverride = TRUE,
+            .moveEffect = MOVE_EFFECT_SPIKES,
+            .chance = 100,
+            .timing = TIMING_EFFECT_FIRST_BLOCK,
         }),
         .battleAnimScript = gBattleAnimMove_CeaselessEdge,
     },

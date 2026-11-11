@@ -1757,6 +1757,9 @@ static void HandleSetEffectStealthRock(struct BattleCalcValues *cv, struct SetEf
 {
     enum BattleSide side = GetBattlerSide(se->effectBattler);
 
+    if (!cv->isStatusMove && !IsMaxMove(cv->move) && !IsBattlerAlive(cv->battlerAtk)) // Stone Axe doesn't activate if attacker fainted
+        return;
+
     if (IsHazardOnSide(side, HAZARDS_STEALTH_ROCK))
     {
         SetEffectFail(BattleScript_ButItFailedRet, cv->isStatusMove);
@@ -2046,6 +2049,9 @@ static void HandleSetEffectToxicSpikes(struct BattleCalcValues *cv, struct SetEf
 static void HandleSetEffectSpikes(struct BattleCalcValues *cv, struct SetEffect *se)
 {
     enum BattleSide side = GetBattlerSide(se->effectBattler);
+
+    if (!cv->isStatusMove && !IsBattlerAlive(cv->battlerAtk)) // Ceaseless Edge doesn't activate if attacker fainted
+        return;
 
     if (gSideTimers[side].spikesAmount == 3)
     {
@@ -4616,6 +4622,7 @@ static inline bool32 IgnoreTargetingForMoveEffect(enum MoveEffect moveEffect) //
     case MOVE_EFFECT_BUG_BITE:
     case MOVE_EFFECT_FLAME_BURST:
     case MOVE_EFFECT_STEALTH_ROCK:
+    case MOVE_EFFECT_SPIKES:
     case MOVE_EFFECT_STEELSURGE:
     case MOVE_EFFECT_SUN:
     case MOVE_EFFECT_RAIN:

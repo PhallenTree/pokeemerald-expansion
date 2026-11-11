@@ -4874,7 +4874,6 @@ static enum MoveEndResult MoveEndFirstMoveBlock(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
 
-    // Thief, Fell Stinger, Thousand Waves, Jaw Lock, Ion Deluge (Plasma Fists)
     while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
     {
         enum BattlerId battlerDef = gEffectBattler = GetTargetBySlot(cv->battlerAtk, gBattleStruct->eventState.moveEndBattler);
@@ -4974,6 +4973,27 @@ static enum MoveEndResult MoveEndFirstMoveBlock(struct BattleCalcValues *cv)
             result = MOVEEND_RESULT_RUN_SCRIPT;
         }
         break;
+    case EFFECT_SPIT_UP:
+    case EFFECT_SWALLOW:
+        if (!gBattleStruct->unableToUseMove)
+        {
+            gBattleMons[cv->battlerAtk].volatiles.stockpileCounter = 0;
+
+            if (gBattleMons[cv->battlerAtk].volatiles.stockpileDef > 0)
+            {
+                SetStatChange(cv->battlerAtk, STAT_DEF, -1 * gBattleMons[cv->battlerAtk].volatiles.stockpileDef);
+                gBattleMons[cv->battlerAtk].volatiles.stockpileDef = 0;
+            }
+            if (gBattleMons[cv->battlerAtk].volatiles.stockpileSpDef > 0)
+            {
+                SetStatChange(cv->battlerAtk, STAT_SPDEF, -1 * gBattleMons[cv->battlerAtk].volatiles.stockpileSpDef);
+                gBattleMons[cv->battlerAtk].volatiles.stockpileSpDef = 0;
+            }
+
+            BattleScriptCall(BattleScript_MoveEffectStockpileWoreOff);
+            result = MOVEEND_RESULT_RUN_SCRIPT;
+        }
+        break;
     default:
         break;
     }
@@ -4995,7 +5015,6 @@ static enum MoveEndResult MoveEndSheerForce(struct BattleCalcValues *cv)
 
 static enum MoveEndResult MoveEndSecondMoveBlock(struct BattleCalcValues *cv)
 {
-    // Secret Power, Rapid Spin/Mortal Spin (Gen 9)
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
 
     while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
@@ -5026,33 +5045,8 @@ static enum MoveEndResult MoveEndSecondMoveBlock(struct BattleCalcValues *cv)
 
         gBattleStruct->eventState.moveEndBattler++;
 
-        enum BattleSide side = GetBattlerSide(battlerDef);
-
         switch (cv->moveEffect)
         {
-        case EFFECT_SPIT_UP:
-        case EFFECT_SWALLOW:
-            if (!gBattleStruct->unableToUseMove)
-            {
-                gBattleMons[cv->battlerAtk].volatiles.stockpileCounter = 0;
-
-                if (gBattleMons[cv->battlerAtk].volatiles.stockpileDef > 0)
-                {
-                    SetStatChange(gBattlerAttacker, STAT_DEF, -1 * gBattleMons[gBattlerAttacker].volatiles.stockpileDef);
-                    gBattleMons[gBattlerAttacker].volatiles.stockpileDef = 0;
-                }
-                if (gBattleMons[gBattlerAttacker].volatiles.stockpileSpDef > 0)
-                {
-                    SetStatChange(gBattlerAttacker, STAT_SPDEF, -1 * gBattleMons[gBattlerAttacker].volatiles.stockpileSpDef);
-                    gBattleMons[gBattlerAttacker].volatiles.stockpileSpDef = 0;
-                }
-
-                BattleScriptCall(BattleScript_MoveEffectStockpileWoreOff);
-                gBattleStruct->eventState.moveEndBattler = 0;
-                gBattleScripting.moveendState++;
-                return MOVEEND_RESULT_RUN_SCRIPT;
-            }
-            break;
         case EFFECT_SECRET_POWER:
             if (IsBattlerTurnDamaged(battlerDef, EXCLUDING_SUBSTITUTES) && IsBattlerAlive(cv->battlerAtk))
             {
@@ -5090,57 +5084,17 @@ static enum MoveEndResult MoveEndSecondMoveBlock(struct BattleCalcValues *cv)
                     break;
 
                 BattleScriptCall(BattleScript_RapidSpinAway);
-                gBattleStruct->eventState.moveEndBattler = 0;
-                gBattleScripting.moveendState++;
                 return MOVEEND_RESULT_RUN_SCRIPT;
-            }
-            break;
-        case EFFECT_STONE_AXE:
-            if (!IsHazardOnSide(side, HAZARDS_STEALTH_ROCK)
-             && IsBattlerTurnDamaged(battlerDef, INCLUDING_SUBSTITUTES)
-             && IsBattlerAlive(cv->battlerAtk))
-            {
-                PushHazardTypeToQueue(side, HAZARDS_STEALTH_ROCK);
-                PrepareStringBattleWithWait(STRINGID_POINTEDSTONESFLOAT, battlerDef);
-                BattleScriptCall(BattleScript_WaitMessage);
-                gBattleStruct->eventState.moveEndBattler = 0;
-                gBattleScripting.moveendState++;
-                return MOVEEND_RESULT_RUN_SCRIPT;
-            }
-            break;
-        case EFFECT_CEASELESS_EDGE:
-            if (gSideTimers[side].spikesAmount < 3
-             && IsBattlerTurnDamaged(battlerDef, INCLUDING_SUBSTITUTES)
-             && IsBattlerAlive(cv->battlerAtk))
-            {
-                if (gBattleStruct->isSkyBattle)
-                {
-                    gBattleStruct->eventState.moveEndBattler = 0;
-                    gBattleScripting.moveendState++;
-                    return MOVEEND_RESULT_CONTINUE;
-                }
-                else
-                {
-                    SetSpikesLayer(side, 1);
-                    PrepareStringBattleWithWait(STRINGID_SPIKESSCATTERED, battlerDef);
-                    BattleScriptCall(BattleScript_WaitMessage);
-                    gBattleStruct->eventState.moveEndBattler = 0;
-                    gBattleScripting.moveendState++;
-                    return MOVEEND_RESULT_RUN_SCRIPT;
-                }
             }
             break;
         case EFFECT_DEFOG:
             if (TryDefogClear(cv->battlerAtk, FALSE))
             {
                 BattleScriptCall(BattleScript_Defog);
-                gBattleStruct->eventState.moveEndBattler = 0;
-                gBattleScripting.moveendState++;
                 return MOVEEND_RESULT_RUN_SCRIPT;
             }
             break;
         default:
-            result = MOVEEND_RESULT_CONTINUE;
             break;
         }
     }

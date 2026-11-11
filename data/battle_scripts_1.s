@@ -4591,7 +4591,7 @@ BattleScript_RedCardActivates::
 	removeitem BS_SCRIPTING
 	setbyte sSWITCH_CASE, B_SWITCH_RED_CARD
 	forcerandomswitch BattleScript_RedCardEnd
-	@ changes the current battle script.
+	@ changes the current battle script. the rest happens in BattleScript_RoarSuccessSwitch, if switch is successful
 BattleScript_RedCardIngrain:
 	printstring STRINGID_PKMNANCHOREDITSELF
 BattleScript_RedCardIngrainContinue:
