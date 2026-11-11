@@ -635,13 +635,8 @@ static void HandleSetEffectIncinerate(struct BattleCalcValues *cv, struct SetEff
 
 static void HandleSetEffectBugBite(struct BattleCalcValues *cv, struct SetEffect *se)
 {
-    if (cv->holdEffects[se->effectBattler] == HOLD_EFFECT_JABOCA_BERRY || gSpecialStatuses[se->effectBattler].berryReduced)
-    {
-        // jaboca berry / resist berries trigger instead of being stolen
-        gBattlescriptCurrInstr = se->script;
-    }
-    else if (GetItemPocket(gBattleMons[se->effectBattler].item) == POCKET_BERRIES
-        && cv->abilities[se->effectBattler] != ABILITY_STICKY_HOLD)
+    if (GetItemPocket(gBattleMons[se->effectBattler].item) == POCKET_BERRIES
+     && cv->abilities[se->effectBattler] != ABILITY_STICKY_HOLD)
     {
         // target loses their berry
         gLastUsedItem = gBattleMons[se->effectBattler].item;
@@ -4174,10 +4169,12 @@ static void HandleSetEffectSmackDown(struct BattleCalcValues *cv, struct SetEffe
 {
     enum SemiInvulnerableState state = gBattleMons[se->effectBattler].volatiles.semiInvulnerable;
     bool32 onAir = state == STATE_ON_AIR;
-    bool32 isOnAirSemiInvulnerable = onAir || state == STATE_SKY_DROP_ATTACKER || state == STATE_SKY_DROP_TARGET;
-    
+
+    if (state == STATE_SKY_DROP_ATTACKER || state == STATE_SKY_DROP_TARGET)
+        SetEffectFail(BattleScript_ButItFailed, cv->isStatusMove);
+
     if (IsBattlerGrounded(se->effectBattler, cv->abilities[se->effectBattler], cv->holdEffects[se->effectBattler])
-     && !isOnAirSemiInvulnerable)
+     && !onAir)
         SetEffectFail(BattleScript_ButItFailed, cv->isStatusMove);
 
     if (cv->onlyChecking || se->effectFailed)
