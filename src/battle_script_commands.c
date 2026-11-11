@@ -8897,11 +8897,11 @@ void BS_UpdateDynamax(void)
     gBattlescriptCurrInstr = cmd->nextInstr;
 }
 
-// Goes to the jump instruction if the target is Dynamaxed.
+// Goes to the jump instruction if the effect battler is Dynamaxed. Used by Red Card
 void BS_JumpIfDynamaxed(void)
 {
     NATIVE_ARGS(const u8 *jumpInstr);
-    if ((GetActiveGimmick(gBattlerTarget) == GIMMICK_DYNAMAX))
+    if ((GetActiveGimmick(gEffectBattler) == GIMMICK_DYNAMAX))
         gBattlescriptCurrInstr = cmd->jumpInstr;
     else
         gBattlescriptCurrInstr = cmd->nextInstr;

@@ -5335,7 +5335,7 @@ static bool32 TryRedCard(enum BattlerId battlerAtk, enum BattlerId redCardBattle
 
     gBattleStruct->redCardActivated = TRUE;
     gLastUsedItem = gBattleMons[redCardBattler].item;
-    gBattleScripting.battler = gBattlerTarget = redCardBattler;
+    gBattleScripting.battler = redCardBattler;
     gEffectBattler = battlerAtk;
     if (gBattleStruct->battlerState[battlerAtk].commanderSpecies != SPECIES_NONE
      || GetBattlerAbility(battlerAtk) == ABILITY_GUARD_DOG

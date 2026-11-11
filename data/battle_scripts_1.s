@@ -2076,11 +2076,13 @@ BattleScript_RoarSuccessSwitch::
 	switchindataupdate BS_EFFECT_BATTLER
 	trytoclearprimalweather
 	flushtextbox
+	savetarget @ for some reason switchinanim changes target value
 	switchinanim BS_EFFECT_BATTLER, FALSE, FALSE
 	waitstate
 	printstring STRINGID_PKMNWASDRAGGEDOUT
 	switchineffects BS_EFFECT_BATTLER
 	switchinevents
+	restoretarget
 	setbyte sSWITCH_CASE, B_SWITCH_NORMAL
 	return
 
