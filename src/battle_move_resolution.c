@@ -4585,8 +4585,7 @@ static enum MoveEndResult MoveEndUpdateLastMoves(struct BattleCalcValues *cv)
 
             gLastHitBy[cv->battlerDef] = cv->battlerAtk; // Used by switch AI only
 
-            if (!gBattleStruct->unableToUseMove
-             && !IsBattlerUnaffectedByMove(battlerDef))
+            if (!gBattleStruct->unableToUseMove && !IsBattlerUnaffectedByMove(battlerDef))
             {
                 if (gChosenMove == MOVE_UNAVAILABLE)
                 {
@@ -6615,7 +6614,7 @@ static enum Move GetMirrorMoveMove(void)
         if (i != gBattlerAttacker)
         {
             move = gBattleStruct->lastTakenMoveFrom[gBattlerAttacker][i];
-            if (move != MOVE_NONE && move != MOVE_UNAVAILABLE)
+            if (IsMoveValid(move))
             {
                 validMoves[validMovesCount] = move;
                 validMovesCount++;
